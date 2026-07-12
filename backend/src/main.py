@@ -1,9 +1,11 @@
 from fastapi import FastAPI
 from sqlalchemy import text
 
+from src.admin import setup_admin
 from src.database import engine
 
 app = FastAPI(title="Эконом ЮФУ API")
+setup_admin(app)
 
 
 @app.get("/health")
