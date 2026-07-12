@@ -6,8 +6,8 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg2://sfedu:sfedu@localhost:5432/sfedu_econ"
     admin_username: str = "admin"
-    admin_password: str = "change-me"
-    secret_key: str = "dev-secret-change-me"
+    admin_password: str
+    secret_key: str
 
 
 settings = Settings()
