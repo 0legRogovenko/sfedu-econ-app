@@ -71,3 +71,23 @@ def test_duplicate_news_url_rejected(db_session):
     db_session.add(make_news(title="Другой заголовок"))
     with pytest.raises(IntegrityError):
         db_session.flush()
+
+
+def test_duplicate_group_rejected(db_session):
+    db_session.add(Group(course=2, number="02.1"))
+    db_session.flush()
+
+    db_session.add(Group(course=2, number="02.1"))
+    with pytest.raises(IntegrityError):
+        db_session.flush()
+
+
+def test_duplicate_kb_slug_rejected(db_session):
+    from src.models import KbArticle
+
+    db_session.add(KbArticle(slug="spravka", title="Справка", body_md="…"))
+    db_session.flush()
+
+    db_session.add(KbArticle(slug="spravka", title="Другая", body_md="…"))
+    with pytest.raises(IntegrityError):
+        db_session.flush()

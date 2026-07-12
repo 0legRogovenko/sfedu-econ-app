@@ -53,11 +53,12 @@ class Lesson(Base):
     ends_at: Mapped[time]
     subject: Mapped[str] = mapped_column(String(200))
     teacher_id: Mapped[int | None] = mapped_column(
-        ForeignKey("teachers.id", ondelete="SET NULL")
+        ForeignKey("teachers.id", ondelete="SET NULL"), index=True
     )
     room: Mapped[str | None] = mapped_column(String(50))
     week_type: Mapped[WeekType] = mapped_column(
-        Enum(WeekType, native_enum=False), default=WeekType.BOTH
+        Enum(WeekType, native_enum=False, values_callable=lambda e: [m.value for m in e]),
+        default=WeekType.BOTH,
     )
     subgroup: Mapped[int] = mapped_column(default=0)  # 0 = вся группа
     valid_from: Mapped[date | None]
@@ -79,11 +80,13 @@ class News(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(500))
     body: Mapped[str] = mapped_column(Text)
-    source: Mapped[NewsSource] = mapped_column(Enum(NewsSource, native_enum=False))
+    source: Mapped[NewsSource] = mapped_column(
+        Enum(NewsSource, native_enum=False, values_callable=lambda e: [m.value for m in e])
+    )
     url: Mapped[str] = mapped_column(String(1000), unique=True)
     image_url: Mapped[str | None] = mapped_column(String(1000))
     is_important: Mapped[bool] = mapped_column(default=False)
-    published_at: Mapped[datetime]
+    published_at: Mapped[datetime] = mapped_column(index=True)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
 
