@@ -1,0 +1,19 @@
+# Brainstorm artifacts (visual companion)
+.superpowers/
+
+# Python
+venv/
+__pycache__/
+*.pyc
+.env
+
+# Flutter
+build/
+.dart_tool/
+.flutter-plugins*
+
+# OS
+.DS_Store
+
+# Local assets scratch
+logo.png
