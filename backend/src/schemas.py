@@ -1,8 +1,9 @@
+from datetime import datetime
 from datetime import time as time_type
 
 from pydantic import BaseModel, ConfigDict
 
-from src.models import WeekType
+from src.models import NewsSource, WeekType
 
 
 class GroupOut(BaseModel):
@@ -35,3 +36,16 @@ class LessonOut(BaseModel):
     week_type: WeekType
     subgroup: int
     teacher: TeacherBrief | None
+
+
+class NewsOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str
+    body: str
+    source: NewsSource
+    url: str
+    image_url: str | None
+    is_important: bool
+    published_at: datetime
