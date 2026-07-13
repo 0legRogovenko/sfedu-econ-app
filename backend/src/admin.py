@@ -89,6 +89,7 @@ class AssistantLogAdmin(ModelView, model=models.AssistantLog):
     ]
     can_create = False
     can_edit = False
+    can_delete = False
 
 
 def setup_admin(app: FastAPI) -> None:
