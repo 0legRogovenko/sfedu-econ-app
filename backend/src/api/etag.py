@@ -9,6 +9,7 @@ def json_with_etag(request: Request, response: Response, payload):
     body = json.dumps(payload, sort_keys=True, ensure_ascii=False, default=str)
     etag = '"' + hashlib.sha256(body.encode()).hexdigest()[:32] + '"'
     if request.headers.get("if-none-match") == etag:
-        return Response(status_code=304)
+        # RFC 7232: 304 несёт тот же ETag, что нёс бы 200
+        return Response(status_code=304, headers={"ETag": etag})
     response.headers["ETag"] = etag
     return payload
