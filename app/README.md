@@ -1,17 +1,27 @@
-# sfedu_econ
+# Эконом ЮФУ — мобильное приложение
 
-A new Flutter project.
+Flutter-клиент. Бэкенд: `../backend` (должен работать на localhost:8000).
 
-## Getting Started
+## Запуск
 
-This project is a starting point for a Flutter application.
+    flutter pub get
+    flutter run    # симулятор/эмулятор; для устройства см. ниже
 
-A few resources to get you started if this is your first Flutter project:
+Для реального устройства бэкенд доступен по IP машины:
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+    flutter run --dart-define=API_BASE_URL=http://<IP-машины>:8000
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Android-эмулятор не видит localhost хоста — использовать:
+
+    flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000
+
+## Тесты и анализ
+
+    flutter test
+    flutter analyze
+
+## Структура
+
+    lib/core/       тема ЮФУ, API-клиент, prefs
+    lib/router.dart go_router: онбординг + 4 вкладки
+    lib/features/   onboarding, schedule, news, assistant, contacts
