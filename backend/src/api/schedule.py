@@ -10,7 +10,7 @@ from src.schemas import LessonOut
 router = APIRouter()
 
 
-@router.get("/schedule")
+@router.get("/schedule", response_model=list[LessonOut])
 def get_schedule(
     request: Request,
     response: Response,

@@ -12,7 +12,7 @@ from src.schemas import NewsOut
 router = APIRouter()
 
 
-@router.get("/news")
+@router.get("/news", response_model=list[NewsOut])
 def list_news(
     request: Request,
     response: Response,

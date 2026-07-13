@@ -10,7 +10,7 @@ from src.schemas import ContactOut
 router = APIRouter()
 
 
-@router.get("/contacts")
+@router.get("/contacts", response_model=list[ContactOut])
 def list_contacts(
     request: Request, response: Response, db: Session = Depends(get_db)
 ):

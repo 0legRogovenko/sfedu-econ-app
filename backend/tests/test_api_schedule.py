@@ -88,6 +88,11 @@ def test_schedule_unknown_group_404(client):
     assert response.status_code == 404
 
 
+def test_schedule_unknown_teacher_404(client):
+    response = client.get("/api/schedule?teacher_id=99999")
+    assert response.status_code == 404
+
+
 def test_schedule_etag_304(client, db_session):
     group, _, _ = _seed_schedule(db_session)
 

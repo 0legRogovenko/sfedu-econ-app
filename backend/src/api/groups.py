@@ -10,7 +10,7 @@ from src.schemas import GroupOut
 router = APIRouter()
 
 
-@router.get("/groups")
+@router.get("/groups", response_model=list[GroupOut])
 def list_groups(
     request: Request, response: Response, db: Session = Depends(get_db)
 ):
