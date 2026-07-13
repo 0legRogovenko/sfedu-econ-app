@@ -14,6 +14,19 @@ FastAPI + PostgreSQL. См. спеку в `../docs/superpowers/specs/`.
 БД проброшена на хост как localhost:5433 (5432 часто занят локальным
 PostgreSQL). Внутри compose-сети api ходит в db:5432.
 
+## API
+
+Read-only ручки для приложения (все отдают ETag, поддерживают If-None-Match):
+
+    GET /api/groups                      — группы по курсам
+    GET /api/schedule?group_id=<id>      — расписание группы (вся неделя)
+    GET /api/schedule?teacher_id=<id>    — расписание преподавателя
+    GET /api/news?before=<iso>&before_id=<id>&limit=20 — новости, keyset-пагинация
+    GET /api/contacts                    — справочник контактов
+
+Демо-данные: `python -m src.seed` (идемпотентно; в Docker —
+`docker compose exec api python -m src.seed`).
+
 ## Разработка локально
 
     python3 -m venv venv && source venv/bin/activate
