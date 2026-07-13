@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sfedu_econ/core/prefs.dart';
 import 'package:sfedu_econ/features/onboarding/group_repository.dart';
 import 'package:sfedu_econ/features/onboarding/selected_group.dart';
+import 'package:sfedu_econ/features/schedule/lesson.dart';
+import 'package:sfedu_econ/features/schedule/schedule_providers.dart';
 import 'package:sfedu_econ/main.dart';
 import 'package:sfedu_econ/router.dart';
 
@@ -14,6 +16,13 @@ const _groups = [
   Group(id: 4, course: 2, number: '02.2', subgroupCount: 2),
 ];
 
+/// Экран расписания в фоне ходит в реальную drift-БД/dio — здесь это
+/// не по теме теста, поэтому подменяем на пустой мгновенный поток.
+class _FakeSync extends SyncStatusNotifier {
+  @override
+  Future<void> sync() async {}
+}
+
 Future<Widget> _app() async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
@@ -21,6 +30,8 @@ Future<Widget> _app() async {
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       groupsProvider.overrideWith((ref) async => _groups),
+      lessonsProvider.overrideWith((ref) => Stream.value(const <Lesson>[])),
+      syncStatusProvider.overrideWith(_FakeSync.new),
     ],
     child: const SfeduEconApp(),
   );
@@ -47,7 +58,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // попали на вкладки
-    expect(find.text('Здесь будет расписание'), findsOneWidget);
+    expect(find.text('Расписание'), findsWidgets);
   });
 
   testWidgets('кнопка «Начать» неактивна без выбранной группы',
