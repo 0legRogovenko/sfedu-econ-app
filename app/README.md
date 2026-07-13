@@ -25,3 +25,10 @@ Android-эмулятор не видит localhost хоста — использ
     lib/core/       тема ЮФУ, API-клиент, prefs
     lib/router.dart go_router: онбординг + 4 вкладки
     lib/features/   onboarding, schedule, news, assistant, contacts
+    lib/features/schedule/  экран расписания: drift-кэш, ETag-синк, недели числитель/знаменатель (нечётная ISO-неделя — числитель, допущение MVP)
+
+## Кодогенерация (drift)
+
+После изменения таблиц в lib/core/db.dart:
+
+    dart run build_runner build --delete-conflicting-outputs
