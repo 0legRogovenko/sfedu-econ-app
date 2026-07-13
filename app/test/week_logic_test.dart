@@ -36,6 +36,12 @@ void main() {
     test('28 декабря 2026 — неделя 53', () {
       expect(isoWeekNumber(DateTime(2026, 12, 28)), 53);
     });
+    test('1 января 2027 (пятница) — неделя 53 предыдущего ISO-года', () {
+      expect(isoWeekNumber(DateTime(2027, 1, 1)), 53);
+    });
+    test('31 декабря 2024 — неделя 1 следующего ISO-года', () {
+      expect(isoWeekNumber(DateTime(2024, 12, 31)), 1);
+    });
   });
 
   group('weekTypeForDate', () {
@@ -78,6 +84,9 @@ void main() {
     });
     test('после конца — false', () {
       expect(isLessonNow(lesson, DateTime(2026, 7, 13, 10, 36)), isFalse);
+    });
+    test('ровно в конце — уже не идёт', () {
+      expect(isLessonNow(lesson, DateTime(2026, 7, 13, 10, 35)), isFalse);
     });
     test('в другой день — false', () {
       expect(isLessonNow(lesson, DateTime(2026, 7, 14, 9, 30)), isFalse);

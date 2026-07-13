@@ -43,6 +43,8 @@ bool isLessonNow(Lesson lesson, DateTime now) {
     return false;
   }
   final nowMinutes = now.hour * 60 + now.minute;
+  // Верхняя граница исключена: в минуту стыка смежных пар
+  // «Сейчас» не должны быть обе.
   return nowMinutes >= _minutes(lesson.startsAt) &&
-      nowMinutes <= _minutes(lesson.endsAt);
+      nowMinutes < _minutes(lesson.endsAt);
 }

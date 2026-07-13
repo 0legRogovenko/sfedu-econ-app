@@ -18,14 +18,20 @@ class ScheduleScreen extends ConsumerStatefulWidget {
 
 class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   late final PageController _pageController;
+  late final DateTime _baseMonday;
   late int _dayIndex; // 0 = понедельник … 5 = суббота
 
   @override
   void initState() {
     super.initState();
     final now = ref.read(clockProvider)();
-    // воскресенье показываем как понедельник следующей недели
-    _dayIndex = (now.weekday - 1).clamp(0, 5);
+    // Воскресенье: показываем следующую неделю с понедельника —
+    // студент планирует предстоящие пары
+    final isSunday = now.weekday == DateTime.sunday;
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    _baseMonday = DateTime(monday.year, monday.month, monday.day)
+        .add(Duration(days: isSunday ? 7 : 0));
+    _dayIndex = isSunday ? 0 : now.weekday - 1;
     _pageController = PageController(initialPage: _dayIndex);
     // фоновая синхронизация при открытии экрана
     Future.microtask(() => ref.read(syncStatusProvider.notifier).sync());
@@ -37,13 +43,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     super.dispose();
   }
 
-  /// Дата, соответствующая выбранному дню текущей недели.
-  DateTime _dateForIndex(int index) {
-    final now = ref.read(clockProvider)();
-    final monday = now.subtract(Duration(days: now.weekday - 1));
-    return DateTime(monday.year, monday.month, monday.day)
-        .add(Duration(days: index));
-  }
+  /// Дата, соответствующая выбранному дню отображаемой недели.
+  DateTime _dateForIndex(int index) => _baseMonday.add(Duration(days: index));
 
   @override
   Widget build(BuildContext context) {

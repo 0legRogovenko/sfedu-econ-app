@@ -5,6 +5,7 @@ import 'package:sfedu_econ/core/clock.dart';
 import 'package:sfedu_econ/features/onboarding/selected_group.dart';
 import 'package:sfedu_econ/features/schedule/lesson.dart';
 import 'package:sfedu_econ/features/schedule/schedule_providers.dart';
+import 'package:sfedu_econ/features/schedule/schedule_repository.dart';
 import 'package:sfedu_econ/features/schedule/schedule_screen.dart';
 
 // 13.07.2026 — понедельник, ISO-неделя 29 (числитель), 09:30 — идёт 1-я пара
@@ -58,12 +59,25 @@ class _FakeSync extends SyncStatusNotifier {
   Future<void> sync() async {}
 }
 
-Widget _screen() => ProviderScope(
+/// Синк уже завершился неудачей — для теста офлайн-плашки.
+class _FailedSync extends SyncStatusNotifier {
+  @override
+  SyncStatus build() => SyncStatus(
+        lastResult: SyncResult.failed,
+        syncedAt: DateTime(2026, 7, 12),
+      );
+
+  @override
+  Future<void> sync() async {}
+}
+
+Widget _screen({DateTime? now, SyncStatusNotifier Function()? sync}) =>
+    ProviderScope(
       overrides: [
         selectedGroupIdProvider.overrideWith(() => FakeSelectedGroupId(3)),
         lessonsProvider.overrideWith((ref) => Stream.value(_lessons)),
-        clockProvider.overrideWithValue(() => _now),
-        syncStatusProvider.overrideWith(_FakeSync.new),
+        clockProvider.overrideWithValue(() => now ?? _now),
+        syncStatusProvider.overrideWith(sync ?? _FakeSync.new),
       ],
       child: const MaterialApp(home: ScheduleScreen()),
     );
@@ -114,5 +128,24 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Пар нет — отдыхаем'), findsOneWidget);
+  });
+
+  testWidgets('в воскресенье показывается понедельник следующей недели',
+      (tester) async {
+    // 19.07.2026 — воскресенье; след. понедельник 20.07 — ISO-неделя 30 (знаменатель)
+    await tester.pumpWidget(_screen(now: DateTime(2026, 7, 19, 12, 0)));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Макроэкономика'), findsOneWidget); // weekType both
+    expect(find.text('Эконометрика'), findsNothing); // числитель — исключена
+    expect(find.text('знаменатель'), findsOneWidget);
+  });
+
+  testWidgets('после неудачного синка показывается плашка с датой данных',
+      (tester) async {
+    await tester.pumpWidget(_screen(sync: _FailedSync.new));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Данные от 12.07.2026'), findsOneWidget);
   });
 }
