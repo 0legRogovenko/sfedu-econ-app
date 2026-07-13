@@ -49,3 +49,16 @@ class NewsOut(BaseModel):
     image_url: str | None
     is_important: bool
     published_at: datetime
+
+
+class ContactOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    section: str
+    name: str
+    role: str | None
+    office: str | None
+    email: str | None
+    phone: str | None
+    office_hours: str | None
