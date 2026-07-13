@@ -27,7 +27,14 @@ def get_schedule(
     query = (
         select(Lesson)
         .options(joinedload(Lesson.teacher))
-        .order_by(Lesson.weekday, Lesson.pair_number, Lesson.subgroup)
+        # week_type и id — стабильные тайбрейкеры: детерминированный порядок => стабильный ETag
+        .order_by(
+            Lesson.weekday,
+            Lesson.pair_number,
+            Lesson.subgroup,
+            Lesson.week_type,
+            Lesson.id,
+        )
     )
     if group_id is not None:
         if db.get(Group, group_id) is None:
