@@ -1,0 +1,93 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import 'features/assistant/assistant_screen.dart';
+import 'features/contacts/contacts_screen.dart';
+import 'features/news/news_screen.dart';
+import 'features/onboarding/onboarding_screen.dart';
+import 'features/onboarding/selected_group.dart';
+import 'features/schedule/schedule_screen.dart';
+
+final routerProvider = Provider<GoRouter>((ref) {
+  // ref.read, не watch: роутер создаётся один раз на старте; после выбора
+  // группы онбординг сам делает context.go('/schedule')
+  final hasGroup = ref.read(selectedGroupIdProvider) != null;
+  return GoRouter(
+    initialLocation: hasGroup ? '/schedule' : '/onboarding',
+    routes: [
+      GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => const OnboardingScreen(),
+      ),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, shell) => _ShellScaffold(shell: shell),
+        branches: [
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/schedule',
+              builder: (context, state) => const ScheduleScreen(),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/news',
+              builder: (context, state) => const NewsScreen(),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/assistant',
+              builder: (context, state) => const AssistantScreen(),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/contacts',
+              builder: (context, state) => const ContactsScreen(),
+            ),
+          ]),
+        ],
+      ),
+    ],
+  );
+});
+
+class _ShellScaffold extends StatelessWidget {
+  const _ShellScaffold({required this.shell});
+
+  final StatefulNavigationShell shell;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: shell,
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: shell.currentIndex,
+        onDestinationSelected: shell.goBranch,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.calendar_today_outlined),
+            selectedIcon: Icon(Icons.calendar_today),
+            label: 'Расписание',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.newspaper_outlined),
+            selectedIcon: Icon(Icons.newspaper),
+            label: 'Новости',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.chat_bubble_outline),
+            selectedIcon: Icon(Icons.chat_bubble),
+            label: 'Помощник',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.people_outline),
+            selectedIcon: Icon(Icons.people),
+            label: 'Контакты',
+          ),
+        ],
+      ),
+    );
+  }
+}
