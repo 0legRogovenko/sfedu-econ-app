@@ -6,6 +6,7 @@ import 'package:sfedu_econ/core/prefs.dart';
 import 'package:sfedu_econ/features/onboarding/group_repository.dart';
 import 'package:sfedu_econ/features/onboarding/selected_group.dart';
 import 'package:sfedu_econ/main.dart';
+import 'package:sfedu_econ/router.dart';
 
 const _groups = [
   Group(id: 1, course: 1, number: '01.1', subgroupCount: 2),
@@ -71,5 +72,28 @@ void main() {
     await container.read(selectedGroupIdProvider.notifier).select(3);
 
     expect(prefs.getInt('selected_group_id'), 3);
+  });
+
+  testWidgets('переход на вкладку без выбранной группы ведёт на онбординг',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        groupsProvider.overrideWith((ref) async => _groups),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(UncontrolledProviderScope(
+      container: container,
+      child: const SfeduEconApp(),
+    ));
+    await tester.pumpAndSettle();
+
+    container.read(routerProvider).go('/news');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Привет! 👋'), findsOneWidget);
   });
 }

@@ -15,6 +15,13 @@ final routerProvider = Provider<GoRouter>((ref) {
   final hasGroup = ref.read(selectedGroupIdProvider) != null;
   return GoRouter(
     initialLocation: hasGroup ? '/schedule' : '/onboarding',
+    redirect: (context, state) {
+      final hasGroup = ref.read(selectedGroupIdProvider) != null;
+      final onOnboarding = state.matchedLocation == '/onboarding';
+      if (!hasGroup && !onOnboarding) return '/onboarding';
+      if (hasGroup && onOnboarding) return '/schedule';
+      return null;
+    },
     routes: [
       GoRoute(
         path: '/onboarding',
