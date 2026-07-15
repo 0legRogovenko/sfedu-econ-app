@@ -26,7 +26,14 @@ class ContactsFeedNotifier extends AsyncNotifier<ContactsFeed> {
   }
 
   Future<void> refresh() async {
-    state = AsyncData(await _repo.refresh());
+    // try/catch: refresh дёргается из Future.microtask в build(), где
+    // исключение (например, кривой JSON) улетело бы необработанным —
+    // показываем ошибку в состоянии (итог ревью)
+    try {
+      state = AsyncData(await _repo.refresh());
+    } catch (error, stack) {
+      state = AsyncError(error, stack);
+    }
   }
 }
 

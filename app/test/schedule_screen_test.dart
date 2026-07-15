@@ -59,6 +59,16 @@ class _FakeSync extends SyncStatusNotifier {
   Future<void> sync() async {}
 }
 
+/// Записывает, сколько раз дёрнули sync — для регрессии на смену группы.
+class _RecordingSync extends SyncStatusNotifier {
+  static int calls = 0;
+
+  @override
+  Future<void> sync() async {
+    calls++;
+  }
+}
+
 /// Синк уже завершился неудачей — для теста офлайн-плашки.
 class _FailedSync extends SyncStatusNotifier {
   @override
@@ -83,6 +93,35 @@ Widget _screen({DateTime? now, SyncStatusNotifier Function()? sync}) =>
     );
 
 void main() {
+  testWidgets('смена группы запускает синхронизацию', (tester) async {
+    // Регрессия: экран синкался только в initState, поэтому после перехода
+    // на push/pop-навигацию смена группы в настройках не подтягивала бы
+    // расписание новой группы (итог ревью).
+    _RecordingSync.calls = 0;
+    final container = ProviderContainer(
+      overrides: [
+        selectedGroupIdProvider.overrideWith(() => FakeSelectedGroupId(3)),
+        lessonsProvider.overrideWith((ref) => Stream.value(_lessons)),
+        clockProvider.overrideWithValue(() => _now),
+        syncStatusProvider.overrideWith(_RecordingSync.new),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(UncontrolledProviderScope(
+      container: container,
+      child: const MaterialApp(home: ScheduleScreen()),
+    ));
+    await tester.pumpAndSettle();
+
+    final afterInit = _RecordingSync.calls; // стартовый синк из initState
+
+    await container.read(selectedGroupIdProvider.notifier).select(1);
+    await tester.pumpAndSettle();
+
+    expect(_RecordingSync.calls, greaterThan(afterInit));
+  });
+
   testWidgets('показывает пары сегодняшнего дня', (tester) async {
     await tester.pumpWidget(_screen());
     await tester.pumpAndSettle();

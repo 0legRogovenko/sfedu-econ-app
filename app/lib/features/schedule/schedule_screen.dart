@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/clock.dart';
+import '../onboarding/selected_group.dart';
 import 'lesson.dart';
 import 'schedule_providers.dart';
 import 'schedule_repository.dart';
@@ -48,6 +49,15 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Смена группы в настройках должна подтягивать её расписание: initState
+    // здесь больше не отрабатывает (экран не пересоздаётся при push/pop),
+    // поэтому синкаем по изменению выбранной группы (итог ревью).
+    ref.listen<int?>(selectedGroupIdProvider, (previous, next) {
+      if (previous != next && next != null) {
+        ref.read(syncStatusProvider.notifier).sync();
+      }
+    });
+
     final lessonsAsync = ref.watch(lessonsProvider);
     final syncStatus = ref.watch(syncStatusProvider);
     final weekType = weekTypeForDate(_dateForIndex(_dayIndex));

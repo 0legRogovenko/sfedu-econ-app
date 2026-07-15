@@ -27,6 +27,8 @@ Android-эмулятор не видит localhost хоста — использ
     lib/features/   onboarding, schedule, news, assistant, contacts
     lib/features/schedule/  экран расписания: drift-кэш, ETag-синк, недели числитель/знаменатель (нечётная ISO-неделя — числитель, допущение MVP)
     lib/features/news/      лента новостей: drift-кэш, keyset-пагинация, детальный экран, офлайн-плашка
+    lib/features/contacts/  справочник: drift-кэш, поиск, mailto/tel
+    lib/features/settings/  настройки: группа, тема, о приложении
 
 ## Кодогенерация (drift)
 

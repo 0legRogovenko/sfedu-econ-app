@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme_mode.dart';
@@ -18,10 +17,9 @@ class SettingsScreen extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Настройки'),
-        leading: BackButton(onPressed: () => context.go('/contacts')),
-      ),
+      // Экран открывается через context.push — стандартная кнопка «назад»
+      // и аппаратная «назад» работают сами (итог ревью)
+      appBar: AppBar(title: const Text('Настройки')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

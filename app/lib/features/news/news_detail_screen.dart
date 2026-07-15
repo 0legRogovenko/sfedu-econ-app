@@ -9,6 +9,27 @@ class NewsDetailScreen extends StatelessWidget {
 
   final NewsItem item;
 
+  /// Открывает новость в браузере; если не вышло — говорит об этом,
+  /// а не падает молча (итог ревью).
+  Future<void> _openSite(BuildContext context) async {
+    const failure = 'Не удалось открыть браузер';
+    try {
+      final ok = await launchUrl(
+        Uri.parse(item.url),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!ok && context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text(failure)));
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text(failure)));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -27,10 +48,7 @@ class NewsDetailScreen extends StatelessWidget {
           SelectableText(item.body, style: theme.textTheme.bodyMedium),
           const SizedBox(height: 24),
           OutlinedButton.icon(
-            onPressed: () => launchUrl(
-              Uri.parse(item.url),
-              mode: LaunchMode.externalApplication,
-            ),
+            onPressed: () => _openSite(context),
             icon: const Icon(Icons.open_in_new),
             label: const Text('Открыть на сайте'),
           ),

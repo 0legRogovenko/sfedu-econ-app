@@ -122,7 +122,10 @@ class _NewsCard extends StatelessWidget {
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => context.go('/news/detail', extra: item),
+        // push, не go: go заменял стек — с детального экрана нельзя было
+        // вернуться (на iOS вообще некуда), аппаратная «назад» закрывала
+        // приложение (итог ревью)
+        onTap: () => context.push('/news/detail', extra: item),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Column(
