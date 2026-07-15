@@ -41,6 +41,7 @@ dependencies:
   shared_preferences: ^2.5.5
   drift: ^2.34.1
   drift_flutter: ^0.3.1
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
