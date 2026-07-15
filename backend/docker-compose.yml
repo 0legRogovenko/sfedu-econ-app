@@ -20,6 +20,7 @@ services:
     env_file: .env
     environment:
       DATABASE_URL: postgresql+psycopg2://sfedu:sfedu@db:5432/sfedu_econ
+      ENABLE_SCHEDULER: "1"  # в контейнере api включаем фоновый парсер новостей
     ports:
       - "8000:8000"
     depends_on:
