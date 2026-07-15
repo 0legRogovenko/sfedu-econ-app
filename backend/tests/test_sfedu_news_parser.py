@@ -36,6 +36,14 @@ class TestParseRuDate:
     def test_tolerates_extra_whitespace(self):
         assert parse_ru_date("  15  июня  2026 г. ") == datetime(2026, 6, 15)
 
+    def test_relative_today(self):
+        today = datetime(2026, 7, 13)
+        assert parse_ru_date("Сегодня", today=today) == today
+
+    def test_relative_yesterday(self):
+        today = datetime(2026, 7, 13)
+        assert parse_ru_date("Вчера", today=today) == datetime(2026, 7, 12)
+
     def test_garbage_raises(self):
         with pytest.raises(ValueError):
             parse_ru_date("не дата")

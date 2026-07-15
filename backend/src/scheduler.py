@@ -7,7 +7,7 @@ api, но не в тестах и не при alembic.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -24,7 +24,9 @@ def create_scheduler() -> BackgroundScheduler:
         _run_news_job,
         trigger="interval",
         minutes=settings.news_poll_minutes,
-        next_run_time=datetime.now() + timedelta(seconds=30),
+        # tz-aware: наивный now() интерпретировался бы как MSK и на UTC-хосте
+        # (Docker) промахивался бы мимо grace-окна прогрева (итог ревью)
+        next_run_time=datetime.now(timezone.utc) + timedelta(seconds=30),
         id="news_parsers",
         max_instances=1,
         coalesce=True,

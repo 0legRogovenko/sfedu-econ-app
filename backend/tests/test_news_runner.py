@@ -133,3 +133,19 @@ def test_alert_sent_on_source_failure(db_session, session_factory, monkeypatch):
     run_news_parsers(session_factory=session_factory, fetch=fetch)
 
     assert calls and "sfedu" in calls[0].lower()
+
+
+def test_alert_on_empty_listing_parse(db_session, session_factory, monkeypatch):
+    # листинг скачался, но 0 элементов распарсилось -> вероятно, сменилась
+    # вёрстка: алерт, но не ошибка (данные не тронуты)
+    from src.parsers import runner
+    from src.parsers.sfedu_news import LISTING_URL
+
+    calls = []
+    monkeypatch.setattr(runner, "notify_admin", lambda text: calls.append(text))
+
+    fetch = FakeFetch({LISTING_URL: "<html><body>нет новостей</body></html>"})
+    result = run_news_parsers(session_factory=session_factory, fetch=fetch)
+
+    assert result == {"sfedu": {"new": 0}}
+    assert calls and "вёрстк" in calls[0].lower() or "разметк" in calls[0].lower()

@@ -23,6 +23,9 @@ def test_create_scheduler_has_news_job():
     try:
         job = scheduler.get_job("news_parsers")
         assert job is not None
+        # прогревочный запуск задан tz-aware временем (иначе на UTC-хосте
+        # промахнётся мимо grace-окна) — итог ревью
+        assert job.next_run_time.tzinfo is not None
     finally:
         scheduler.shutdown(wait=False) if scheduler.running else None
 

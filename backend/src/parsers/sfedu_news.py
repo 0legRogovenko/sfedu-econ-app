@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 import ssl
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib.parse import urljoin
 
 import requests
@@ -47,9 +47,23 @@ class NewsCandidate:
     image_url: str | None
 
 
-def parse_ru_date(text: str) -> datetime:
-    """«15 июня 2026 г.» -> datetime(2026, 6, 15). ValueError на мусоре."""
-    match = _DATE_RE.search(text.strip().lower())
+def parse_ru_date(text: str, today: datetime | None = None) -> datetime:
+    """«15 июня 2026 г.» -> datetime(2026, 6, 15). ValueError на мусоре.
+
+    Понимает относительные «Сегодня»/«Вчера» (самая свежая новость на sfedu.ru
+    датируется относительно). `today` инжектится в тестах.
+    """
+    normalized = text.strip().lower()
+
+    if today is None:
+        now = datetime.now()
+        today = datetime(now.year, now.month, now.day)
+    if "сегодня" in normalized:
+        return today
+    if "вчера" in normalized:
+        return today - timedelta(days=1)
+
+    match = _DATE_RE.search(normalized)
     if not match:
         raise ValueError(f"Не удалось распознать дату: {text!r}")
     day, month_name, year = match.groups()
@@ -68,7 +82,9 @@ def parse_listing(html: str) -> list[NewsCandidate]:
     candidates: list[NewsCandidate] = []
     seen_urls: set[str] = set()
 
-    for block in soup.select("div.new"):
+    # ограничиваемся блоками новостей — не задеваем галерею и сайдбар
+    blocks = soup.select("div.news_list div.new") or soup.select("div.new")
+    for block in blocks:
         link = block.find("a", href=True)
         if link is None:
             continue
@@ -91,6 +107,7 @@ def parse_listing(html: str) -> list[NewsCandidate]:
         title = (name_el.get_text() if name_el else link.get_text()).strip()
         if not title:
             continue
+        title = title[:500]  # защитно под String(500) в модели News
 
         snippet_el = block.find(class_="prev_text")
         snippet = snippet_el.get_text().strip() if snippet_el else None

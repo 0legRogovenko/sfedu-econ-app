@@ -28,6 +28,16 @@ def _sync_sfedu(session, fetch: Callable[[str], str]) -> int:
     listing_html = fetch(sfedu_news.LISTING_URL)
     candidates = sfedu_news.parse_listing(listing_html)
 
+    if not candidates:
+        # листинг скачался, но ничего не распарсилось — вероятно, сменилась
+        # вёрстка sfedu.ru; сигналим админу, но не считаем это ошибкой
+        logger.warning("sfedu: листинг скачан, но 0 новостей распарсилось")
+        notify_admin(
+            "Парсер новостей sfedu: страница скачалась, но 0 элементов "
+            "распарсилось — вероятно, сменилась вёрстка sfedu.ru."
+        )
+        return 0
+
     existing = set(
         session.scalars(
             select(News.url).where(News.source == NewsSource.SFEDU)
