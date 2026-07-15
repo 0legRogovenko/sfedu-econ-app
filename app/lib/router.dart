@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import 'features/assistant/assistant_screen.dart';
 import 'features/contacts/contacts_screen.dart';
+import 'features/news/news_detail_screen.dart';
+import 'features/news/news_item.dart';
 import 'features/news/news_screen.dart';
 import 'features/onboarding/onboarding_screen.dart';
 import 'features/onboarding/selected_group.dart';
@@ -55,6 +57,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ]),
         ],
+      ),
+      GoRoute(
+        path: '/news/detail',
+        builder: (context, state) =>
+            NewsDetailScreen(item: state.extra! as NewsItem),
       ),
     ],
   );
