@@ -18,6 +18,27 @@ class ContactsScreen extends ConsumerStatefulWidget {
 class _ContactsScreenState extends ConsumerState<ContactsScreen> {
   String _query = '';
 
+  /// Офлайн-первый: пока в кэше что-то есть — показываем его, даже если
+  /// последний ответ сервера был ошибкой. Экран ошибки — только когда
+  /// показать нечего (итог ревью).
+  Widget _body(AsyncValue<ContactsFeed> feedAsync) {
+    Widget list(ContactsFeed feed) => _ContactsList(
+          feed: feed,
+          query: _query,
+          onRefresh: () => ref.read(contactsFeedProvider.notifier).refresh(),
+        );
+
+    final cached = feedAsync.value;
+    if (cached != null && cached.items.isNotEmpty) return list(cached);
+
+    return feedAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, _) =>
+          const Center(child: Text('Не удалось загрузить контакты')),
+      data: list,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final feedAsync = ref.watch(contactsFeedProvider);
@@ -49,19 +70,7 @@ class _ContactsScreenState extends ConsumerState<ContactsScreen> {
               onChanged: (value) => setState(() => _query = value),
             ),
           ),
-          Expanded(
-            child: feedAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) =>
-                  const Center(child: Text('Не удалось загрузить контакты')),
-              data: (feed) => _ContactsList(
-                feed: feed,
-                query: _query,
-                onRefresh: () =>
-                    ref.read(contactsFeedProvider.notifier).refresh(),
-              ),
-            ),
-          ),
+          Expanded(child: _body(feedAsync)),
         ],
       ),
     );
