@@ -21,6 +21,11 @@ final newsRepositoryProvider = Provider<NewsRepository>(
 class NewsFeedNotifier extends AsyncNotifier<NewsFeed> {
   NewsRepository get _repo => ref.read(newsRepositoryProvider);
 
+  // Пока идёт refresh (в т.ч. стартовый фоновой), loadMore не запускаем:
+  // иначе докидка со стартового курсора кэша могла бы затереть свежую
+  // первую страницу устаревшими строками (итог ревью).
+  bool _refreshing = false;
+
   @override
   Future<NewsFeed> build() async {
     final cached = await _repo.loadCached();
@@ -30,11 +35,17 @@ class NewsFeedNotifier extends AsyncNotifier<NewsFeed> {
   }
 
   Future<void> refresh() async {
-    final feed = await _repo.refresh();
-    state = AsyncData(feed);
+    _refreshing = true;
+    try {
+      final feed = await _repo.refresh();
+      state = AsyncData(feed);
+    } finally {
+      _refreshing = false;
+    }
   }
 
   Future<void> loadMore() async {
+    if (_refreshing) return;
     final current = state.asData?.value;
     if (current == null || !current.hasMore || current.loadingMore) return;
     state = AsyncData(current.copyWith(loadingMore: true));
