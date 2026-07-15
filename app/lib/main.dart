@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/prefs.dart';
 import 'core/theme.dart';
+import 'core/theme_mode.dart';
 import 'router.dart';
 
 Future<void> main() async {
@@ -27,7 +28,7 @@ class SfeduEconApp extends ConsumerWidget {
       title: 'Эконом ЮФУ',
       theme: buildLightTheme(),
       darkTheme: buildDarkTheme(),
-      themeMode: ThemeMode.system,
+      themeMode: ref.watch(themeModeProvider),
       routerConfig: router,
     );
   }

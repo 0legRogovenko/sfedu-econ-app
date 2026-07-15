@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sfedu_econ/core/prefs.dart';
 import 'package:sfedu_econ/features/contacts/contact.dart';
 import 'package:sfedu_econ/features/contacts/contacts_providers.dart';
 import 'package:sfedu_econ/features/contacts/contacts_repository.dart';
@@ -62,24 +64,31 @@ class _FakeContactsFeed extends ContactsFeedNotifier {
   Future<void> refresh() async {}
 }
 
-Widget _app(List<Contact> items, {bool offline = false}) => ProviderScope(
-      overrides: [
-        selectedGroupIdProvider.overrideWith(() => FakeSelectedGroupId(3)),
-        lessonsProvider.overrideWith((ref) => Stream.value(const <Lesson>[])),
-        syncStatusProvider.overrideWith(_FakeSync.new),
-        newsFeedProvider.overrideWith(_FakeNewsFeed.new),
-        contactsFeedProvider.overrideWith(
-          () => _FakeContactsFeed(
-            ContactsFeed(items: items, offline: offline),
-          ),
+/// main.dart читает themeModeProvider, которому нужен sharedPreferencesProvider
+/// — подменяем на мок, чтобы не падать с UnimplementedError.
+Future<Widget> _app(List<Contact> items, {bool offline = false}) async {
+  SharedPreferences.setMockInitialValues({});
+  final prefs = await SharedPreferences.getInstance();
+  return ProviderScope(
+    overrides: [
+      sharedPreferencesProvider.overrideWithValue(prefs),
+      selectedGroupIdProvider.overrideWith(() => FakeSelectedGroupId(3)),
+      lessonsProvider.overrideWith((ref) => Stream.value(const <Lesson>[])),
+      syncStatusProvider.overrideWith(_FakeSync.new),
+      newsFeedProvider.overrideWith(_FakeNewsFeed.new),
+      contactsFeedProvider.overrideWith(
+        () => _FakeContactsFeed(
+          ContactsFeed(items: items, offline: offline),
         ),
-      ],
-      child: const SfeduEconApp(),
-    );
+      ),
+    ],
+    child: const SfeduEconApp(),
+  );
+}
 
 void main() {
   testWidgets('секции и контакты рендерятся', (tester) async {
-    await tester.pumpWidget(_app([
+    await tester.pumpWidget(await _app([
       _c(id: 1, section: 'Деканат', name: 'Иванова Елена Петровна'),
       _c(id: 2, section: 'Кафедра экономики', name: 'Петров Андрей Сергеевич'),
     ]));
@@ -94,7 +103,7 @@ void main() {
   });
 
   testWidgets('поиск фильтрует список', (tester) async {
-    await tester.pumpWidget(_app([
+    await tester.pumpWidget(await _app([
       _c(id: 1, name: 'Иванова Елена Игоревна'),
       _c(id: 2, name: 'Петров Андрей Сергеевич'),
     ]));
@@ -110,7 +119,7 @@ void main() {
   });
 
   testWidgets('поиск без результатов', (tester) async {
-    await tester.pumpWidget(_app([_c()]));
+    await tester.pumpWidget(await _app([_c()]));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Контакты'));
     await tester.pumpAndSettle();
@@ -122,7 +131,7 @@ void main() {
   });
 
   testWidgets('офлайн-плашка при недоступной сети', (tester) async {
-    await tester.pumpWidget(_app([_c()], offline: true));
+    await tester.pumpWidget(await _app([_c()], offline: true));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Контакты'));
     await tester.pumpAndSettle();
@@ -135,7 +144,7 @@ void main() {
 
   testWidgets('кнопка настроек в AppBar ведёт на экран настроек',
       (tester) async {
-    await tester.pumpWidget(_app([_c()]));
+    await tester.pumpWidget(await _app([_c()]));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Контакты'));
     await tester.pumpAndSettle();

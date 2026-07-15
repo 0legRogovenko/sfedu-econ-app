@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sfedu_econ/core/prefs.dart';
 import 'package:sfedu_econ/features/news/news_date.dart';
 import 'package:sfedu_econ/features/news/news_item.dart';
 import 'package:sfedu_econ/features/news/news_providers.dart';
@@ -49,23 +51,30 @@ class _FakeFeed extends NewsFeedNotifier {
   Future<void> loadMore() async {}
 }
 
-Widget _app(List<NewsItem> items, {bool offline = false}) => ProviderScope(
-      overrides: [
-        selectedGroupIdProvider.overrideWith(() => FakeSelectedGroupId(3)),
-        lessonsProvider.overrideWith((ref) => Stream.value(const <Lesson>[])),
-        syncStatusProvider.overrideWith(_FakeSync.new),
-        newsFeedProvider.overrideWith(
-          () => _FakeFeed(
-            NewsFeed(items: items, offline: offline, hasMore: false),
-          ),
+/// main.dart читает themeModeProvider, которому нужен sharedPreferencesProvider
+/// — подменяем на мок, чтобы не падать с UnimplementedError.
+Future<Widget> _app(List<NewsItem> items, {bool offline = false}) async {
+  SharedPreferences.setMockInitialValues({});
+  final prefs = await SharedPreferences.getInstance();
+  return ProviderScope(
+    overrides: [
+      sharedPreferencesProvider.overrideWithValue(prefs),
+      selectedGroupIdProvider.overrideWith(() => FakeSelectedGroupId(3)),
+      lessonsProvider.overrideWith((ref) => Stream.value(const <Lesson>[])),
+      syncStatusProvider.overrideWith(_FakeSync.new),
+      newsFeedProvider.overrideWith(
+        () => _FakeFeed(
+          NewsFeed(items: items, offline: offline, hasMore: false),
         ),
-      ],
-      child: const SfeduEconApp(),
-    );
+      ),
+    ],
+    child: const SfeduEconApp(),
+  );
+}
 
 void main() {
   testWidgets('лента рендерит заголовки и чипы источников', (tester) async {
-    await tester.pumpWidget(_app([
+    await tester.pumpWidget(await _app([
       _item(id: 1, title: 'Эконфак новость', source: 'econ'),
       _item(id: 2, title: 'Универ новость', source: 'sfedu'),
     ]));
@@ -83,7 +92,7 @@ void main() {
 
   testWidgets('«Важное» показывается только у важных новостей',
       (tester) async {
-    await tester.pumpWidget(_app([
+    await tester.pumpWidget(await _app([
       _item(id: 1, important: true),
       _item(id: 2, important: false),
     ]));
@@ -95,7 +104,7 @@ void main() {
   });
 
   testWidgets('тап по карточке открывает полный текст', (tester) async {
-    await tester.pumpWidget(_app([_item(id: 7, title: 'Про стипендию')]));
+    await tester.pumpWidget(await _app([_item(id: 7, title: 'Про стипендию')]));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Новости'));
     await tester.pumpAndSettle();
@@ -108,7 +117,7 @@ void main() {
   });
 
   testWidgets('офлайн-плашка при недоступной сети', (tester) async {
-    await tester.pumpWidget(_app([_item()], offline: true));
+    await tester.pumpWidget(await _app([_item()], offline: true));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Новости'));
     await tester.pumpAndSettle();

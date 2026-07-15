@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sfedu_econ/core/prefs.dart';
 import 'package:sfedu_econ/features/contacts/contacts_providers.dart';
 import 'package:sfedu_econ/features/contacts/contacts_repository.dart';
 import 'package:sfedu_econ/features/news/news_providers.dart';
@@ -34,21 +36,28 @@ class _FakeContactsFeed extends ContactsFeedNotifier {
   Future<void> refresh() async {}
 }
 
-Widget _appWithGroup() => ProviderScope(
-      overrides: [
-        // группа уже выбрана — онбординг не показывается
-        selectedGroupIdProvider.overrideWith(() => FakeSelectedGroupId(3)),
-        lessonsProvider.overrideWith((ref) => Stream.value(const <Lesson>[])),
-        syncStatusProvider.overrideWith(_FakeSync.new),
-        newsFeedProvider.overrideWith(_FakeFeed.new),
-        contactsFeedProvider.overrideWith(_FakeContactsFeed.new),
-      ],
-      child: const SfeduEconApp(),
-    );
+/// main.dart читает themeModeProvider, которому нужен sharedPreferencesProvider
+/// — подменяем на мок, чтобы не падать с UnimplementedError.
+Future<Widget> _appWithGroup() async {
+  SharedPreferences.setMockInitialValues({});
+  final prefs = await SharedPreferences.getInstance();
+  return ProviderScope(
+    overrides: [
+      sharedPreferencesProvider.overrideWithValue(prefs),
+      // группа уже выбрана — онбординг не показывается
+      selectedGroupIdProvider.overrideWith(() => FakeSelectedGroupId(3)),
+      lessonsProvider.overrideWith((ref) => Stream.value(const <Lesson>[])),
+      syncStatusProvider.overrideWith(_FakeSync.new),
+      newsFeedProvider.overrideWith(_FakeFeed.new),
+      contactsFeedProvider.overrideWith(_FakeContactsFeed.new),
+    ],
+    child: const SfeduEconApp(),
+  );
+}
 
 void main() {
   testWidgets('четыре вкладки в нижней панели', (tester) async {
-    await tester.pumpWidget(_appWithGroup());
+    await tester.pumpWidget(await _appWithGroup());
     await tester.pumpAndSettle();
 
     expect(find.text('Расписание'), findsWidgets);
@@ -58,7 +67,7 @@ void main() {
   });
 
   testWidgets('переключение вкладок работает', (tester) async {
-    await tester.pumpWidget(_appWithGroup());
+    await tester.pumpWidget(await _appWithGroup());
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Новости'));
