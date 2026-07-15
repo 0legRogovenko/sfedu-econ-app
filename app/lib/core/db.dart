@@ -29,14 +29,41 @@ class ScheduleCacheMeta extends Table {
   Set<Column> get primaryKey => {groupId};
 }
 
-@DriftDatabase(tables: [CachedLessons, ScheduleCacheMeta])
+class CachedNews extends Table {
+  IntColumn get id => integer()();
+  TextColumn get title => text()();
+  TextColumn get body => text()();
+  TextColumn get source => text()();
+  TextColumn get url => text()();
+  TextColumn get imageUrl => text().nullable()();
+  BoolColumn get isImportant => boolean()();
+  DateTimeColumn get publishedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DriftDatabase(tables: [CachedLessons, ScheduleCacheMeta, CachedNews])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: 'sfedu_econ'));
 
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) => m.createAll(),
+        onUpgrade: (m, from, to) async {
+          // Это локальный кэш, а не источник истины — при апгрейде схемы
+          // проще пересоздать все таблицы, чем писать пошаговые миграции.
+          for (final table in allTables) {
+            await m.deleteTable(table.actualTableName);
+          }
+          await m.createAll();
+        },
+      );
 
   Future<List<CachedLesson>> lessonsForGroup(int groupId) =>
       (select(cachedLessons)..where((t) => t.groupId.equals(groupId))).get();
@@ -70,4 +97,20 @@ class AppDatabase extends _$AppDatabase {
   Future<void> touchSyncedAt(int groupId, DateTime at) =>
       (update(scheduleCacheMeta)..where((t) => t.groupId.equals(groupId)))
           .write(ScheduleCacheMetaCompanion(syncedAt: Value(at)));
+
+  // --- Новости ---
+
+  Future<List<CachedNew>> allNews() => (select(cachedNews)
+        ..orderBy([
+          (t) => OrderingTerm(expression: t.publishedAt, mode: OrderingMode.desc),
+          (t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc),
+        ]))
+      .get();
+
+  /// Атомарная замена всего кэша новостей (первая страница ленты).
+  Future<void> replaceNewsCache(List<CachedNewsCompanion> rows) =>
+      transaction(() async {
+        await delete(cachedNews).go();
+        await batch((b) => b.insertAll(cachedNews, rows));
+      });
 }
