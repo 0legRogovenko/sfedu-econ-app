@@ -1406,6 +1406,494 @@ class CachedNewsCompanion extends UpdateCompanion<CachedNew> {
   }
 }
 
+class $CachedContactsTable extends CachedContacts
+    with TableInfo<$CachedContactsTable, CachedContact> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CachedContactsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sectionMeta = const VerificationMeta(
+    'section',
+  );
+  @override
+  late final GeneratedColumn<String> section = GeneratedColumn<String>(
+    'section',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _roleMeta = const VerificationMeta('role');
+  @override
+  late final GeneratedColumn<String> role = GeneratedColumn<String>(
+    'role',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _officeMeta = const VerificationMeta('office');
+  @override
+  late final GeneratedColumn<String> office = GeneratedColumn<String>(
+    'office',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _emailMeta = const VerificationMeta('email');
+  @override
+  late final GeneratedColumn<String> email = GeneratedColumn<String>(
+    'email',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _phoneMeta = const VerificationMeta('phone');
+  @override
+  late final GeneratedColumn<String> phone = GeneratedColumn<String>(
+    'phone',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _officeHoursMeta = const VerificationMeta(
+    'officeHours',
+  );
+  @override
+  late final GeneratedColumn<String> officeHours = GeneratedColumn<String>(
+    'office_hours',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    section,
+    name,
+    role,
+    office,
+    email,
+    phone,
+    officeHours,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cached_contacts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CachedContact> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('section')) {
+      context.handle(
+        _sectionMeta,
+        section.isAcceptableOrUnknown(data['section']!, _sectionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sectionMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('role')) {
+      context.handle(
+        _roleMeta,
+        role.isAcceptableOrUnknown(data['role']!, _roleMeta),
+      );
+    }
+    if (data.containsKey('office')) {
+      context.handle(
+        _officeMeta,
+        office.isAcceptableOrUnknown(data['office']!, _officeMeta),
+      );
+    }
+    if (data.containsKey('email')) {
+      context.handle(
+        _emailMeta,
+        email.isAcceptableOrUnknown(data['email']!, _emailMeta),
+      );
+    }
+    if (data.containsKey('phone')) {
+      context.handle(
+        _phoneMeta,
+        phone.isAcceptableOrUnknown(data['phone']!, _phoneMeta),
+      );
+    }
+    if (data.containsKey('office_hours')) {
+      context.handle(
+        _officeHoursMeta,
+        officeHours.isAcceptableOrUnknown(
+          data['office_hours']!,
+          _officeHoursMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CachedContact map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CachedContact(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      section: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}section'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      role: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}role'],
+      ),
+      office: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}office'],
+      ),
+      email: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}email'],
+      ),
+      phone: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}phone'],
+      ),
+      officeHours: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}office_hours'],
+      ),
+    );
+  }
+
+  @override
+  $CachedContactsTable createAlias(String alias) {
+    return $CachedContactsTable(attachedDatabase, alias);
+  }
+}
+
+class CachedContact extends DataClass implements Insertable<CachedContact> {
+  final int id;
+  final String section;
+  final String name;
+  final String? role;
+  final String? office;
+  final String? email;
+  final String? phone;
+  final String? officeHours;
+  const CachedContact({
+    required this.id,
+    required this.section,
+    required this.name,
+    this.role,
+    this.office,
+    this.email,
+    this.phone,
+    this.officeHours,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['section'] = Variable<String>(section);
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || role != null) {
+      map['role'] = Variable<String>(role);
+    }
+    if (!nullToAbsent || office != null) {
+      map['office'] = Variable<String>(office);
+    }
+    if (!nullToAbsent || email != null) {
+      map['email'] = Variable<String>(email);
+    }
+    if (!nullToAbsent || phone != null) {
+      map['phone'] = Variable<String>(phone);
+    }
+    if (!nullToAbsent || officeHours != null) {
+      map['office_hours'] = Variable<String>(officeHours);
+    }
+    return map;
+  }
+
+  CachedContactsCompanion toCompanion(bool nullToAbsent) {
+    return CachedContactsCompanion(
+      id: Value(id),
+      section: Value(section),
+      name: Value(name),
+      role: role == null && nullToAbsent ? const Value.absent() : Value(role),
+      office: office == null && nullToAbsent
+          ? const Value.absent()
+          : Value(office),
+      email: email == null && nullToAbsent
+          ? const Value.absent()
+          : Value(email),
+      phone: phone == null && nullToAbsent
+          ? const Value.absent()
+          : Value(phone),
+      officeHours: officeHours == null && nullToAbsent
+          ? const Value.absent()
+          : Value(officeHours),
+    );
+  }
+
+  factory CachedContact.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CachedContact(
+      id: serializer.fromJson<int>(json['id']),
+      section: serializer.fromJson<String>(json['section']),
+      name: serializer.fromJson<String>(json['name']),
+      role: serializer.fromJson<String?>(json['role']),
+      office: serializer.fromJson<String?>(json['office']),
+      email: serializer.fromJson<String?>(json['email']),
+      phone: serializer.fromJson<String?>(json['phone']),
+      officeHours: serializer.fromJson<String?>(json['officeHours']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'section': serializer.toJson<String>(section),
+      'name': serializer.toJson<String>(name),
+      'role': serializer.toJson<String?>(role),
+      'office': serializer.toJson<String?>(office),
+      'email': serializer.toJson<String?>(email),
+      'phone': serializer.toJson<String?>(phone),
+      'officeHours': serializer.toJson<String?>(officeHours),
+    };
+  }
+
+  CachedContact copyWith({
+    int? id,
+    String? section,
+    String? name,
+    Value<String?> role = const Value.absent(),
+    Value<String?> office = const Value.absent(),
+    Value<String?> email = const Value.absent(),
+    Value<String?> phone = const Value.absent(),
+    Value<String?> officeHours = const Value.absent(),
+  }) => CachedContact(
+    id: id ?? this.id,
+    section: section ?? this.section,
+    name: name ?? this.name,
+    role: role.present ? role.value : this.role,
+    office: office.present ? office.value : this.office,
+    email: email.present ? email.value : this.email,
+    phone: phone.present ? phone.value : this.phone,
+    officeHours: officeHours.present ? officeHours.value : this.officeHours,
+  );
+  CachedContact copyWithCompanion(CachedContactsCompanion data) {
+    return CachedContact(
+      id: data.id.present ? data.id.value : this.id,
+      section: data.section.present ? data.section.value : this.section,
+      name: data.name.present ? data.name.value : this.name,
+      role: data.role.present ? data.role.value : this.role,
+      office: data.office.present ? data.office.value : this.office,
+      email: data.email.present ? data.email.value : this.email,
+      phone: data.phone.present ? data.phone.value : this.phone,
+      officeHours: data.officeHours.present
+          ? data.officeHours.value
+          : this.officeHours,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedContact(')
+          ..write('id: $id, ')
+          ..write('section: $section, ')
+          ..write('name: $name, ')
+          ..write('role: $role, ')
+          ..write('office: $office, ')
+          ..write('email: $email, ')
+          ..write('phone: $phone, ')
+          ..write('officeHours: $officeHours')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, section, name, role, office, email, phone, officeHours);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CachedContact &&
+          other.id == this.id &&
+          other.section == this.section &&
+          other.name == this.name &&
+          other.role == this.role &&
+          other.office == this.office &&
+          other.email == this.email &&
+          other.phone == this.phone &&
+          other.officeHours == this.officeHours);
+}
+
+class CachedContactsCompanion extends UpdateCompanion<CachedContact> {
+  final Value<int> id;
+  final Value<String> section;
+  final Value<String> name;
+  final Value<String?> role;
+  final Value<String?> office;
+  final Value<String?> email;
+  final Value<String?> phone;
+  final Value<String?> officeHours;
+  const CachedContactsCompanion({
+    this.id = const Value.absent(),
+    this.section = const Value.absent(),
+    this.name = const Value.absent(),
+    this.role = const Value.absent(),
+    this.office = const Value.absent(),
+    this.email = const Value.absent(),
+    this.phone = const Value.absent(),
+    this.officeHours = const Value.absent(),
+  });
+  CachedContactsCompanion.insert({
+    this.id = const Value.absent(),
+    required String section,
+    required String name,
+    this.role = const Value.absent(),
+    this.office = const Value.absent(),
+    this.email = const Value.absent(),
+    this.phone = const Value.absent(),
+    this.officeHours = const Value.absent(),
+  }) : section = Value(section),
+       name = Value(name);
+  static Insertable<CachedContact> custom({
+    Expression<int>? id,
+    Expression<String>? section,
+    Expression<String>? name,
+    Expression<String>? role,
+    Expression<String>? office,
+    Expression<String>? email,
+    Expression<String>? phone,
+    Expression<String>? officeHours,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (section != null) 'section': section,
+      if (name != null) 'name': name,
+      if (role != null) 'role': role,
+      if (office != null) 'office': office,
+      if (email != null) 'email': email,
+      if (phone != null) 'phone': phone,
+      if (officeHours != null) 'office_hours': officeHours,
+    });
+  }
+
+  CachedContactsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? section,
+    Value<String>? name,
+    Value<String?>? role,
+    Value<String?>? office,
+    Value<String?>? email,
+    Value<String?>? phone,
+    Value<String?>? officeHours,
+  }) {
+    return CachedContactsCompanion(
+      id: id ?? this.id,
+      section: section ?? this.section,
+      name: name ?? this.name,
+      role: role ?? this.role,
+      office: office ?? this.office,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
+      officeHours: officeHours ?? this.officeHours,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (section.present) {
+      map['section'] = Variable<String>(section.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (role.present) {
+      map['role'] = Variable<String>(role.value);
+    }
+    if (office.present) {
+      map['office'] = Variable<String>(office.value);
+    }
+    if (email.present) {
+      map['email'] = Variable<String>(email.value);
+    }
+    if (phone.present) {
+      map['phone'] = Variable<String>(phone.value);
+    }
+    if (officeHours.present) {
+      map['office_hours'] = Variable<String>(officeHours.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedContactsCompanion(')
+          ..write('id: $id, ')
+          ..write('section: $section, ')
+          ..write('name: $name, ')
+          ..write('role: $role, ')
+          ..write('office: $office, ')
+          ..write('email: $email, ')
+          ..write('phone: $phone, ')
+          ..write('officeHours: $officeHours')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1413,6 +1901,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ScheduleCacheMetaTable scheduleCacheMeta =
       $ScheduleCacheMetaTable(this);
   late final $CachedNewsTable cachedNews = $CachedNewsTable(this);
+  late final $CachedContactsTable cachedContacts = $CachedContactsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1421,6 +1910,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     cachedLessons,
     scheduleCacheMeta,
     cachedNews,
+    cachedContacts,
   ];
 }
 
@@ -2157,6 +2647,261 @@ typedef $$CachedNewsTableProcessedTableManager =
       CachedNew,
       PrefetchHooks Function()
     >;
+typedef $$CachedContactsTableCreateCompanionBuilder =
+    CachedContactsCompanion Function({
+      Value<int> id,
+      required String section,
+      required String name,
+      Value<String?> role,
+      Value<String?> office,
+      Value<String?> email,
+      Value<String?> phone,
+      Value<String?> officeHours,
+    });
+typedef $$CachedContactsTableUpdateCompanionBuilder =
+    CachedContactsCompanion Function({
+      Value<int> id,
+      Value<String> section,
+      Value<String> name,
+      Value<String?> role,
+      Value<String?> office,
+      Value<String?> email,
+      Value<String?> phone,
+      Value<String?> officeHours,
+    });
+
+class $$CachedContactsTableFilterComposer
+    extends Composer<_$AppDatabase, $CachedContactsTable> {
+  $$CachedContactsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get section => $composableBuilder(
+    column: $table.section,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get role => $composableBuilder(
+    column: $table.role,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get office => $composableBuilder(
+    column: $table.office,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get phone => $composableBuilder(
+    column: $table.phone,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get officeHours => $composableBuilder(
+    column: $table.officeHours,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CachedContactsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CachedContactsTable> {
+  $$CachedContactsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get section => $composableBuilder(
+    column: $table.section,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get role => $composableBuilder(
+    column: $table.role,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get office => $composableBuilder(
+    column: $table.office,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get phone => $composableBuilder(
+    column: $table.phone,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get officeHours => $composableBuilder(
+    column: $table.officeHours,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CachedContactsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CachedContactsTable> {
+  $$CachedContactsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get section =>
+      $composableBuilder(column: $table.section, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get role =>
+      $composableBuilder(column: $table.role, builder: (column) => column);
+
+  GeneratedColumn<String> get office =>
+      $composableBuilder(column: $table.office, builder: (column) => column);
+
+  GeneratedColumn<String> get email =>
+      $composableBuilder(column: $table.email, builder: (column) => column);
+
+  GeneratedColumn<String> get phone =>
+      $composableBuilder(column: $table.phone, builder: (column) => column);
+
+  GeneratedColumn<String> get officeHours => $composableBuilder(
+    column: $table.officeHours,
+    builder: (column) => column,
+  );
+}
+
+class $$CachedContactsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CachedContactsTable,
+          CachedContact,
+          $$CachedContactsTableFilterComposer,
+          $$CachedContactsTableOrderingComposer,
+          $$CachedContactsTableAnnotationComposer,
+          $$CachedContactsTableCreateCompanionBuilder,
+          $$CachedContactsTableUpdateCompanionBuilder,
+          (
+            CachedContact,
+            BaseReferences<_$AppDatabase, $CachedContactsTable, CachedContact>,
+          ),
+          CachedContact,
+          PrefetchHooks Function()
+        > {
+  $$CachedContactsTableTableManager(
+    _$AppDatabase db,
+    $CachedContactsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CachedContactsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CachedContactsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CachedContactsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> section = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String?> role = const Value.absent(),
+                Value<String?> office = const Value.absent(),
+                Value<String?> email = const Value.absent(),
+                Value<String?> phone = const Value.absent(),
+                Value<String?> officeHours = const Value.absent(),
+              }) => CachedContactsCompanion(
+                id: id,
+                section: section,
+                name: name,
+                role: role,
+                office: office,
+                email: email,
+                phone: phone,
+                officeHours: officeHours,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String section,
+                required String name,
+                Value<String?> role = const Value.absent(),
+                Value<String?> office = const Value.absent(),
+                Value<String?> email = const Value.absent(),
+                Value<String?> phone = const Value.absent(),
+                Value<String?> officeHours = const Value.absent(),
+              }) => CachedContactsCompanion.insert(
+                id: id,
+                section: section,
+                name: name,
+                role: role,
+                office: office,
+                email: email,
+                phone: phone,
+                officeHours: officeHours,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CachedContactsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CachedContactsTable,
+      CachedContact,
+      $$CachedContactsTableFilterComposer,
+      $$CachedContactsTableOrderingComposer,
+      $$CachedContactsTableAnnotationComposer,
+      $$CachedContactsTableCreateCompanionBuilder,
+      $$CachedContactsTableUpdateCompanionBuilder,
+      (
+        CachedContact,
+        BaseReferences<_$AppDatabase, $CachedContactsTable, CachedContact>,
+      ),
+      CachedContact,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2167,4 +2912,6 @@ class $AppDatabaseManager {
       $$ScheduleCacheMetaTableTableManager(_db, _db.scheduleCacheMeta);
   $$CachedNewsTableTableManager get cachedNews =>
       $$CachedNewsTableTableManager(_db, _db.cachedNews);
+  $$CachedContactsTableTableManager get cachedContacts =>
+      $$CachedContactsTableTableManager(_db, _db.cachedContacts);
 }

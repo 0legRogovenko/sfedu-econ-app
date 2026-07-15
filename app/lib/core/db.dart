@@ -43,14 +43,29 @@ class CachedNews extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-@DriftDatabase(tables: [CachedLessons, ScheduleCacheMeta, CachedNews])
+class CachedContacts extends Table {
+  IntColumn get id => integer()();
+  TextColumn get section => text()();
+  TextColumn get name => text()();
+  TextColumn get role => text().nullable()();
+  TextColumn get office => text().nullable()();
+  TextColumn get email => text().nullable()();
+  TextColumn get phone => text().nullable()();
+  TextColumn get officeHours => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DriftDatabase(
+    tables: [CachedLessons, ScheduleCacheMeta, CachedNews, CachedContacts])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: 'sfedu_econ'));
 
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -112,5 +127,18 @@ class AppDatabase extends _$AppDatabase {
       transaction(() async {
         await delete(cachedNews).go();
         await batch((b) => b.insertAll(cachedNews, rows));
+      });
+
+  // --- Контакты ---
+
+  Future<List<CachedContact>> allContacts() =>
+      (select(cachedContacts)..orderBy([(t) => OrderingTerm(expression: t.id)]))
+          .get();
+
+  /// Атомарная замена всего кэша контактов (справочник маленький).
+  Future<void> replaceContactsCache(List<CachedContactsCompanion> rows) =>
+      transaction(() async {
+        await delete(cachedContacts).go();
+        await batch((b) => b.insertAll(cachedContacts, rows));
       });
 }
