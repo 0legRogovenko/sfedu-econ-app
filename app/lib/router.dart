@@ -10,6 +10,7 @@ import 'features/news/news_screen.dart';
 import 'features/onboarding/onboarding_screen.dart';
 import 'features/onboarding/selected_group.dart';
 import 'features/schedule/schedule_screen.dart';
+import 'features/settings/settings_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   // ref.read, не watch: роутер создаётся один раз на старте; после выбора
@@ -62,6 +63,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/news/detail',
         builder: (context, state) =>
             NewsDetailScreen(item: state.extra! as NewsItem),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const SettingsScreen(),
       ),
     ],
   );

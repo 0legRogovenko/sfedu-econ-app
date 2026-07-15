@@ -1,13 +1,193 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-class ContactsScreen extends StatelessWidget {
+import 'contact.dart';
+import 'contacts_providers.dart';
+import 'contacts_repository.dart';
+import 'contacts_search.dart';
+
+class ContactsScreen extends ConsumerStatefulWidget {
   const ContactsScreen({super.key});
 
   @override
+  ConsumerState<ContactsScreen> createState() => _ContactsScreenState();
+}
+
+class _ContactsScreenState extends ConsumerState<ContactsScreen> {
+  String _query = '';
+
+  @override
   Widget build(BuildContext context) {
+    final feedAsync = ref.watch(contactsFeedProvider);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Контакты')),
-      body: const Center(child: Text('Здесь будет справочник')),
+      appBar: AppBar(
+        title: const Text('Контакты'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: 'Настройки',
+            onPressed: () => context.go('/settings'),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+            child: TextField(
+              decoration: const InputDecoration(
+                hintText: 'Поиск по имени',
+                prefixIcon: Icon(Icons.search),
+                isDense: true,
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (value) => setState(() => _query = value),
+            ),
+          ),
+          Expanded(
+            child: feedAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) =>
+                  const Center(child: Text('Не удалось загрузить контакты')),
+              data: (feed) => _ContactsList(
+                feed: feed,
+                query: _query,
+                onRefresh: () =>
+                    ref.read(contactsFeedProvider.notifier).refresh(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ContactsList extends StatelessWidget {
+  const _ContactsList({
+    required this.feed,
+    required this.query,
+    required this.onRefresh,
+  });
+
+  final ContactsFeed feed;
+  final String query;
+  final Future<void> Function() onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final grouped = groupBySection(filterContacts(feed.items, query));
+
+    final Widget listBody;
+    if (grouped.isEmpty) {
+      final message = feed.items.isEmpty && !feed.offline
+          ? 'Справочник пуст'
+          : 'Никого не нашли';
+      listBody = ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(
+            height: 300,
+            child: Center(child: Text(message)),
+          ),
+        ],
+      );
+    } else {
+      listBody = ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(12),
+        children: [
+          for (final entry in grouped.entries) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                entry.key,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            for (final contact in entry.value) ...[
+              _ContactCard(contact: contact),
+              const SizedBox(height: 8),
+            ],
+          ],
+        ],
+      );
+    }
+
+    return Column(
+      children: [
+        if (feed.offline)
+          MaterialBanner(
+            content: const Text('Нет сети. Показаны сохранённые контакты'),
+            actions: [
+              TextButton(onPressed: onRefresh, child: const Text('Обновить')),
+            ],
+          ),
+        Expanded(
+          child: RefreshIndicator(onRefresh: onRefresh, child: listBody),
+        ),
+      ],
+    );
+  }
+}
+
+class _ContactCard extends StatelessWidget {
+  const _ContactCard({required this.contact});
+
+  final Contact contact;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final details = [
+      if (contact.office != null) 'ауд. ${contact.office}',
+      if (contact.officeHours != null) contact.officeHours!,
+    ].join(' · ');
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(contact.name, style: theme.textTheme.titleMedium),
+                  if (contact.role != null) ...[
+                    const SizedBox(height: 2),
+                    Text(contact.role!, style: theme.textTheme.bodySmall),
+                  ],
+                  if (details.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(details, style: theme.textTheme.bodySmall),
+                  ],
+                ],
+              ),
+            ),
+            if (contact.email != null)
+              IconButton(
+                icon: const Icon(Icons.email_outlined),
+                tooltip: 'Написать письмо',
+                onPressed: () =>
+                    launchUrl(Uri.parse('mailto:${contact.email}')),
+              ),
+            if (contact.phone != null)
+              IconButton(
+                icon: const Icon(Icons.call_outlined),
+                tooltip: 'Позвонить',
+                onPressed: () => launchUrl(Uri.parse('tel:${contact.phone}')),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

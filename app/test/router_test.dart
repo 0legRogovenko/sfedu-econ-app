@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sfedu_econ/features/contacts/contacts_providers.dart';
+import 'package:sfedu_econ/features/contacts/contacts_repository.dart';
 import 'package:sfedu_econ/features/news/news_providers.dart';
 import 'package:sfedu_econ/features/news/news_repository.dart';
 import 'package:sfedu_econ/features/onboarding/selected_group.dart';
@@ -8,8 +10,9 @@ import 'package:sfedu_econ/features/schedule/lesson.dart';
 import 'package:sfedu_econ/features/schedule/schedule_providers.dart';
 import 'package:sfedu_econ/main.dart';
 
-/// Экраны расписания и новостей в фоне ходят в реальную drift-БД/dio — здесь
-/// это не по теме теста, поэтому подменяем на пустые мгновенные состояния.
+/// Экраны расписания, новостей и контактов в фоне ходят в реальную
+/// drift-БД/dio — здесь это не по теме теста, поэтому подменяем на пустые
+/// мгновенные состояния.
 class _FakeSync extends SyncStatusNotifier {
   @override
   Future<void> sync() async {}
@@ -23,6 +26,14 @@ class _FakeFeed extends NewsFeedNotifier {
   Future<void> refresh() async {}
 }
 
+class _FakeContactsFeed extends ContactsFeedNotifier {
+  @override
+  Future<ContactsFeed> build() async =>
+      const ContactsFeed(items: [], offline: false);
+  @override
+  Future<void> refresh() async {}
+}
+
 Widget _appWithGroup() => ProviderScope(
       overrides: [
         // группа уже выбрана — онбординг не показывается
@@ -30,6 +41,7 @@ Widget _appWithGroup() => ProviderScope(
         lessonsProvider.overrideWith((ref) => Stream.value(const <Lesson>[])),
         syncStatusProvider.overrideWith(_FakeSync.new),
         newsFeedProvider.overrideWith(_FakeFeed.new),
+        contactsFeedProvider.overrideWith(_FakeContactsFeed.new),
       ],
       child: const SfeduEconApp(),
     );
@@ -55,6 +67,6 @@ void main() {
 
     await tester.tap(find.text('Контакты'));
     await tester.pumpAndSettle();
-    expect(find.text('Здесь будет справочник'), findsOneWidget);
+    expect(find.text('Справочник пуст'), findsOneWidget);
   });
 }
