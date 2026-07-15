@@ -17,3 +17,6 @@ build/
 
 # Local assets scratch
 logo.png
+
+# Workflow worktrees
+.worktrees/
