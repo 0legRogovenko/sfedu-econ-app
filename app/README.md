@@ -26,6 +26,7 @@ Android-эмулятор не видит localhost хоста — использ
     lib/router.dart go_router: онбординг + 4 вкладки
     lib/features/   onboarding, schedule, news, assistant, contacts
     lib/features/schedule/  экран расписания: drift-кэш, ETag-синк, недели числитель/знаменатель (нечётная ISO-неделя — числитель, допущение MVP)
+    lib/features/news/      лента новостей: drift-кэш, keyset-пагинация, детальный экран, офлайн-плашка
 
 ## Кодогенерация (drift)
 
