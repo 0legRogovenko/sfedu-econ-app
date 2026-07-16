@@ -19,5 +19,11 @@ class Settings(BaseSettings):
     telegram_alert_bot_token: str | None = None
     telegram_alert_chat_id: str | None = None
 
+    # AI-помощник. Ключ опционален: без него ручка отвечает заглушкой
+    # с контактами деканата, а не падает.
+    anthropic_api_key: str | None = None
+    assistant_model: str = "claude-haiku-4-5"
+    assistant_daily_limit: int = 20
+
 
 settings = Settings()

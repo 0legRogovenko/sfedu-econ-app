@@ -1,7 +1,8 @@
 from datetime import datetime
 from datetime import time as time_type
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, StringConstraints
 
 from src.models import NewsSource, WeekType
 
@@ -62,3 +63,21 @@ class ContactOut(BaseModel):
     email: str | None
     phone: str | None
     office_hours: str | None
+
+
+class AskRequest(BaseModel):
+    # strip_whitespace идёт до проверки длины: "   " — это 422, а не платный
+    # вызов модели; " " как device_id — не отдельное ведро квоты
+    question: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True, min_length=1, max_length=1000),
+    ]
+    device_id: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True, min_length=1, max_length=64),
+    ]
+
+
+class AskResponse(BaseModel):
+    answer: str
+    fallback: bool = False
