@@ -42,6 +42,7 @@ dependencies:
   drift: ^2.34.1
   drift_flutter: ^0.3.1
   url_launcher: ^6.3.2
+  uuid: ^4.6.0
 
 dev_dependencies:
   flutter_test:
