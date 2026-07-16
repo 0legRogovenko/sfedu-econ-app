@@ -32,7 +32,7 @@ def seed() -> None:
             return
 
         groups = [
-            Group(course=c, number=f"0{c}.{n}", subgroup_count=2)
+            Group(course=c, number=f"{c}.{n}", subgroup_count=2)
             for c in range(1, 5)
             for n in (1, 2)
         ]
@@ -60,7 +60,7 @@ def seed() -> None:
         session.add_all(teachers)
         session.flush()
 
-        demo = groups[2]  # 02.1
+        demo = groups[2]  # 2.1
         lessons = [
             Lesson(
                 group_id=demo.id, weekday=0, pair_number=1,

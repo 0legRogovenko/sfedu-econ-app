@@ -16,9 +16,9 @@ import 'package:sfedu_econ/main.dart';
 import 'package:sfedu_econ/router.dart';
 
 const _groups = [
-  Group(id: 1, course: 1, number: '01.1', subgroupCount: 2),
-  Group(id: 3, course: 2, number: '02.1', subgroupCount: 2),
-  Group(id: 4, course: 2, number: '02.2', subgroupCount: 2),
+  Group(id: 1, course: 1, number: '1.1', subgroupCount: 2),
+  Group(id: 3, course: 2, number: '2.1', subgroupCount: 2),
+  Group(id: 4, course: 2, number: '2.2', subgroupCount: 2),
 ];
 
 /// Расписание, новости и контакты в фоне ходят в реальную drift-БД/dio —
@@ -76,7 +76,7 @@ void main() {
     addTearDown(container.dispose);
     await _pumpSettings(tester, container);
 
-    expect(find.text('Текущая группа: 02.1'), findsOneWidget);
+    expect(find.text('Текущая группа: 2.1'), findsOneWidget);
   });
 
   testWidgets('смена группы обновляет провайдер и сохраняется в prefs',
@@ -85,7 +85,7 @@ void main() {
     addTearDown(container.dispose);
     await _pumpSettings(tester, container);
 
-    await tester.tap(find.text('01.1'));
+    await tester.tap(find.text('1.1'));
     await tester.pumpAndSettle();
 
     expect(container.read(selectedGroupIdProvider), 1);

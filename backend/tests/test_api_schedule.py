@@ -4,8 +4,8 @@ from src.models import Group, Lesson, Teacher, WeekType
 
 
 def _seed_schedule(db_session):
-    group = Group(course=2, number="02.1")
-    other = Group(course=2, number="02.2")
+    group = Group(course=2, number="2.1")
+    other = Group(course=2, number="2.2")
     teacher = Teacher(full_name="Иванова Елена Петровна")
     db_session.add_all([group, other, teacher])
     db_session.flush()

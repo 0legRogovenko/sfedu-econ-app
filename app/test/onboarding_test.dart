@@ -11,9 +11,9 @@ import 'package:sfedu_econ/main.dart';
 import 'package:sfedu_econ/router.dart';
 
 const _groups = [
-  Group(id: 1, course: 1, number: '01.1', subgroupCount: 2),
-  Group(id: 3, course: 2, number: '02.1', subgroupCount: 2),
-  Group(id: 4, course: 2, number: '02.2', subgroupCount: 2),
+  Group(id: 1, course: 1, number: '1.1', subgroupCount: 2),
+  Group(id: 3, course: 2, number: '2.1', subgroupCount: 2),
+  Group(id: 4, course: 2, number: '2.2', subgroupCount: 2),
 ];
 
 /// Экран расписания в фоне ходит в реальную drift-БД/dio — здесь это
@@ -49,10 +49,10 @@ void main() {
     // выбираем курс 2 — остаются группы второго курса
     await tester.tap(find.text('2 курс'));
     await tester.pumpAndSettle();
-    expect(find.text('01.1'), findsNothing);
+    expect(find.text('1.1'), findsNothing);
 
     // выбираем группу и жмём «Начать»
-    await tester.tap(find.text('02.1'));
+    await tester.tap(find.text('2.1'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Начать'));
     await tester.pumpAndSettle();

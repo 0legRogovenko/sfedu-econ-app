@@ -4,9 +4,9 @@ from src.models import Group
 def _add_groups(db_session):
     db_session.add_all(
         [
-            Group(course=2, number="02.2"),
-            Group(course=1, number="01.1"),
-            Group(course=2, number="02.1"),
+            Group(course=2, number="2.2"),
+            Group(course=1, number="1.1"),
+            Group(course=2, number="2.1"),
         ]
     )
     db_session.flush()
@@ -19,11 +19,11 @@ def test_groups_sorted_by_course_and_number(client, db_session):
 
     assert response.status_code == 200
     numbers = [g["number"] for g in response.json()]
-    assert numbers == ["01.1", "02.1", "02.2"]
+    assert numbers == ["1.1", "2.1", "2.2"]
     assert response.json()[0] == {
         "id": response.json()[0]["id"],
         "course": 1,
-        "number": "01.1",
+        "number": "1.1",
         "subgroup_count": 1,
     }
 
@@ -49,7 +49,7 @@ def test_groups_etag_changes_with_data(client, db_session):
     _add_groups(db_session)
     first = client.get("/api/groups")
 
-    db_session.add(Group(course=3, number="03.1"))
+    db_session.add(Group(course=3, number="3.1"))
     db_session.flush()
 
     second = client.get(

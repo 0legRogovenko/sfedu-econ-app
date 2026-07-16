@@ -34,7 +34,7 @@ def make_news(**overrides):
 
 
 def _make_group(db_session) -> int:
-    group = Group(course=2, number="02.1")
+    group = Group(course=2, number="2.1")
     db_session.add(group)
     db_session.flush()
     return group.id
@@ -74,10 +74,10 @@ def test_duplicate_news_url_rejected(db_session):
 
 
 def test_duplicate_group_rejected(db_session):
-    db_session.add(Group(course=2, number="02.1"))
+    db_session.add(Group(course=2, number="2.1"))
     db_session.flush()
 
-    db_session.add(Group(course=2, number="02.1"))
+    db_session.add(Group(course=2, number="2.1"))
     with pytest.raises(IntegrityError):
         db_session.flush()
 
