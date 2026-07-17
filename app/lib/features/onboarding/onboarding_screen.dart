@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'group_picker.dart';
 import 'group_repository.dart';
 import 'selected_group.dart';
 
@@ -13,7 +14,6 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 }
 
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
-  int? _course;
   Group? _group;
 
   @override
@@ -30,11 +30,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               onRetry: () => ref.invalidate(groupsProvider),
             ),
             data: (groups) {
-              final courses =
-                  groups.map((g) => g.course).toSet().toList()..sort();
-              final courseGroups = _course == null
-                  ? <Group>[]
-                  : groups.where((g) => g.course == _course).toList();
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -43,35 +38,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       style: Theme.of(context).textTheme.headlineLarge),
                   const SizedBox(height: 8),
                   Text(
-                    'Выбери курс и группу — и всё готово. Без регистрации.',
+                    'Выбери уровень и группу — и всё готово. Без регистрации.',
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 24),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      for (final course in courses)
-                        ChoiceChip(
-                          label: Text('$course курс'),
-                          selected: _course == course,
-                          onSelected: (_) => setState(() {
-                            _course = course;
-                            _group = null;
-                          }),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      for (final group in courseGroups)
-                        ChoiceChip(
-                          label: Text(group.displayName),
-                          selected: _group?.id == group.id,
-                          onSelected: (_) => setState(() => _group = group),
-                        ),
-                    ],
+                  GroupPicker(
+                    groups: groups,
+                    onSelected: (group) => setState(() => _group = group),
                   ),
                   const Spacer(),
                   SizedBox(

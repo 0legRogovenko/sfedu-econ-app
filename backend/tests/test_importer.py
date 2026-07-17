@@ -180,6 +180,65 @@ class TestCorpus:
         assert masters
         assert all(g.number is None and g.program for g in masters)
 
+    def test_master_programs_are_canonicalized(self, corpus):
+        """Магистерские программы сведены к канону: 11 групп, не 23.
+
+        Одна программа расщеплена между файлами — пары приходят с чистым именем
+        из расписаний, экзамены с грязным (в обёртке «Магистерская программа
+        «…»», с опечатками/переносами) из сессий. Без канонизации это 23 группы:
+        у половины только пары, у половины только экзамены. canonical_program
+        сводит оба написания в одну группу на (курс, программа): к1 — 6 программ,
+        к2 — 5. Ни одно имя не остаётся в обёртке, и у каждой группы есть пары
+        ИЛИ экзамены (обычно и то и другое).
+        """
+        session, _ = corpus
+        masters = session.scalars(
+            select(Group).where(Group.level == EducationLevel.MASTER)
+        ).all()
+        assert len(masters) == 11, (
+            "магистерских групп должно быть 11 (к1:6, к2:5), а не "
+            f"{len(masters)} — программы не канонизированы: "
+            + ", ".join(sorted(f"к{g.course} {g.program}" for g in masters))
+        )
+        by_course = Counter(g.course for g in masters)
+        assert by_course == Counter({1: 6, 2: 5}), by_course
+
+        assert all("Магистерск" not in g.program for g in masters), (
+            "остались имена в обёртке «Магистерская программа «…»»: "
+            + ", ".join(g.program for g in masters if "Магистерск" in g.program)
+        )
+
+        # Программа, у которой не осталось ни пар, ни экзаменов, — призрак:
+        # слияние должно было отдать ей и то, и другое из обоих источников.
+        for group in masters:
+            lessons = session.scalar(
+                select(func.count()).select_from(Lesson).where(
+                    Lesson.group_id == group.id
+                )
+            )
+            exams = session.scalar(
+                select(func.count()).select_from(ExamEvent).where(
+                    ExamEvent.group_id == group.id
+                )
+            )
+            assert lessons or exams, f"пустая магистерская группа: к{group.course} {group.program}"
+
+    def test_no_master_exams_lost_to_canonicalization(self, corpus):
+        """Канонизация сливает группы, но не теряет экзамены магистров.
+
+        Слияние грязной группы (экзамены) с чистой (пары) не должно ни съесть,
+        ни продублировать экзамены: их общее число у магистров остаётся тем же,
+        что и в источнике (сумма по грязным именам из файлов сессий).
+        """
+        session, _ = corpus
+        master_exams = session.scalar(
+            select(func.count())
+            .select_from(ExamEvent)
+            .join(Group, ExamEvent.group_id == Group.id)
+            .where(Group.level == EducationLevel.MASTER)
+        )
+        assert master_exams == 49, master_exams
+
     def test_no_cell_is_lost_silently(self, corpus):
         """ГЛАВНЫЙ ТЕСТ ПЛАНА.
 
