@@ -10,15 +10,36 @@ import 'package:sfedu_econ/features/news/news_providers.dart';
 import 'package:sfedu_econ/features/news/news_repository.dart';
 import 'package:sfedu_econ/features/onboarding/group_repository.dart';
 import 'package:sfedu_econ/features/onboarding/selected_group.dart';
-import 'package:sfedu_econ/features/schedule/lesson.dart';
+import 'package:sfedu_econ/features/schedule/schedule_data.dart';
 import 'package:sfedu_econ/features/schedule/schedule_providers.dart';
 import 'package:sfedu_econ/main.dart';
 import 'package:sfedu_econ/router.dart';
 
 const _groups = [
-  Group(id: 1, course: 1, number: '1.1', subgroupCount: 2),
-  Group(id: 3, course: 2, number: '2.1', subgroupCount: 2),
-  Group(id: 4, course: 2, number: '2.2', subgroupCount: 2),
+  Group(
+    id: 1,
+    course: 1,
+    number: '1.1',
+    program: null,
+    level: EducationLevel.bachelor,
+    subgroupCount: 2,
+  ),
+  Group(
+    id: 3,
+    course: 2,
+    number: '2.1',
+    program: null,
+    level: EducationLevel.bachelor,
+    subgroupCount: 2,
+  ),
+  Group(
+    id: 4,
+    course: 2,
+    number: '2.2',
+    program: null,
+    level: EducationLevel.bachelor,
+    subgroupCount: 2,
+  ),
 ];
 
 /// Расписание, новости и контакты в фоне ходят в реальную drift-БД/dio —
@@ -53,7 +74,8 @@ Future<ProviderContainer> _container() async {
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       groupsProvider.overrideWith((ref) async => _groups),
-      lessonsProvider.overrideWith((ref) => Stream.value(const <Lesson>[])),
+      scheduleDataProvider
+          .overrideWith((ref) => Stream.value(const ScheduleData.empty())),
       syncStatusProvider.overrideWith(_FakeSync.new),
       newsFeedProvider.overrideWith(_FakeNewsFeed.new),
       contactsFeedProvider.overrideWith(_FakeContactsFeed.new),

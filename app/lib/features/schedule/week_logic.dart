@@ -1,27 +1,50 @@
 import 'lesson.dart';
+import 'schedule_data.dart';
 
-/// Номер недели по ISO 8601 (неделя четверга).
-int isoWeekNumber(DateTime date) {
-  final day = DateTime(date.year, date.month, date.day);
-  final thursday = day.add(Duration(days: 4 - day.weekday));
-  final firstDayOfYear = DateTime(thursday.year, 1, 1);
-  return thursday.difference(firstDayOfYear).inDays ~/ 7 + 1;
+// Прежняя формула «чётность ISO-недели → тип недели» УДАЛЕНА: она давала
+// результат, обратный реальному календарю ЮФУ (0 совпадений из 10). Тип недели
+// и активный модуль теперь берутся из данных сервера (week_calendar, valid_from/
+// valid_to) по правилу резолвинга из контракта — никаких формул чётности.
+
+bool _inRange(DateTime date, DateTime from, DateTime to) =>
+    !date.isBefore(from) && !date.isAfter(to);
+
+/// Тип недели для даты по календарю. null — дата вне всех диапазонов
+/// (тип недели неизвестен → показываем только пары без чередования).
+WeekType? weekTypeForDate(List<WeekCalendarEntry> calendar, DateTime date) {
+  for (final entry in calendar) {
+    if (_inRange(date, entry.dateFrom, entry.dateTo)) return entry.weekType;
+  }
+  return null;
 }
 
-/// Допущение MVP: числитель — нечётная ISO-неделя.
-/// Единственная точка правки, когда сверимся с реальным расписанием.
-WeekType weekTypeForDate(DateTime date) =>
-    isoWeekNumber(date).isOdd ? WeekType.numerator : WeekType.denominator;
+/// Активный модуль для даты, либо null (демо/ручные пары без модулей).
+Module? activeModule(List<Module> modules, DateTime date) {
+  for (final module in modules) {
+    if (_inRange(date, module.dateFrom, module.dateTo)) return module;
+  }
+  return null;
+}
 
-/// Пары на конкретную дату: фильтр по дню недели и типу недели,
+/// Видна ли пара в дату по ПРАВИЛУ РЕЗОЛВИНГА:
+/// weekday совпадает И (окно valid_from..valid_to охватывает дату)
+/// И (тип недели пары null ИЛИ равен типу недели календаря на эту дату).
+bool lessonVisibleOn(Lesson lesson, DateTime date, WeekType? weekType) {
+  if (lesson.weekday != date.weekday - 1) return false;
+  if (lesson.validFrom != null && date.isBefore(lesson.validFrom!)) return false;
+  if (lesson.validTo != null && date.isAfter(lesson.validTo!)) return false;
+  // Пара с чередованием видна только на своей неделе. Если тип недели на дату
+  // неизвестен (null), такая пара не показывается — только пары без чередования.
+  if (lesson.weekType != null && lesson.weekType != weekType) return false;
+  return true;
+}
+
+/// Пары на конкретную дату: фильтр по правилу резолвинга,
 /// сортировка по номеру пары и подгруппе.
-List<Lesson> lessonsForDay(List<Lesson> lessons, DateTime date) {
-  final weekday = date.weekday - 1; // DateTime: 1=пн … модель: 0=пн
-  final weekType = weekTypeForDate(date);
-  final result = lessons
-      .where((l) =>
-          l.weekday == weekday &&
-          (l.weekType == WeekType.both || l.weekType == weekType))
+List<Lesson> lessonsForDay(ScheduleData data, DateTime date) {
+  final weekType = weekTypeForDate(data.weekCalendar, date);
+  final result = data.lessons
+      .where((l) => lessonVisibleOn(l, date, weekType))
       .toList()
     ..sort((a, b) {
       final byPair = a.pairNumber.compareTo(b.pairNumber);
@@ -35,13 +58,11 @@ int _minutes(String hhmmss) {
   return int.parse(parts[0]) * 60 + int.parse(parts[1]);
 }
 
-/// Идёт ли пара прямо сейчас (день, тип недели и интервал времени).
-bool isLessonNow(Lesson lesson, DateTime now) {
-  if (lesson.weekday != now.weekday - 1) return false;
-  final weekType = weekTypeForDate(now);
-  if (lesson.weekType != WeekType.both && lesson.weekType != weekType) {
-    return false;
-  }
+/// Идёт ли пара прямо сейчас (правило резолвинга на сегодня + интервал времени).
+/// [weekType] — тип недели сегодняшней даты (резолвится вызывающим по календарю).
+bool isLessonNow(Lesson lesson, WeekType? weekType, DateTime now) {
+  final today = DateTime(now.year, now.month, now.day);
+  if (!lessonVisibleOn(lesson, today, weekType)) return false;
   final nowMinutes = now.hour * 60 + now.minute;
   // Верхняя граница исключена: в минуту стыка смежных пар
   // «Сейчас» не должны быть обе.

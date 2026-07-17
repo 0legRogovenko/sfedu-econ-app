@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/clock.dart';
 import '../onboarding/selected_group.dart';
@@ -58,22 +59,71 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
       }
     });
 
-    final lessonsAsync = ref.watch(lessonsProvider);
+    final scheduleAsync = ref.watch(scheduleDataProvider);
     final syncStatus = ref.watch(syncStatusProvider);
-    final weekType = weekTypeForDate(_dateForIndex(_dayIndex));
+    // Тип недели выбранного дня — из календаря сервера (не формула).
+    final weekType = scheduleAsync.maybeWhen(
+      data: (data) =>
+          weekTypeForDate(data.weekCalendar, _dateForIndex(_dayIndex)),
+      orElse: () => null,
+    );
+    // Активный модуль выбранного дня (модуль, чей диапазон накрывает дату).
+    // null — дата вне всех модулей ИЛИ у модуля нет имени → бейдж скрыт.
+    final moduleName = scheduleAsync.maybeWhen(
+      data: (data) =>
+          activeModule(data.modules, _dateForIndex(_dayIndex))?.name,
+      orElse: () => null,
+    );
+    // Первый офлайн-запуск: кэш пуст И первый синк упал (syncedAt == null).
+    // Отличаем «данные не загружены» от «пар правда нет» — иначе показали бы
+    // «Пар нет — отдыхаем», и студент решит, что занятий нет.
+    final noData = syncStatus.lastResult == SyncResult.failed &&
+        syncStatus.syncedAt == null &&
+        scheduleAsync.maybeWhen(
+          data: (data) => data.lessons.isEmpty,
+          orElse: () => false,
+        );
+    final now = ref.read(clockProvider)();
+    final nowWeekType = scheduleAsync.maybeWhen(
+      data: (data) => weekTypeForDate(
+          data.weekCalendar, DateTime(now.year, now.month, now.day)),
+      orElse: () => null,
+    );
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Расписание'),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Center(
-              child: Text(
-                weekType == WeekType.numerator ? 'числитель' : 'знаменатель',
-                style: Theme.of(context).textTheme.bodySmall,
+          // Бейдж активного модуля выбранного дня. Скрыт, если дата вне всех
+          // модулей (или у модуля нет имени), — как и бейдж недели.
+          if (moduleName != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Center(
+                child: Text(
+                  moduleName,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
               ),
             ),
+          // Бейдж типа недели («верхняя»/«нижняя») — термины ЮФУ. Если дата вне
+          // календаря, тип неизвестен — бейдж не показываем.
+          if (weekType != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Center(
+                child: Text(
+                  weekType.label,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+            ),
+          IconButton(
+            icon: const Icon(Icons.event_note_outlined),
+            tooltip: 'Экзамены',
+            // push, не go: аппаратная «назад» вернёт на расписание, а не
+            // закроет приложение (как контакты открывают настройки).
+            onPressed: () => context.push('/exams'),
           ),
         ],
       ),
@@ -106,18 +156,20 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
             },
           ),
           Expanded(
-            child: lessonsAsync.when(
+            child: scheduleAsync.when(
               loading: () =>
                   const Center(child: CircularProgressIndicator()),
               error: (error, _) =>
                   const Center(child: Text('Не удалось открыть расписание')),
-              data: (lessons) => PageView.builder(
+              data: (data) => PageView.builder(
                 controller: _pageController,
                 itemCount: 6,
                 onPageChanged: (index) =>
                     setState(() => _dayIndex = index),
                 itemBuilder: (context, index) => _DayPage(
-                  lessons: lessonsForDay(lessons, _dateForIndex(index)),
+                  lessons: lessonsForDay(data, _dateForIndex(index)),
+                  nowWeekType: nowWeekType,
+                  noData: noData,
                   onRefresh: () =>
                       ref.read(syncStatusProvider.notifier).sync(),
                 ),
@@ -165,22 +217,40 @@ class _DayStrip extends StatelessWidget {
 }
 
 class _DayPage extends ConsumerWidget {
-  const _DayPage({required this.lessons, required this.onRefresh});
+  const _DayPage({
+    required this.lessons,
+    required this.nowWeekType,
+    required this.noData,
+    required this.onRefresh,
+  });
 
   final List<Lesson> lessons;
+  final WeekType? nowWeekType; // тип текущей недели для метки «Сейчас»
+  final bool noData; // кэш пуст из-за неудачного первого синка (не «пар нет»)
   final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final now = ref.watch(clockProvider)();
 
+    // Пустой день при пустом кэше и неудачном первом синке — не «пар нет», а
+    // «данные ещё не загружены». Честная плашка вместо «Пар нет — отдыхаем».
+    final emptyText = noData
+        ? 'Нет данных. Для первой загрузки нужна сеть'
+        : 'Пар нет — отдыхаем';
+
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: lessons.isEmpty
           ? ListView(
-              children: const [
-                SizedBox(height: 120),
-                Center(child: Text('Пар нет — отдыхаем')),
+              children: [
+                const SizedBox(height: 120),
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Text(emptyText, textAlign: TextAlign.center),
+                  ),
+                ),
               ],
             )
           : ListView.separated(
@@ -189,7 +259,7 @@ class _DayPage extends ConsumerWidget {
               separatorBuilder: (_, _) => const SizedBox(height: 8),
               itemBuilder: (context, index) => _LessonCard(
                 lesson: lessons[index],
-                isNow: isLessonNow(lessons[index], now),
+                isNow: isLessonNow(lessons[index], nowWeekType, now),
               ),
             ),
     );

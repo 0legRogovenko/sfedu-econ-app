@@ -11,7 +11,7 @@ import 'package:sfedu_econ/features/contacts/contacts_repository.dart';
 import 'package:sfedu_econ/features/news/news_providers.dart';
 import 'package:sfedu_econ/features/news/news_repository.dart';
 import 'package:sfedu_econ/features/onboarding/selected_group.dart';
-import 'package:sfedu_econ/features/schedule/lesson.dart';
+import 'package:sfedu_econ/features/schedule/schedule_data.dart';
 import 'package:sfedu_econ/features/schedule/schedule_providers.dart';
 import 'package:sfedu_econ/main.dart';
 
@@ -57,7 +57,8 @@ Future<Widget> _app(_FakeApi api) async {
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       selectedGroupIdProvider.overrideWith(() => FakeSelectedGroupId(3)),
-      lessonsProvider.overrideWith((ref) => Stream.value(const <Lesson>[])),
+      scheduleDataProvider
+          .overrideWith((ref) => Stream.value(const ScheduleData.empty())),
       syncStatusProvider.overrideWith(_FakeSync.new),
       newsFeedProvider.overrideWith(_FakeFeed.new),
       contactsFeedProvider.overrideWith(_FakeContactsFeed.new),

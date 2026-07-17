@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'features/assistant/assistant_screen.dart';
 import 'features/contacts/contacts_screen.dart';
+import 'features/exams/exams_screen.dart';
 import 'features/news/news_detail_screen.dart';
 import 'features/news/news_item.dart';
 import 'features/news/news_screen.dart';
@@ -63,6 +64,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/news/detail',
         builder: (context, state) =>
             NewsDetailScreen(item: state.extra! as NewsItem),
+      ),
+      GoRoute(
+        path: '/exams',
+        builder: (context, state) => const ExamsScreen(),
       ),
       GoRoute(
         path: '/settings',

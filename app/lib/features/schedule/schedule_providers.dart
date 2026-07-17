@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api_client.dart';
 import '../../core/db.dart';
 import '../onboarding/selected_group.dart';
-import 'lesson.dart';
 import 'schedule_api.dart';
+import 'schedule_data.dart';
 import 'schedule_repository.dart';
 
 final databaseProvider = Provider<AppDatabase>((ref) {
@@ -20,8 +20,8 @@ final scheduleRepositoryProvider = Provider<ScheduleRepository>((ref) =>
     ScheduleRepository(
         ref.watch(scheduleApiProvider), ref.watch(databaseProvider)));
 
-/// Пары выбранной группы из кэша (реактивно).
-final lessonsProvider = StreamProvider<List<Lesson>>((ref) {
+/// Расписание выбранной группы из кэша (пары + модули + календарь, реактивно).
+final scheduleDataProvider = StreamProvider<ScheduleData>((ref) {
   final groupId = ref.watch(selectedGroupIdProvider);
   if (groupId == null) return const Stream.empty();
   return ref.watch(scheduleRepositoryProvider).watch(groupId);

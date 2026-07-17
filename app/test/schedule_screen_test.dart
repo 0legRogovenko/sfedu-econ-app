@@ -4,11 +4,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sfedu_econ/core/clock.dart';
 import 'package:sfedu_econ/features/onboarding/selected_group.dart';
 import 'package:sfedu_econ/features/schedule/lesson.dart';
+import 'package:sfedu_econ/features/schedule/schedule_data.dart';
 import 'package:sfedu_econ/features/schedule/schedule_providers.dart';
 import 'package:sfedu_econ/features/schedule/schedule_repository.dart';
 import 'package:sfedu_econ/features/schedule/schedule_screen.dart';
 
-// 13.07.2026 — понедельник, ISO-неделя 29 (числитель), 09:30 — идёт 1-я пара
+// 13.07.2026 — понедельник, 09:30 — идёт 1-я пара. Неделя 13–19.07 — верхняя.
 final _now = DateTime(2026, 7, 13, 9, 30);
 
 const _lessons = [
@@ -21,7 +22,7 @@ const _lessons = [
     endsAt: '10:35:00',
     subject: 'Макроэкономика',
     room: '220',
-    weekType: WeekType.both,
+    weekType: null, // каждую неделю
     subgroup: 0,
     teacherName: 'Иванова Е. П.',
   ),
@@ -34,7 +35,7 @@ const _lessons = [
     endsAt: '12:25:00',
     subject: 'Эконометрика',
     room: '305',
-    weekType: WeekType.numerator,
+    weekType: WeekType.upper,
     subgroup: 0,
     teacherName: 'Петров А. С.',
   ),
@@ -47,11 +48,28 @@ const _lessons = [
     endsAt: '10:35:00',
     subject: 'Иностранный язык',
     room: '118',
-    weekType: WeekType.both,
+    weekType: null,
     subgroup: 1,
     teacherName: null,
   ),
 ];
+
+// Календарь: 13–19.07 верхняя, 20–26.07 нижняя.
+final _calendar = [
+  WeekCalendarEntry(
+    dateFrom: DateTime(2026, 7, 13),
+    dateTo: DateTime(2026, 7, 19),
+    weekType: WeekType.upper,
+  ),
+  WeekCalendarEntry(
+    dateFrom: DateTime(2026, 7, 20),
+    dateTo: DateTime(2026, 7, 26),
+    weekType: WeekType.lower,
+  ),
+];
+
+final _data =
+    ScheduleData(lessons: _lessons, modules: const [], weekCalendar: _calendar);
 
 /// Фоновый sync в initState не должен трогать реальную drift-БД в тестах.
 class _FakeSync extends SyncStatusNotifier {
@@ -81,11 +99,26 @@ class _FailedSync extends SyncStatusNotifier {
   Future<void> sync() async {}
 }
 
-Widget _screen({DateTime? now, SyncStatusNotifier Function()? sync}) =>
+/// Первый запуск: сеть упала ДО первого успешного синка, кэша ещё нет
+/// (syncedAt == null). Для теста честной плашки «нет данных».
+class _FirstLaunchFailedSync extends SyncStatusNotifier {
+  @override
+  SyncStatus build() =>
+      const SyncStatus(lastResult: SyncResult.failed, syncedAt: null);
+
+  @override
+  Future<void> sync() async {}
+}
+
+Widget _screen({
+  DateTime? now,
+  SyncStatusNotifier Function()? sync,
+  ScheduleData? data,
+}) =>
     ProviderScope(
       overrides: [
         selectedGroupIdProvider.overrideWith(() => FakeSelectedGroupId(3)),
-        lessonsProvider.overrideWith((ref) => Stream.value(_lessons)),
+        scheduleDataProvider.overrideWith((ref) => Stream.value(data ?? _data)),
         clockProvider.overrideWithValue(() => now ?? _now),
         syncStatusProvider.overrideWith(sync ?? _FakeSync.new),
       ],
@@ -101,7 +134,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         selectedGroupIdProvider.overrideWith(() => FakeSelectedGroupId(3)),
-        lessonsProvider.overrideWith((ref) => Stream.value(_lessons)),
+        scheduleDataProvider.overrideWith((ref) => Stream.value(_data)),
         clockProvider.overrideWithValue(() => _now),
         syncStatusProvider.overrideWith(_RecordingSync.new),
       ],
@@ -169,15 +202,22 @@ void main() {
     expect(find.text('Пар нет — отдыхаем'), findsOneWidget);
   });
 
+  testWidgets('бейдж «верхняя» на верхней неделе', (tester) async {
+    await tester.pumpWidget(_screen());
+    await tester.pumpAndSettle();
+
+    expect(find.text('верхняя'), findsOneWidget);
+  });
+
   testWidgets('в воскресенье показывается понедельник следующей недели',
       (tester) async {
-    // 19.07.2026 — воскресенье; след. понедельник 20.07 — ISO-неделя 30 (знаменатель)
+    // 19.07.2026 — воскресенье; след. понедельник 20.07 — нижняя неделя.
     await tester.pumpWidget(_screen(now: DateTime(2026, 7, 19, 12, 0)));
     await tester.pumpAndSettle();
 
-    expect(find.text('Макроэкономика'), findsOneWidget); // weekType both
-    expect(find.text('Эконометрика'), findsNothing); // числитель — исключена
-    expect(find.text('знаменатель'), findsOneWidget);
+    expect(find.text('Макроэкономика'), findsOneWidget); // каждую неделю
+    expect(find.text('Эконометрика'), findsNothing); // верхняя — исключена
+    expect(find.text('нижняя'), findsOneWidget);
   });
 
   testWidgets('после неудачного синка показывается плашка с датой данных',
@@ -186,5 +226,61 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('Данные от 12.07.2026'), findsOneWidget);
+  });
+
+  testWidgets('бейдж активного модуля виден для даты внутри модуля',
+      (tester) async {
+    // Выбранный день — 13.07.2026, модуль накрывает весь июль.
+    final data = ScheduleData(
+      lessons: _lessons,
+      modules: [
+        Module(
+          id: 2,
+          name: '2 модуль',
+          dateFrom: DateTime(2026, 7, 1),
+          dateTo: DateTime(2026, 7, 31),
+        ),
+      ],
+      weekCalendar: _calendar,
+    );
+    await tester.pumpWidget(_screen(data: data));
+    await tester.pumpAndSettle();
+
+    expect(find.text('2 модуль'), findsOneWidget);
+  });
+
+  testWidgets('бейдж активного модуля скрыт для даты вне диапазонов',
+      (tester) async {
+    // Выбранный день — 13.07.2026, модуль относится к сентябрю.
+    final data = ScheduleData(
+      lessons: _lessons,
+      modules: [
+        Module(
+          id: 1,
+          name: '1 модуль',
+          dateFrom: DateTime(2026, 9, 1),
+          dateTo: DateTime(2026, 9, 30),
+        ),
+      ],
+      weekCalendar: _calendar,
+    );
+    await tester.pumpWidget(_screen(data: data));
+    await tester.pumpAndSettle();
+
+    expect(find.text('1 модуль'), findsNothing);
+  });
+
+  testWidgets('первый офлайн-запуск: честная плашка вместо «Пар нет»',
+      (tester) async {
+    // Свежая установка: кэш пуст, первый синк упал (syncedAt == null).
+    // Студент не должен видеть «Пар нет — отдыхаем» — данные просто не загружены.
+    await tester.pumpWidget(_screen(
+      sync: _FirstLaunchFailedSync.new,
+      data: const ScheduleData.empty(),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Пар нет — отдыхаем'), findsNothing);
+    expect(find.textContaining('Нет данных'), findsOneWidget);
   });
 }

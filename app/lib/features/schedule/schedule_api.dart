@@ -3,13 +3,13 @@ import 'package:dio/dio.dart';
 enum ScheduleApiStatus { ok, notModified, failure }
 
 class ScheduleApiResponse {
-  const ScheduleApiResponse._(this.status, this.lessonsJson, this.etag);
+  const ScheduleApiResponse._(this.status, this.scheduleJson, this.etag);
 
   factory ScheduleApiResponse.ok(
-    List<Map<String, dynamic>> lessons,
+    Map<String, dynamic> schedule,
     String? etag,
   ) =>
-      ScheduleApiResponse._(ScheduleApiStatus.ok, lessons, etag);
+      ScheduleApiResponse._(ScheduleApiStatus.ok, schedule, etag);
 
   factory ScheduleApiResponse.notModified() =>
       const ScheduleApiResponse._(ScheduleApiStatus.notModified, null, null);
@@ -18,7 +18,9 @@ class ScheduleApiResponse {
       const ScheduleApiResponse._(ScheduleApiStatus.failure, null, null);
 
   final ScheduleApiStatus status;
-  final List<Map<String, dynamic>>? lessonsJson;
+  // Объект {lessons, modules, week_calendar} — breaking change контракта:
+  // прежде был плоский массив пар.
+  final Map<String, dynamic>? scheduleJson;
   final String? etag;
 }
 
@@ -34,7 +36,7 @@ class DioScheduleApi implements ScheduleApi {
   @override
   Future<ScheduleApiResponse> fetchSchedule(int groupId, String? etag) async {
     try {
-      final response = await _dio.get<List<dynamic>>(
+      final response = await _dio.get<Map<String, dynamic>>(
         '/api/schedule',
         queryParameters: {'group_id': groupId},
         options: Options(
@@ -46,7 +48,7 @@ class DioScheduleApi implements ScheduleApi {
         return ScheduleApiResponse.notModified();
       }
       return ScheduleApiResponse.ok(
-        (response.data ?? []).cast<Map<String, dynamic>>(),
+        response.data ?? const {},
         response.headers.value('etag'),
       );
     } on DioException {

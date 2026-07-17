@@ -1,4 +1,4 @@
-"""Фоновый планировщик парсеров новостей (APScheduler).
+"""Фоновый планировщик парсеров новостей и импорта расписания (APScheduler).
 
 Стартует только когда settings.enable_scheduler=True — то есть в контейнере
 api, но не в тестах и не при alembic.
@@ -13,12 +13,13 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 from src.config import settings
 from src.parsers.runner import run_news_parsers
+from src.schedule.importer import run_schedule_import
 
 logger = logging.getLogger(__name__)
 
 
 def create_scheduler() -> BackgroundScheduler:
-    """Создаёт планировщик с задачей парсинга новостей (не запускает его)."""
+    """Создаёт планировщик с задачами новостей и расписания (не запускает его)."""
     scheduler = BackgroundScheduler(timezone="Europe/Moscow")
     scheduler.add_job(
         _run_news_job,
@@ -31,6 +32,17 @@ def create_scheduler() -> BackgroundScheduler:
         max_instances=1,
         coalesce=True,
     )
+    scheduler.add_job(
+        _run_schedule_job,
+        trigger="interval",
+        hours=settings.schedule_import_hours,
+        # Прогрев позже новостей: цикл импорта — это 29 файлов с Crawl-delay 30,
+        # то есть ~15 минут; на старте контейнера он не нужен первым.
+        next_run_time=datetime.now(timezone.utc) + timedelta(minutes=5),
+        id="schedule_import",
+        max_instances=1,
+        coalesce=True,
+    )
     return scheduler
 
 
@@ -38,3 +50,9 @@ def _run_news_job() -> None:
     logger.info("Запуск парсеров новостей по расписанию")
     result = run_news_parsers()
     logger.info("Парсеры новостей завершены: %s", result)
+
+
+def _run_schedule_job() -> None:
+    logger.info("Запуск импорта расписания по расписанию")
+    result = run_schedule_import()
+    logger.info("Импорт расписания завершён: %s", result)

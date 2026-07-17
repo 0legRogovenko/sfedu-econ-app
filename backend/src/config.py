@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     # и при alembic; включается в контейнере api (ENABLE_SCHEDULER=1).
     enable_scheduler: bool = False
     news_poll_minutes: int = 30
+    # Импорт расписания: раз в сутки. Чаще незачем — один цикл это 29 файлов
+    # по Crawl-delay: 30, то есть ~15 минут вежливого чтения чужого сайта.
+    schedule_import_hours: int = 24
 
     # Telegram-алерты о падении парсеров (опционально). Если не заданы —
     # уведомления идут только в лог.

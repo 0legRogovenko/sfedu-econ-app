@@ -37,7 +37,7 @@ class SettingsScreen extends ConsumerWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Текущая группа: ${currentGroup?.number ?? '—'}'),
+                  Text('Текущая группа: ${currentGroup?.displayName ?? '—'}'),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -45,7 +45,7 @@ class SettingsScreen extends ConsumerWidget {
                     children: [
                       for (final group in groups)
                         ChoiceChip(
-                          label: Text(group.number),
+                          label: Text(group.displayName),
                           selected: group.id == selectedGroupId,
                           onSelected: (_) => ref
                               .read(selectedGroupIdProvider.notifier)

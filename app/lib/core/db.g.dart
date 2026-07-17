@@ -98,9 +98,9 @@ class $CachedLessonsTable extends CachedLessons
   late final GeneratedColumn<String> weekType = GeneratedColumn<String>(
     'week_type',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _subgroupMeta = const VerificationMeta(
     'subgroup',
@@ -124,6 +124,39 @@ class $CachedLessonsTable extends CachedLessons
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _moduleIdMeta = const VerificationMeta(
+    'moduleId',
+  );
+  @override
+  late final GeneratedColumn<int> moduleId = GeneratedColumn<int>(
+    'module_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _validFromMeta = const VerificationMeta(
+    'validFrom',
+  );
+  @override
+  late final GeneratedColumn<String> validFrom = GeneratedColumn<String>(
+    'valid_from',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _validToMeta = const VerificationMeta(
+    'validTo',
+  );
+  @override
+  late final GeneratedColumn<String> validTo = GeneratedColumn<String>(
+    'valid_to',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -137,6 +170,9 @@ class $CachedLessonsTable extends CachedLessons
     weekType,
     subgroup,
     teacherName,
+    moduleId,
+    validFrom,
+    validTo,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -212,8 +248,6 @@ class $CachedLessonsTable extends CachedLessons
         _weekTypeMeta,
         weekType.isAcceptableOrUnknown(data['week_type']!, _weekTypeMeta),
       );
-    } else if (isInserting) {
-      context.missing(_weekTypeMeta);
     }
     if (data.containsKey('subgroup')) {
       context.handle(
@@ -230,6 +264,24 @@ class $CachedLessonsTable extends CachedLessons
           data['teacher_name']!,
           _teacherNameMeta,
         ),
+      );
+    }
+    if (data.containsKey('module_id')) {
+      context.handle(
+        _moduleIdMeta,
+        moduleId.isAcceptableOrUnknown(data['module_id']!, _moduleIdMeta),
+      );
+    }
+    if (data.containsKey('valid_from')) {
+      context.handle(
+        _validFromMeta,
+        validFrom.isAcceptableOrUnknown(data['valid_from']!, _validFromMeta),
+      );
+    }
+    if (data.containsKey('valid_to')) {
+      context.handle(
+        _validToMeta,
+        validTo.isAcceptableOrUnknown(data['valid_to']!, _validToMeta),
       );
     }
     return context;
@@ -276,7 +328,7 @@ class $CachedLessonsTable extends CachedLessons
       weekType: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}week_type'],
-      )!,
+      ),
       subgroup: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}subgroup'],
@@ -284,6 +336,18 @@ class $CachedLessonsTable extends CachedLessons
       teacherName: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}teacher_name'],
+      ),
+      moduleId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}module_id'],
+      ),
+      validFrom: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}valid_from'],
+      ),
+      validTo: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}valid_to'],
       ),
     );
   }
@@ -303,9 +367,12 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
   final String endsAt;
   final String subject;
   final String? room;
-  final String weekType;
+  final String? weekType;
   final int subgroup;
   final String? teacherName;
+  final int? moduleId;
+  final String? validFrom;
+  final String? validTo;
   const CachedLesson({
     required this.id,
     required this.groupId,
@@ -315,9 +382,12 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
     required this.endsAt,
     required this.subject,
     this.room,
-    required this.weekType,
+    this.weekType,
     required this.subgroup,
     this.teacherName,
+    this.moduleId,
+    this.validFrom,
+    this.validTo,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -332,10 +402,21 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
     if (!nullToAbsent || room != null) {
       map['room'] = Variable<String>(room);
     }
-    map['week_type'] = Variable<String>(weekType);
+    if (!nullToAbsent || weekType != null) {
+      map['week_type'] = Variable<String>(weekType);
+    }
     map['subgroup'] = Variable<int>(subgroup);
     if (!nullToAbsent || teacherName != null) {
       map['teacher_name'] = Variable<String>(teacherName);
+    }
+    if (!nullToAbsent || moduleId != null) {
+      map['module_id'] = Variable<int>(moduleId);
+    }
+    if (!nullToAbsent || validFrom != null) {
+      map['valid_from'] = Variable<String>(validFrom);
+    }
+    if (!nullToAbsent || validTo != null) {
+      map['valid_to'] = Variable<String>(validTo);
     }
     return map;
   }
@@ -350,11 +431,22 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
       endsAt: Value(endsAt),
       subject: Value(subject),
       room: room == null && nullToAbsent ? const Value.absent() : Value(room),
-      weekType: Value(weekType),
+      weekType: weekType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(weekType),
       subgroup: Value(subgroup),
       teacherName: teacherName == null && nullToAbsent
           ? const Value.absent()
           : Value(teacherName),
+      moduleId: moduleId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(moduleId),
+      validFrom: validFrom == null && nullToAbsent
+          ? const Value.absent()
+          : Value(validFrom),
+      validTo: validTo == null && nullToAbsent
+          ? const Value.absent()
+          : Value(validTo),
     );
   }
 
@@ -372,9 +464,12 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
       endsAt: serializer.fromJson<String>(json['endsAt']),
       subject: serializer.fromJson<String>(json['subject']),
       room: serializer.fromJson<String?>(json['room']),
-      weekType: serializer.fromJson<String>(json['weekType']),
+      weekType: serializer.fromJson<String?>(json['weekType']),
       subgroup: serializer.fromJson<int>(json['subgroup']),
       teacherName: serializer.fromJson<String?>(json['teacherName']),
+      moduleId: serializer.fromJson<int?>(json['moduleId']),
+      validFrom: serializer.fromJson<String?>(json['validFrom']),
+      validTo: serializer.fromJson<String?>(json['validTo']),
     );
   }
   @override
@@ -389,9 +484,12 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
       'endsAt': serializer.toJson<String>(endsAt),
       'subject': serializer.toJson<String>(subject),
       'room': serializer.toJson<String?>(room),
-      'weekType': serializer.toJson<String>(weekType),
+      'weekType': serializer.toJson<String?>(weekType),
       'subgroup': serializer.toJson<int>(subgroup),
       'teacherName': serializer.toJson<String?>(teacherName),
+      'moduleId': serializer.toJson<int?>(moduleId),
+      'validFrom': serializer.toJson<String?>(validFrom),
+      'validTo': serializer.toJson<String?>(validTo),
     };
   }
 
@@ -404,9 +502,12 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
     String? endsAt,
     String? subject,
     Value<String?> room = const Value.absent(),
-    String? weekType,
+    Value<String?> weekType = const Value.absent(),
     int? subgroup,
     Value<String?> teacherName = const Value.absent(),
+    Value<int?> moduleId = const Value.absent(),
+    Value<String?> validFrom = const Value.absent(),
+    Value<String?> validTo = const Value.absent(),
   }) => CachedLesson(
     id: id ?? this.id,
     groupId: groupId ?? this.groupId,
@@ -416,9 +517,12 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
     endsAt: endsAt ?? this.endsAt,
     subject: subject ?? this.subject,
     room: room.present ? room.value : this.room,
-    weekType: weekType ?? this.weekType,
+    weekType: weekType.present ? weekType.value : this.weekType,
     subgroup: subgroup ?? this.subgroup,
     teacherName: teacherName.present ? teacherName.value : this.teacherName,
+    moduleId: moduleId.present ? moduleId.value : this.moduleId,
+    validFrom: validFrom.present ? validFrom.value : this.validFrom,
+    validTo: validTo.present ? validTo.value : this.validTo,
   );
   CachedLesson copyWithCompanion(CachedLessonsCompanion data) {
     return CachedLesson(
@@ -437,6 +541,9 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
       teacherName: data.teacherName.present
           ? data.teacherName.value
           : this.teacherName,
+      moduleId: data.moduleId.present ? data.moduleId.value : this.moduleId,
+      validFrom: data.validFrom.present ? data.validFrom.value : this.validFrom,
+      validTo: data.validTo.present ? data.validTo.value : this.validTo,
     );
   }
 
@@ -453,7 +560,10 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
           ..write('room: $room, ')
           ..write('weekType: $weekType, ')
           ..write('subgroup: $subgroup, ')
-          ..write('teacherName: $teacherName')
+          ..write('teacherName: $teacherName, ')
+          ..write('moduleId: $moduleId, ')
+          ..write('validFrom: $validFrom, ')
+          ..write('validTo: $validTo')
           ..write(')'))
         .toString();
   }
@@ -471,6 +581,9 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
     weekType,
     subgroup,
     teacherName,
+    moduleId,
+    validFrom,
+    validTo,
   );
   @override
   bool operator ==(Object other) =>
@@ -486,7 +599,10 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
           other.room == this.room &&
           other.weekType == this.weekType &&
           other.subgroup == this.subgroup &&
-          other.teacherName == this.teacherName);
+          other.teacherName == this.teacherName &&
+          other.moduleId == this.moduleId &&
+          other.validFrom == this.validFrom &&
+          other.validTo == this.validTo);
 }
 
 class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
@@ -498,9 +614,12 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
   final Value<String> endsAt;
   final Value<String> subject;
   final Value<String?> room;
-  final Value<String> weekType;
+  final Value<String?> weekType;
   final Value<int> subgroup;
   final Value<String?> teacherName;
+  final Value<int?> moduleId;
+  final Value<String?> validFrom;
+  final Value<String?> validTo;
   const CachedLessonsCompanion({
     this.id = const Value.absent(),
     this.groupId = const Value.absent(),
@@ -513,6 +632,9 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
     this.weekType = const Value.absent(),
     this.subgroup = const Value.absent(),
     this.teacherName = const Value.absent(),
+    this.moduleId = const Value.absent(),
+    this.validFrom = const Value.absent(),
+    this.validTo = const Value.absent(),
   });
   CachedLessonsCompanion.insert({
     this.id = const Value.absent(),
@@ -523,16 +645,18 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
     required String endsAt,
     required String subject,
     this.room = const Value.absent(),
-    required String weekType,
+    this.weekType = const Value.absent(),
     required int subgroup,
     this.teacherName = const Value.absent(),
+    this.moduleId = const Value.absent(),
+    this.validFrom = const Value.absent(),
+    this.validTo = const Value.absent(),
   }) : groupId = Value(groupId),
        weekday = Value(weekday),
        pairNumber = Value(pairNumber),
        startsAt = Value(startsAt),
        endsAt = Value(endsAt),
        subject = Value(subject),
-       weekType = Value(weekType),
        subgroup = Value(subgroup);
   static Insertable<CachedLesson> custom({
     Expression<int>? id,
@@ -546,6 +670,9 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
     Expression<String>? weekType,
     Expression<int>? subgroup,
     Expression<String>? teacherName,
+    Expression<int>? moduleId,
+    Expression<String>? validFrom,
+    Expression<String>? validTo,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -559,6 +686,9 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
       if (weekType != null) 'week_type': weekType,
       if (subgroup != null) 'subgroup': subgroup,
       if (teacherName != null) 'teacher_name': teacherName,
+      if (moduleId != null) 'module_id': moduleId,
+      if (validFrom != null) 'valid_from': validFrom,
+      if (validTo != null) 'valid_to': validTo,
     });
   }
 
@@ -571,9 +701,12 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
     Value<String>? endsAt,
     Value<String>? subject,
     Value<String?>? room,
-    Value<String>? weekType,
+    Value<String?>? weekType,
     Value<int>? subgroup,
     Value<String?>? teacherName,
+    Value<int?>? moduleId,
+    Value<String?>? validFrom,
+    Value<String?>? validTo,
   }) {
     return CachedLessonsCompanion(
       id: id ?? this.id,
@@ -587,6 +720,9 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
       weekType: weekType ?? this.weekType,
       subgroup: subgroup ?? this.subgroup,
       teacherName: teacherName ?? this.teacherName,
+      moduleId: moduleId ?? this.moduleId,
+      validFrom: validFrom ?? this.validFrom,
+      validTo: validTo ?? this.validTo,
     );
   }
 
@@ -626,6 +762,15 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
     if (teacherName.present) {
       map['teacher_name'] = Variable<String>(teacherName.value);
     }
+    if (moduleId.present) {
+      map['module_id'] = Variable<int>(moduleId.value);
+    }
+    if (validFrom.present) {
+      map['valid_from'] = Variable<String>(validFrom.value);
+    }
+    if (validTo.present) {
+      map['valid_to'] = Variable<String>(validTo.value);
+    }
     return map;
   }
 
@@ -642,7 +787,687 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
           ..write('room: $room, ')
           ..write('weekType: $weekType, ')
           ..write('subgroup: $subgroup, ')
-          ..write('teacherName: $teacherName')
+          ..write('teacherName: $teacherName, ')
+          ..write('moduleId: $moduleId, ')
+          ..write('validFrom: $validFrom, ')
+          ..write('validTo: $validTo')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CachedModulesTable extends CachedModules
+    with TableInfo<$CachedModulesTable, CachedModule> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CachedModulesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<int> groupId = GeneratedColumn<int>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _moduleIdMeta = const VerificationMeta(
+    'moduleId',
+  );
+  @override
+  late final GeneratedColumn<int> moduleId = GeneratedColumn<int>(
+    'module_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _dateFromMeta = const VerificationMeta(
+    'dateFrom',
+  );
+  @override
+  late final GeneratedColumn<String> dateFrom = GeneratedColumn<String>(
+    'date_from',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dateToMeta = const VerificationMeta('dateTo');
+  @override
+  late final GeneratedColumn<String> dateTo = GeneratedColumn<String>(
+    'date_to',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    groupId,
+    moduleId,
+    name,
+    dateFrom,
+    dateTo,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cached_modules';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CachedModule> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('module_id')) {
+      context.handle(
+        _moduleIdMeta,
+        moduleId.isAcceptableOrUnknown(data['module_id']!, _moduleIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_moduleIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    }
+    if (data.containsKey('date_from')) {
+      context.handle(
+        _dateFromMeta,
+        dateFrom.isAcceptableOrUnknown(data['date_from']!, _dateFromMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dateFromMeta);
+    }
+    if (data.containsKey('date_to')) {
+      context.handle(
+        _dateToMeta,
+        dateTo.isAcceptableOrUnknown(data['date_to']!, _dateToMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dateToMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => const {};
+  @override
+  CachedModule map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CachedModule(
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}group_id'],
+      )!,
+      moduleId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}module_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      ),
+      dateFrom: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}date_from'],
+      )!,
+      dateTo: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}date_to'],
+      )!,
+    );
+  }
+
+  @override
+  $CachedModulesTable createAlias(String alias) {
+    return $CachedModulesTable(attachedDatabase, alias);
+  }
+}
+
+class CachedModule extends DataClass implements Insertable<CachedModule> {
+  final int groupId;
+  final int moduleId;
+  final String? name;
+  final String dateFrom;
+  final String dateTo;
+  const CachedModule({
+    required this.groupId,
+    required this.moduleId,
+    this.name,
+    required this.dateFrom,
+    required this.dateTo,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['group_id'] = Variable<int>(groupId);
+    map['module_id'] = Variable<int>(moduleId);
+    if (!nullToAbsent || name != null) {
+      map['name'] = Variable<String>(name);
+    }
+    map['date_from'] = Variable<String>(dateFrom);
+    map['date_to'] = Variable<String>(dateTo);
+    return map;
+  }
+
+  CachedModulesCompanion toCompanion(bool nullToAbsent) {
+    return CachedModulesCompanion(
+      groupId: Value(groupId),
+      moduleId: Value(moduleId),
+      name: name == null && nullToAbsent ? const Value.absent() : Value(name),
+      dateFrom: Value(dateFrom),
+      dateTo: Value(dateTo),
+    );
+  }
+
+  factory CachedModule.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CachedModule(
+      groupId: serializer.fromJson<int>(json['groupId']),
+      moduleId: serializer.fromJson<int>(json['moduleId']),
+      name: serializer.fromJson<String?>(json['name']),
+      dateFrom: serializer.fromJson<String>(json['dateFrom']),
+      dateTo: serializer.fromJson<String>(json['dateTo']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'groupId': serializer.toJson<int>(groupId),
+      'moduleId': serializer.toJson<int>(moduleId),
+      'name': serializer.toJson<String?>(name),
+      'dateFrom': serializer.toJson<String>(dateFrom),
+      'dateTo': serializer.toJson<String>(dateTo),
+    };
+  }
+
+  CachedModule copyWith({
+    int? groupId,
+    int? moduleId,
+    Value<String?> name = const Value.absent(),
+    String? dateFrom,
+    String? dateTo,
+  }) => CachedModule(
+    groupId: groupId ?? this.groupId,
+    moduleId: moduleId ?? this.moduleId,
+    name: name.present ? name.value : this.name,
+    dateFrom: dateFrom ?? this.dateFrom,
+    dateTo: dateTo ?? this.dateTo,
+  );
+  CachedModule copyWithCompanion(CachedModulesCompanion data) {
+    return CachedModule(
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      moduleId: data.moduleId.present ? data.moduleId.value : this.moduleId,
+      name: data.name.present ? data.name.value : this.name,
+      dateFrom: data.dateFrom.present ? data.dateFrom.value : this.dateFrom,
+      dateTo: data.dateTo.present ? data.dateTo.value : this.dateTo,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedModule(')
+          ..write('groupId: $groupId, ')
+          ..write('moduleId: $moduleId, ')
+          ..write('name: $name, ')
+          ..write('dateFrom: $dateFrom, ')
+          ..write('dateTo: $dateTo')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(groupId, moduleId, name, dateFrom, dateTo);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CachedModule &&
+          other.groupId == this.groupId &&
+          other.moduleId == this.moduleId &&
+          other.name == this.name &&
+          other.dateFrom == this.dateFrom &&
+          other.dateTo == this.dateTo);
+}
+
+class CachedModulesCompanion extends UpdateCompanion<CachedModule> {
+  final Value<int> groupId;
+  final Value<int> moduleId;
+  final Value<String?> name;
+  final Value<String> dateFrom;
+  final Value<String> dateTo;
+  final Value<int> rowid;
+  const CachedModulesCompanion({
+    this.groupId = const Value.absent(),
+    this.moduleId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.dateFrom = const Value.absent(),
+    this.dateTo = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CachedModulesCompanion.insert({
+    required int groupId,
+    required int moduleId,
+    this.name = const Value.absent(),
+    required String dateFrom,
+    required String dateTo,
+    this.rowid = const Value.absent(),
+  }) : groupId = Value(groupId),
+       moduleId = Value(moduleId),
+       dateFrom = Value(dateFrom),
+       dateTo = Value(dateTo);
+  static Insertable<CachedModule> custom({
+    Expression<int>? groupId,
+    Expression<int>? moduleId,
+    Expression<String>? name,
+    Expression<String>? dateFrom,
+    Expression<String>? dateTo,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (groupId != null) 'group_id': groupId,
+      if (moduleId != null) 'module_id': moduleId,
+      if (name != null) 'name': name,
+      if (dateFrom != null) 'date_from': dateFrom,
+      if (dateTo != null) 'date_to': dateTo,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CachedModulesCompanion copyWith({
+    Value<int>? groupId,
+    Value<int>? moduleId,
+    Value<String?>? name,
+    Value<String>? dateFrom,
+    Value<String>? dateTo,
+    Value<int>? rowid,
+  }) {
+    return CachedModulesCompanion(
+      groupId: groupId ?? this.groupId,
+      moduleId: moduleId ?? this.moduleId,
+      name: name ?? this.name,
+      dateFrom: dateFrom ?? this.dateFrom,
+      dateTo: dateTo ?? this.dateTo,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (groupId.present) {
+      map['group_id'] = Variable<int>(groupId.value);
+    }
+    if (moduleId.present) {
+      map['module_id'] = Variable<int>(moduleId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (dateFrom.present) {
+      map['date_from'] = Variable<String>(dateFrom.value);
+    }
+    if (dateTo.present) {
+      map['date_to'] = Variable<String>(dateTo.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedModulesCompanion(')
+          ..write('groupId: $groupId, ')
+          ..write('moduleId: $moduleId, ')
+          ..write('name: $name, ')
+          ..write('dateFrom: $dateFrom, ')
+          ..write('dateTo: $dateTo, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CachedWeekCalendarTable extends CachedWeekCalendar
+    with TableInfo<$CachedWeekCalendarTable, CachedWeekCalendarData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CachedWeekCalendarTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<int> groupId = GeneratedColumn<int>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dateFromMeta = const VerificationMeta(
+    'dateFrom',
+  );
+  @override
+  late final GeneratedColumn<String> dateFrom = GeneratedColumn<String>(
+    'date_from',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dateToMeta = const VerificationMeta('dateTo');
+  @override
+  late final GeneratedColumn<String> dateTo = GeneratedColumn<String>(
+    'date_to',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _weekTypeMeta = const VerificationMeta(
+    'weekType',
+  );
+  @override
+  late final GeneratedColumn<String> weekType = GeneratedColumn<String>(
+    'week_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [groupId, dateFrom, dateTo, weekType];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cached_week_calendar';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CachedWeekCalendarData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('date_from')) {
+      context.handle(
+        _dateFromMeta,
+        dateFrom.isAcceptableOrUnknown(data['date_from']!, _dateFromMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dateFromMeta);
+    }
+    if (data.containsKey('date_to')) {
+      context.handle(
+        _dateToMeta,
+        dateTo.isAcceptableOrUnknown(data['date_to']!, _dateToMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dateToMeta);
+    }
+    if (data.containsKey('week_type')) {
+      context.handle(
+        _weekTypeMeta,
+        weekType.isAcceptableOrUnknown(data['week_type']!, _weekTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_weekTypeMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => const {};
+  @override
+  CachedWeekCalendarData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CachedWeekCalendarData(
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}group_id'],
+      )!,
+      dateFrom: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}date_from'],
+      )!,
+      dateTo: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}date_to'],
+      )!,
+      weekType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}week_type'],
+      )!,
+    );
+  }
+
+  @override
+  $CachedWeekCalendarTable createAlias(String alias) {
+    return $CachedWeekCalendarTable(attachedDatabase, alias);
+  }
+}
+
+class CachedWeekCalendarData extends DataClass
+    implements Insertable<CachedWeekCalendarData> {
+  final int groupId;
+  final String dateFrom;
+  final String dateTo;
+  final String weekType;
+  const CachedWeekCalendarData({
+    required this.groupId,
+    required this.dateFrom,
+    required this.dateTo,
+    required this.weekType,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['group_id'] = Variable<int>(groupId);
+    map['date_from'] = Variable<String>(dateFrom);
+    map['date_to'] = Variable<String>(dateTo);
+    map['week_type'] = Variable<String>(weekType);
+    return map;
+  }
+
+  CachedWeekCalendarCompanion toCompanion(bool nullToAbsent) {
+    return CachedWeekCalendarCompanion(
+      groupId: Value(groupId),
+      dateFrom: Value(dateFrom),
+      dateTo: Value(dateTo),
+      weekType: Value(weekType),
+    );
+  }
+
+  factory CachedWeekCalendarData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CachedWeekCalendarData(
+      groupId: serializer.fromJson<int>(json['groupId']),
+      dateFrom: serializer.fromJson<String>(json['dateFrom']),
+      dateTo: serializer.fromJson<String>(json['dateTo']),
+      weekType: serializer.fromJson<String>(json['weekType']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'groupId': serializer.toJson<int>(groupId),
+      'dateFrom': serializer.toJson<String>(dateFrom),
+      'dateTo': serializer.toJson<String>(dateTo),
+      'weekType': serializer.toJson<String>(weekType),
+    };
+  }
+
+  CachedWeekCalendarData copyWith({
+    int? groupId,
+    String? dateFrom,
+    String? dateTo,
+    String? weekType,
+  }) => CachedWeekCalendarData(
+    groupId: groupId ?? this.groupId,
+    dateFrom: dateFrom ?? this.dateFrom,
+    dateTo: dateTo ?? this.dateTo,
+    weekType: weekType ?? this.weekType,
+  );
+  CachedWeekCalendarData copyWithCompanion(CachedWeekCalendarCompanion data) {
+    return CachedWeekCalendarData(
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      dateFrom: data.dateFrom.present ? data.dateFrom.value : this.dateFrom,
+      dateTo: data.dateTo.present ? data.dateTo.value : this.dateTo,
+      weekType: data.weekType.present ? data.weekType.value : this.weekType,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedWeekCalendarData(')
+          ..write('groupId: $groupId, ')
+          ..write('dateFrom: $dateFrom, ')
+          ..write('dateTo: $dateTo, ')
+          ..write('weekType: $weekType')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(groupId, dateFrom, dateTo, weekType);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CachedWeekCalendarData &&
+          other.groupId == this.groupId &&
+          other.dateFrom == this.dateFrom &&
+          other.dateTo == this.dateTo &&
+          other.weekType == this.weekType);
+}
+
+class CachedWeekCalendarCompanion
+    extends UpdateCompanion<CachedWeekCalendarData> {
+  final Value<int> groupId;
+  final Value<String> dateFrom;
+  final Value<String> dateTo;
+  final Value<String> weekType;
+  final Value<int> rowid;
+  const CachedWeekCalendarCompanion({
+    this.groupId = const Value.absent(),
+    this.dateFrom = const Value.absent(),
+    this.dateTo = const Value.absent(),
+    this.weekType = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CachedWeekCalendarCompanion.insert({
+    required int groupId,
+    required String dateFrom,
+    required String dateTo,
+    required String weekType,
+    this.rowid = const Value.absent(),
+  }) : groupId = Value(groupId),
+       dateFrom = Value(dateFrom),
+       dateTo = Value(dateTo),
+       weekType = Value(weekType);
+  static Insertable<CachedWeekCalendarData> custom({
+    Expression<int>? groupId,
+    Expression<String>? dateFrom,
+    Expression<String>? dateTo,
+    Expression<String>? weekType,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (groupId != null) 'group_id': groupId,
+      if (dateFrom != null) 'date_from': dateFrom,
+      if (dateTo != null) 'date_to': dateTo,
+      if (weekType != null) 'week_type': weekType,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CachedWeekCalendarCompanion copyWith({
+    Value<int>? groupId,
+    Value<String>? dateFrom,
+    Value<String>? dateTo,
+    Value<String>? weekType,
+    Value<int>? rowid,
+  }) {
+    return CachedWeekCalendarCompanion(
+      groupId: groupId ?? this.groupId,
+      dateFrom: dateFrom ?? this.dateFrom,
+      dateTo: dateTo ?? this.dateTo,
+      weekType: weekType ?? this.weekType,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (groupId.present) {
+      map['group_id'] = Variable<int>(groupId.value);
+    }
+    if (dateFrom.present) {
+      map['date_from'] = Variable<String>(dateFrom.value);
+    }
+    if (dateTo.present) {
+      map['date_to'] = Variable<String>(dateTo.value);
+    }
+    if (weekType.present) {
+      map['week_type'] = Variable<String>(weekType.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedWeekCalendarCompanion(')
+          ..write('groupId: $groupId, ')
+          ..write('dateFrom: $dateFrom, ')
+          ..write('dateTo: $dateTo, ')
+          ..write('weekType: $weekType, ')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -894,6 +1719,759 @@ class ScheduleCacheMetaCompanion
   @override
   String toString() {
     return (StringBuffer('ScheduleCacheMetaCompanion(')
+          ..write('groupId: $groupId, ')
+          ..write('etag: $etag, ')
+          ..write('syncedAt: $syncedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CachedExamsTable extends CachedExams
+    with TableInfo<$CachedExamsTable, CachedExam> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CachedExamsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<int> groupId = GeneratedColumn<int>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _subjectMeta = const VerificationMeta(
+    'subject',
+  );
+  @override
+  late final GeneratedColumn<String> subject = GeneratedColumn<String>(
+    'subject',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _teacherMeta = const VerificationMeta(
+    'teacher',
+  );
+  @override
+  late final GeneratedColumn<String> teacher = GeneratedColumn<String>(
+    'teacher',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _consultationAtMeta = const VerificationMeta(
+    'consultationAt',
+  );
+  @override
+  late final GeneratedColumn<String> consultationAt = GeneratedColumn<String>(
+    'consultation_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _examAtMeta = const VerificationMeta('examAt');
+  @override
+  late final GeneratedColumn<String> examAt = GeneratedColumn<String>(
+    'exam_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _roomMeta = const VerificationMeta('room');
+  @override
+  late final GeneratedColumn<String> room = GeneratedColumn<String>(
+    'room',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    groupId,
+    subject,
+    teacher,
+    consultationAt,
+    examAt,
+    room,
+    kind,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cached_exams';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CachedExam> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('subject')) {
+      context.handle(
+        _subjectMeta,
+        subject.isAcceptableOrUnknown(data['subject']!, _subjectMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_subjectMeta);
+    }
+    if (data.containsKey('teacher')) {
+      context.handle(
+        _teacherMeta,
+        teacher.isAcceptableOrUnknown(data['teacher']!, _teacherMeta),
+      );
+    }
+    if (data.containsKey('consultation_at')) {
+      context.handle(
+        _consultationAtMeta,
+        consultationAt.isAcceptableOrUnknown(
+          data['consultation_at']!,
+          _consultationAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('exam_at')) {
+      context.handle(
+        _examAtMeta,
+        examAt.isAcceptableOrUnknown(data['exam_at']!, _examAtMeta),
+      );
+    }
+    if (data.containsKey('room')) {
+      context.handle(
+        _roomMeta,
+        room.isAcceptableOrUnknown(data['room']!, _roomMeta),
+      );
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CachedExam map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CachedExam(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}group_id'],
+      )!,
+      subject: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}subject'],
+      )!,
+      teacher: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}teacher'],
+      ),
+      consultationAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}consultation_at'],
+      ),
+      examAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}exam_at'],
+      ),
+      room: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}room'],
+      ),
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      ),
+    );
+  }
+
+  @override
+  $CachedExamsTable createAlias(String alias) {
+    return $CachedExamsTable(attachedDatabase, alias);
+  }
+}
+
+class CachedExam extends DataClass implements Insertable<CachedExam> {
+  final int id;
+  final int groupId;
+  final String subject;
+  final String? teacher;
+  final String? consultationAt;
+  final String? examAt;
+  final String? room;
+  final String? kind;
+  const CachedExam({
+    required this.id,
+    required this.groupId,
+    required this.subject,
+    this.teacher,
+    this.consultationAt,
+    this.examAt,
+    this.room,
+    this.kind,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['group_id'] = Variable<int>(groupId);
+    map['subject'] = Variable<String>(subject);
+    if (!nullToAbsent || teacher != null) {
+      map['teacher'] = Variable<String>(teacher);
+    }
+    if (!nullToAbsent || consultationAt != null) {
+      map['consultation_at'] = Variable<String>(consultationAt);
+    }
+    if (!nullToAbsent || examAt != null) {
+      map['exam_at'] = Variable<String>(examAt);
+    }
+    if (!nullToAbsent || room != null) {
+      map['room'] = Variable<String>(room);
+    }
+    if (!nullToAbsent || kind != null) {
+      map['kind'] = Variable<String>(kind);
+    }
+    return map;
+  }
+
+  CachedExamsCompanion toCompanion(bool nullToAbsent) {
+    return CachedExamsCompanion(
+      id: Value(id),
+      groupId: Value(groupId),
+      subject: Value(subject),
+      teacher: teacher == null && nullToAbsent
+          ? const Value.absent()
+          : Value(teacher),
+      consultationAt: consultationAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(consultationAt),
+      examAt: examAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(examAt),
+      room: room == null && nullToAbsent ? const Value.absent() : Value(room),
+      kind: kind == null && nullToAbsent ? const Value.absent() : Value(kind),
+    );
+  }
+
+  factory CachedExam.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CachedExam(
+      id: serializer.fromJson<int>(json['id']),
+      groupId: serializer.fromJson<int>(json['groupId']),
+      subject: serializer.fromJson<String>(json['subject']),
+      teacher: serializer.fromJson<String?>(json['teacher']),
+      consultationAt: serializer.fromJson<String?>(json['consultationAt']),
+      examAt: serializer.fromJson<String?>(json['examAt']),
+      room: serializer.fromJson<String?>(json['room']),
+      kind: serializer.fromJson<String?>(json['kind']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'groupId': serializer.toJson<int>(groupId),
+      'subject': serializer.toJson<String>(subject),
+      'teacher': serializer.toJson<String?>(teacher),
+      'consultationAt': serializer.toJson<String?>(consultationAt),
+      'examAt': serializer.toJson<String?>(examAt),
+      'room': serializer.toJson<String?>(room),
+      'kind': serializer.toJson<String?>(kind),
+    };
+  }
+
+  CachedExam copyWith({
+    int? id,
+    int? groupId,
+    String? subject,
+    Value<String?> teacher = const Value.absent(),
+    Value<String?> consultationAt = const Value.absent(),
+    Value<String?> examAt = const Value.absent(),
+    Value<String?> room = const Value.absent(),
+    Value<String?> kind = const Value.absent(),
+  }) => CachedExam(
+    id: id ?? this.id,
+    groupId: groupId ?? this.groupId,
+    subject: subject ?? this.subject,
+    teacher: teacher.present ? teacher.value : this.teacher,
+    consultationAt: consultationAt.present
+        ? consultationAt.value
+        : this.consultationAt,
+    examAt: examAt.present ? examAt.value : this.examAt,
+    room: room.present ? room.value : this.room,
+    kind: kind.present ? kind.value : this.kind,
+  );
+  CachedExam copyWithCompanion(CachedExamsCompanion data) {
+    return CachedExam(
+      id: data.id.present ? data.id.value : this.id,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      subject: data.subject.present ? data.subject.value : this.subject,
+      teacher: data.teacher.present ? data.teacher.value : this.teacher,
+      consultationAt: data.consultationAt.present
+          ? data.consultationAt.value
+          : this.consultationAt,
+      examAt: data.examAt.present ? data.examAt.value : this.examAt,
+      room: data.room.present ? data.room.value : this.room,
+      kind: data.kind.present ? data.kind.value : this.kind,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedExam(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('subject: $subject, ')
+          ..write('teacher: $teacher, ')
+          ..write('consultationAt: $consultationAt, ')
+          ..write('examAt: $examAt, ')
+          ..write('room: $room, ')
+          ..write('kind: $kind')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    groupId,
+    subject,
+    teacher,
+    consultationAt,
+    examAt,
+    room,
+    kind,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CachedExam &&
+          other.id == this.id &&
+          other.groupId == this.groupId &&
+          other.subject == this.subject &&
+          other.teacher == this.teacher &&
+          other.consultationAt == this.consultationAt &&
+          other.examAt == this.examAt &&
+          other.room == this.room &&
+          other.kind == this.kind);
+}
+
+class CachedExamsCompanion extends UpdateCompanion<CachedExam> {
+  final Value<int> id;
+  final Value<int> groupId;
+  final Value<String> subject;
+  final Value<String?> teacher;
+  final Value<String?> consultationAt;
+  final Value<String?> examAt;
+  final Value<String?> room;
+  final Value<String?> kind;
+  const CachedExamsCompanion({
+    this.id = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.subject = const Value.absent(),
+    this.teacher = const Value.absent(),
+    this.consultationAt = const Value.absent(),
+    this.examAt = const Value.absent(),
+    this.room = const Value.absent(),
+    this.kind = const Value.absent(),
+  });
+  CachedExamsCompanion.insert({
+    this.id = const Value.absent(),
+    required int groupId,
+    required String subject,
+    this.teacher = const Value.absent(),
+    this.consultationAt = const Value.absent(),
+    this.examAt = const Value.absent(),
+    this.room = const Value.absent(),
+    this.kind = const Value.absent(),
+  }) : groupId = Value(groupId),
+       subject = Value(subject);
+  static Insertable<CachedExam> custom({
+    Expression<int>? id,
+    Expression<int>? groupId,
+    Expression<String>? subject,
+    Expression<String>? teacher,
+    Expression<String>? consultationAt,
+    Expression<String>? examAt,
+    Expression<String>? room,
+    Expression<String>? kind,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (groupId != null) 'group_id': groupId,
+      if (subject != null) 'subject': subject,
+      if (teacher != null) 'teacher': teacher,
+      if (consultationAt != null) 'consultation_at': consultationAt,
+      if (examAt != null) 'exam_at': examAt,
+      if (room != null) 'room': room,
+      if (kind != null) 'kind': kind,
+    });
+  }
+
+  CachedExamsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? groupId,
+    Value<String>? subject,
+    Value<String?>? teacher,
+    Value<String?>? consultationAt,
+    Value<String?>? examAt,
+    Value<String?>? room,
+    Value<String?>? kind,
+  }) {
+    return CachedExamsCompanion(
+      id: id ?? this.id,
+      groupId: groupId ?? this.groupId,
+      subject: subject ?? this.subject,
+      teacher: teacher ?? this.teacher,
+      consultationAt: consultationAt ?? this.consultationAt,
+      examAt: examAt ?? this.examAt,
+      room: room ?? this.room,
+      kind: kind ?? this.kind,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<int>(groupId.value);
+    }
+    if (subject.present) {
+      map['subject'] = Variable<String>(subject.value);
+    }
+    if (teacher.present) {
+      map['teacher'] = Variable<String>(teacher.value);
+    }
+    if (consultationAt.present) {
+      map['consultation_at'] = Variable<String>(consultationAt.value);
+    }
+    if (examAt.present) {
+      map['exam_at'] = Variable<String>(examAt.value);
+    }
+    if (room.present) {
+      map['room'] = Variable<String>(room.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedExamsCompanion(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('subject: $subject, ')
+          ..write('teacher: $teacher, ')
+          ..write('consultationAt: $consultationAt, ')
+          ..write('examAt: $examAt, ')
+          ..write('room: $room, ')
+          ..write('kind: $kind')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ExamCacheMetaTable extends ExamCacheMeta
+    with TableInfo<$ExamCacheMetaTable, ExamCacheMetaData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ExamCacheMetaTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<int> groupId = GeneratedColumn<int>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _etagMeta = const VerificationMeta('etag');
+  @override
+  late final GeneratedColumn<String> etag = GeneratedColumn<String>(
+    'etag',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _syncedAtMeta = const VerificationMeta(
+    'syncedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> syncedAt = GeneratedColumn<DateTime>(
+    'synced_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [groupId, etag, syncedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'exam_cache_meta';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ExamCacheMetaData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    }
+    if (data.containsKey('etag')) {
+      context.handle(
+        _etagMeta,
+        etag.isAcceptableOrUnknown(data['etag']!, _etagMeta),
+      );
+    }
+    if (data.containsKey('synced_at')) {
+      context.handle(
+        _syncedAtMeta,
+        syncedAt.isAcceptableOrUnknown(data['synced_at']!, _syncedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_syncedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {groupId};
+  @override
+  ExamCacheMetaData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ExamCacheMetaData(
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}group_id'],
+      )!,
+      etag: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}etag'],
+      ),
+      syncedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}synced_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ExamCacheMetaTable createAlias(String alias) {
+    return $ExamCacheMetaTable(attachedDatabase, alias);
+  }
+}
+
+class ExamCacheMetaData extends DataClass
+    implements Insertable<ExamCacheMetaData> {
+  final int groupId;
+  final String? etag;
+  final DateTime syncedAt;
+  const ExamCacheMetaData({
+    required this.groupId,
+    this.etag,
+    required this.syncedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['group_id'] = Variable<int>(groupId);
+    if (!nullToAbsent || etag != null) {
+      map['etag'] = Variable<String>(etag);
+    }
+    map['synced_at'] = Variable<DateTime>(syncedAt);
+    return map;
+  }
+
+  ExamCacheMetaCompanion toCompanion(bool nullToAbsent) {
+    return ExamCacheMetaCompanion(
+      groupId: Value(groupId),
+      etag: etag == null && nullToAbsent ? const Value.absent() : Value(etag),
+      syncedAt: Value(syncedAt),
+    );
+  }
+
+  factory ExamCacheMetaData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ExamCacheMetaData(
+      groupId: serializer.fromJson<int>(json['groupId']),
+      etag: serializer.fromJson<String?>(json['etag']),
+      syncedAt: serializer.fromJson<DateTime>(json['syncedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'groupId': serializer.toJson<int>(groupId),
+      'etag': serializer.toJson<String?>(etag),
+      'syncedAt': serializer.toJson<DateTime>(syncedAt),
+    };
+  }
+
+  ExamCacheMetaData copyWith({
+    int? groupId,
+    Value<String?> etag = const Value.absent(),
+    DateTime? syncedAt,
+  }) => ExamCacheMetaData(
+    groupId: groupId ?? this.groupId,
+    etag: etag.present ? etag.value : this.etag,
+    syncedAt: syncedAt ?? this.syncedAt,
+  );
+  ExamCacheMetaData copyWithCompanion(ExamCacheMetaCompanion data) {
+    return ExamCacheMetaData(
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      etag: data.etag.present ? data.etag.value : this.etag,
+      syncedAt: data.syncedAt.present ? data.syncedAt.value : this.syncedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ExamCacheMetaData(')
+          ..write('groupId: $groupId, ')
+          ..write('etag: $etag, ')
+          ..write('syncedAt: $syncedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(groupId, etag, syncedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ExamCacheMetaData &&
+          other.groupId == this.groupId &&
+          other.etag == this.etag &&
+          other.syncedAt == this.syncedAt);
+}
+
+class ExamCacheMetaCompanion extends UpdateCompanion<ExamCacheMetaData> {
+  final Value<int> groupId;
+  final Value<String?> etag;
+  final Value<DateTime> syncedAt;
+  const ExamCacheMetaCompanion({
+    this.groupId = const Value.absent(),
+    this.etag = const Value.absent(),
+    this.syncedAt = const Value.absent(),
+  });
+  ExamCacheMetaCompanion.insert({
+    this.groupId = const Value.absent(),
+    this.etag = const Value.absent(),
+    required DateTime syncedAt,
+  }) : syncedAt = Value(syncedAt);
+  static Insertable<ExamCacheMetaData> custom({
+    Expression<int>? groupId,
+    Expression<String>? etag,
+    Expression<DateTime>? syncedAt,
+  }) {
+    return RawValuesInsertable({
+      if (groupId != null) 'group_id': groupId,
+      if (etag != null) 'etag': etag,
+      if (syncedAt != null) 'synced_at': syncedAt,
+    });
+  }
+
+  ExamCacheMetaCompanion copyWith({
+    Value<int>? groupId,
+    Value<String?>? etag,
+    Value<DateTime>? syncedAt,
+  }) {
+    return ExamCacheMetaCompanion(
+      groupId: groupId ?? this.groupId,
+      etag: etag ?? this.etag,
+      syncedAt: syncedAt ?? this.syncedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (groupId.present) {
+      map['group_id'] = Variable<int>(groupId.value);
+    }
+    if (etag.present) {
+      map['etag'] = Variable<String>(etag.value);
+    }
+    if (syncedAt.present) {
+      map['synced_at'] = Variable<DateTime>(syncedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ExamCacheMetaCompanion(')
           ..write('groupId: $groupId, ')
           ..write('etag: $etag, ')
           ..write('syncedAt: $syncedAt')
@@ -1898,8 +3476,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $CachedLessonsTable cachedLessons = $CachedLessonsTable(this);
+  late final $CachedModulesTable cachedModules = $CachedModulesTable(this);
+  late final $CachedWeekCalendarTable cachedWeekCalendar =
+      $CachedWeekCalendarTable(this);
   late final $ScheduleCacheMetaTable scheduleCacheMeta =
       $ScheduleCacheMetaTable(this);
+  late final $CachedExamsTable cachedExams = $CachedExamsTable(this);
+  late final $ExamCacheMetaTable examCacheMeta = $ExamCacheMetaTable(this);
   late final $CachedNewsTable cachedNews = $CachedNewsTable(this);
   late final $CachedContactsTable cachedContacts = $CachedContactsTable(this);
   @override
@@ -1908,7 +3491,11 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     cachedLessons,
+    cachedModules,
+    cachedWeekCalendar,
     scheduleCacheMeta,
+    cachedExams,
+    examCacheMeta,
     cachedNews,
     cachedContacts,
   ];
@@ -1924,9 +3511,12 @@ typedef $$CachedLessonsTableCreateCompanionBuilder =
       required String endsAt,
       required String subject,
       Value<String?> room,
-      required String weekType,
+      Value<String?> weekType,
       required int subgroup,
       Value<String?> teacherName,
+      Value<int?> moduleId,
+      Value<String?> validFrom,
+      Value<String?> validTo,
     });
 typedef $$CachedLessonsTableUpdateCompanionBuilder =
     CachedLessonsCompanion Function({
@@ -1938,9 +3528,12 @@ typedef $$CachedLessonsTableUpdateCompanionBuilder =
       Value<String> endsAt,
       Value<String> subject,
       Value<String?> room,
-      Value<String> weekType,
+      Value<String?> weekType,
       Value<int> subgroup,
       Value<String?> teacherName,
+      Value<int?> moduleId,
+      Value<String?> validFrom,
+      Value<String?> validTo,
     });
 
 class $$CachedLessonsTableFilterComposer
@@ -2004,6 +3597,21 @@ class $$CachedLessonsTableFilterComposer
 
   ColumnFilters<String> get teacherName => $composableBuilder(
     column: $table.teacherName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get moduleId => $composableBuilder(
+    column: $table.moduleId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get validFrom => $composableBuilder(
+    column: $table.validFrom,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get validTo => $composableBuilder(
+    column: $table.validTo,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -2071,6 +3679,21 @@ class $$CachedLessonsTableOrderingComposer
     column: $table.teacherName,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get moduleId => $composableBuilder(
+    column: $table.moduleId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get validFrom => $composableBuilder(
+    column: $table.validFrom,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get validTo => $composableBuilder(
+    column: $table.validTo,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CachedLessonsTableAnnotationComposer
@@ -2118,6 +3741,15 @@ class $$CachedLessonsTableAnnotationComposer
     column: $table.teacherName,
     builder: (column) => column,
   );
+
+  GeneratedColumn<int> get moduleId =>
+      $composableBuilder(column: $table.moduleId, builder: (column) => column);
+
+  GeneratedColumn<String> get validFrom =>
+      $composableBuilder(column: $table.validFrom, builder: (column) => column);
+
+  GeneratedColumn<String> get validTo =>
+      $composableBuilder(column: $table.validTo, builder: (column) => column);
 }
 
 class $$CachedLessonsTableTableManager
@@ -2159,9 +3791,12 @@ class $$CachedLessonsTableTableManager
                 Value<String> endsAt = const Value.absent(),
                 Value<String> subject = const Value.absent(),
                 Value<String?> room = const Value.absent(),
-                Value<String> weekType = const Value.absent(),
+                Value<String?> weekType = const Value.absent(),
                 Value<int> subgroup = const Value.absent(),
                 Value<String?> teacherName = const Value.absent(),
+                Value<int?> moduleId = const Value.absent(),
+                Value<String?> validFrom = const Value.absent(),
+                Value<String?> validTo = const Value.absent(),
               }) => CachedLessonsCompanion(
                 id: id,
                 groupId: groupId,
@@ -2174,6 +3809,9 @@ class $$CachedLessonsTableTableManager
                 weekType: weekType,
                 subgroup: subgroup,
                 teacherName: teacherName,
+                moduleId: moduleId,
+                validFrom: validFrom,
+                validTo: validTo,
               ),
           createCompanionCallback:
               ({
@@ -2185,9 +3823,12 @@ class $$CachedLessonsTableTableManager
                 required String endsAt,
                 required String subject,
                 Value<String?> room = const Value.absent(),
-                required String weekType,
+                Value<String?> weekType = const Value.absent(),
                 required int subgroup,
                 Value<String?> teacherName = const Value.absent(),
+                Value<int?> moduleId = const Value.absent(),
+                Value<String?> validFrom = const Value.absent(),
+                Value<String?> validTo = const Value.absent(),
               }) => CachedLessonsCompanion.insert(
                 id: id,
                 groupId: groupId,
@@ -2200,6 +3841,9 @@ class $$CachedLessonsTableTableManager
                 weekType: weekType,
                 subgroup: subgroup,
                 teacherName: teacherName,
+                moduleId: moduleId,
+                validFrom: validFrom,
+                validTo: validTo,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -2224,6 +3868,400 @@ typedef $$CachedLessonsTableProcessedTableManager =
         BaseReferences<_$AppDatabase, $CachedLessonsTable, CachedLesson>,
       ),
       CachedLesson,
+      PrefetchHooks Function()
+    >;
+typedef $$CachedModulesTableCreateCompanionBuilder =
+    CachedModulesCompanion Function({
+      required int groupId,
+      required int moduleId,
+      Value<String?> name,
+      required String dateFrom,
+      required String dateTo,
+      Value<int> rowid,
+    });
+typedef $$CachedModulesTableUpdateCompanionBuilder =
+    CachedModulesCompanion Function({
+      Value<int> groupId,
+      Value<int> moduleId,
+      Value<String?> name,
+      Value<String> dateFrom,
+      Value<String> dateTo,
+      Value<int> rowid,
+    });
+
+class $$CachedModulesTableFilterComposer
+    extends Composer<_$AppDatabase, $CachedModulesTable> {
+  $$CachedModulesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get moduleId => $composableBuilder(
+    column: $table.moduleId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dateFrom => $composableBuilder(
+    column: $table.dateFrom,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dateTo => $composableBuilder(
+    column: $table.dateTo,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CachedModulesTableOrderingComposer
+    extends Composer<_$AppDatabase, $CachedModulesTable> {
+  $$CachedModulesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get moduleId => $composableBuilder(
+    column: $table.moduleId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get dateFrom => $composableBuilder(
+    column: $table.dateFrom,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get dateTo => $composableBuilder(
+    column: $table.dateTo,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CachedModulesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CachedModulesTable> {
+  $$CachedModulesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get groupId =>
+      $composableBuilder(column: $table.groupId, builder: (column) => column);
+
+  GeneratedColumn<int> get moduleId =>
+      $composableBuilder(column: $table.moduleId, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get dateFrom =>
+      $composableBuilder(column: $table.dateFrom, builder: (column) => column);
+
+  GeneratedColumn<String> get dateTo =>
+      $composableBuilder(column: $table.dateTo, builder: (column) => column);
+}
+
+class $$CachedModulesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CachedModulesTable,
+          CachedModule,
+          $$CachedModulesTableFilterComposer,
+          $$CachedModulesTableOrderingComposer,
+          $$CachedModulesTableAnnotationComposer,
+          $$CachedModulesTableCreateCompanionBuilder,
+          $$CachedModulesTableUpdateCompanionBuilder,
+          (
+            CachedModule,
+            BaseReferences<_$AppDatabase, $CachedModulesTable, CachedModule>,
+          ),
+          CachedModule,
+          PrefetchHooks Function()
+        > {
+  $$CachedModulesTableTableManager(_$AppDatabase db, $CachedModulesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CachedModulesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CachedModulesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CachedModulesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> groupId = const Value.absent(),
+                Value<int> moduleId = const Value.absent(),
+                Value<String?> name = const Value.absent(),
+                Value<String> dateFrom = const Value.absent(),
+                Value<String> dateTo = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CachedModulesCompanion(
+                groupId: groupId,
+                moduleId: moduleId,
+                name: name,
+                dateFrom: dateFrom,
+                dateTo: dateTo,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int groupId,
+                required int moduleId,
+                Value<String?> name = const Value.absent(),
+                required String dateFrom,
+                required String dateTo,
+                Value<int> rowid = const Value.absent(),
+              }) => CachedModulesCompanion.insert(
+                groupId: groupId,
+                moduleId: moduleId,
+                name: name,
+                dateFrom: dateFrom,
+                dateTo: dateTo,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CachedModulesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CachedModulesTable,
+      CachedModule,
+      $$CachedModulesTableFilterComposer,
+      $$CachedModulesTableOrderingComposer,
+      $$CachedModulesTableAnnotationComposer,
+      $$CachedModulesTableCreateCompanionBuilder,
+      $$CachedModulesTableUpdateCompanionBuilder,
+      (
+        CachedModule,
+        BaseReferences<_$AppDatabase, $CachedModulesTable, CachedModule>,
+      ),
+      CachedModule,
+      PrefetchHooks Function()
+    >;
+typedef $$CachedWeekCalendarTableCreateCompanionBuilder =
+    CachedWeekCalendarCompanion Function({
+      required int groupId,
+      required String dateFrom,
+      required String dateTo,
+      required String weekType,
+      Value<int> rowid,
+    });
+typedef $$CachedWeekCalendarTableUpdateCompanionBuilder =
+    CachedWeekCalendarCompanion Function({
+      Value<int> groupId,
+      Value<String> dateFrom,
+      Value<String> dateTo,
+      Value<String> weekType,
+      Value<int> rowid,
+    });
+
+class $$CachedWeekCalendarTableFilterComposer
+    extends Composer<_$AppDatabase, $CachedWeekCalendarTable> {
+  $$CachedWeekCalendarTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dateFrom => $composableBuilder(
+    column: $table.dateFrom,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dateTo => $composableBuilder(
+    column: $table.dateTo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get weekType => $composableBuilder(
+    column: $table.weekType,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CachedWeekCalendarTableOrderingComposer
+    extends Composer<_$AppDatabase, $CachedWeekCalendarTable> {
+  $$CachedWeekCalendarTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get dateFrom => $composableBuilder(
+    column: $table.dateFrom,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get dateTo => $composableBuilder(
+    column: $table.dateTo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get weekType => $composableBuilder(
+    column: $table.weekType,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CachedWeekCalendarTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CachedWeekCalendarTable> {
+  $$CachedWeekCalendarTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get groupId =>
+      $composableBuilder(column: $table.groupId, builder: (column) => column);
+
+  GeneratedColumn<String> get dateFrom =>
+      $composableBuilder(column: $table.dateFrom, builder: (column) => column);
+
+  GeneratedColumn<String> get dateTo =>
+      $composableBuilder(column: $table.dateTo, builder: (column) => column);
+
+  GeneratedColumn<String> get weekType =>
+      $composableBuilder(column: $table.weekType, builder: (column) => column);
+}
+
+class $$CachedWeekCalendarTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CachedWeekCalendarTable,
+          CachedWeekCalendarData,
+          $$CachedWeekCalendarTableFilterComposer,
+          $$CachedWeekCalendarTableOrderingComposer,
+          $$CachedWeekCalendarTableAnnotationComposer,
+          $$CachedWeekCalendarTableCreateCompanionBuilder,
+          $$CachedWeekCalendarTableUpdateCompanionBuilder,
+          (
+            CachedWeekCalendarData,
+            BaseReferences<
+              _$AppDatabase,
+              $CachedWeekCalendarTable,
+              CachedWeekCalendarData
+            >,
+          ),
+          CachedWeekCalendarData,
+          PrefetchHooks Function()
+        > {
+  $$CachedWeekCalendarTableTableManager(
+    _$AppDatabase db,
+    $CachedWeekCalendarTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CachedWeekCalendarTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CachedWeekCalendarTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CachedWeekCalendarTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> groupId = const Value.absent(),
+                Value<String> dateFrom = const Value.absent(),
+                Value<String> dateTo = const Value.absent(),
+                Value<String> weekType = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CachedWeekCalendarCompanion(
+                groupId: groupId,
+                dateFrom: dateFrom,
+                dateTo: dateTo,
+                weekType: weekType,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int groupId,
+                required String dateFrom,
+                required String dateTo,
+                required String weekType,
+                Value<int> rowid = const Value.absent(),
+              }) => CachedWeekCalendarCompanion.insert(
+                groupId: groupId,
+                dateFrom: dateFrom,
+                dateTo: dateTo,
+                weekType: weekType,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CachedWeekCalendarTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CachedWeekCalendarTable,
+      CachedWeekCalendarData,
+      $$CachedWeekCalendarTableFilterComposer,
+      $$CachedWeekCalendarTableOrderingComposer,
+      $$CachedWeekCalendarTableAnnotationComposer,
+      $$CachedWeekCalendarTableCreateCompanionBuilder,
+      $$CachedWeekCalendarTableUpdateCompanionBuilder,
+      (
+        CachedWeekCalendarData,
+        BaseReferences<
+          _$AppDatabase,
+          $CachedWeekCalendarTable,
+          CachedWeekCalendarData
+        >,
+      ),
+      CachedWeekCalendarData,
       PrefetchHooks Function()
     >;
 typedef $$ScheduleCacheMetaTableCreateCompanionBuilder =
@@ -2393,6 +4431,419 @@ typedef $$ScheduleCacheMetaTableProcessedTableManager =
         >,
       ),
       ScheduleCacheMetaData,
+      PrefetchHooks Function()
+    >;
+typedef $$CachedExamsTableCreateCompanionBuilder =
+    CachedExamsCompanion Function({
+      Value<int> id,
+      required int groupId,
+      required String subject,
+      Value<String?> teacher,
+      Value<String?> consultationAt,
+      Value<String?> examAt,
+      Value<String?> room,
+      Value<String?> kind,
+    });
+typedef $$CachedExamsTableUpdateCompanionBuilder =
+    CachedExamsCompanion Function({
+      Value<int> id,
+      Value<int> groupId,
+      Value<String> subject,
+      Value<String?> teacher,
+      Value<String?> consultationAt,
+      Value<String?> examAt,
+      Value<String?> room,
+      Value<String?> kind,
+    });
+
+class $$CachedExamsTableFilterComposer
+    extends Composer<_$AppDatabase, $CachedExamsTable> {
+  $$CachedExamsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get subject => $composableBuilder(
+    column: $table.subject,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get teacher => $composableBuilder(
+    column: $table.teacher,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get consultationAt => $composableBuilder(
+    column: $table.consultationAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get examAt => $composableBuilder(
+    column: $table.examAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get room => $composableBuilder(
+    column: $table.room,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CachedExamsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CachedExamsTable> {
+  $$CachedExamsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get subject => $composableBuilder(
+    column: $table.subject,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get teacher => $composableBuilder(
+    column: $table.teacher,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get consultationAt => $composableBuilder(
+    column: $table.consultationAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get examAt => $composableBuilder(
+    column: $table.examAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get room => $composableBuilder(
+    column: $table.room,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CachedExamsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CachedExamsTable> {
+  $$CachedExamsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get groupId =>
+      $composableBuilder(column: $table.groupId, builder: (column) => column);
+
+  GeneratedColumn<String> get subject =>
+      $composableBuilder(column: $table.subject, builder: (column) => column);
+
+  GeneratedColumn<String> get teacher =>
+      $composableBuilder(column: $table.teacher, builder: (column) => column);
+
+  GeneratedColumn<String> get consultationAt => $composableBuilder(
+    column: $table.consultationAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get examAt =>
+      $composableBuilder(column: $table.examAt, builder: (column) => column);
+
+  GeneratedColumn<String> get room =>
+      $composableBuilder(column: $table.room, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+}
+
+class $$CachedExamsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CachedExamsTable,
+          CachedExam,
+          $$CachedExamsTableFilterComposer,
+          $$CachedExamsTableOrderingComposer,
+          $$CachedExamsTableAnnotationComposer,
+          $$CachedExamsTableCreateCompanionBuilder,
+          $$CachedExamsTableUpdateCompanionBuilder,
+          (
+            CachedExam,
+            BaseReferences<_$AppDatabase, $CachedExamsTable, CachedExam>,
+          ),
+          CachedExam,
+          PrefetchHooks Function()
+        > {
+  $$CachedExamsTableTableManager(_$AppDatabase db, $CachedExamsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CachedExamsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CachedExamsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CachedExamsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> groupId = const Value.absent(),
+                Value<String> subject = const Value.absent(),
+                Value<String?> teacher = const Value.absent(),
+                Value<String?> consultationAt = const Value.absent(),
+                Value<String?> examAt = const Value.absent(),
+                Value<String?> room = const Value.absent(),
+                Value<String?> kind = const Value.absent(),
+              }) => CachedExamsCompanion(
+                id: id,
+                groupId: groupId,
+                subject: subject,
+                teacher: teacher,
+                consultationAt: consultationAt,
+                examAt: examAt,
+                room: room,
+                kind: kind,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int groupId,
+                required String subject,
+                Value<String?> teacher = const Value.absent(),
+                Value<String?> consultationAt = const Value.absent(),
+                Value<String?> examAt = const Value.absent(),
+                Value<String?> room = const Value.absent(),
+                Value<String?> kind = const Value.absent(),
+              }) => CachedExamsCompanion.insert(
+                id: id,
+                groupId: groupId,
+                subject: subject,
+                teacher: teacher,
+                consultationAt: consultationAt,
+                examAt: examAt,
+                room: room,
+                kind: kind,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CachedExamsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CachedExamsTable,
+      CachedExam,
+      $$CachedExamsTableFilterComposer,
+      $$CachedExamsTableOrderingComposer,
+      $$CachedExamsTableAnnotationComposer,
+      $$CachedExamsTableCreateCompanionBuilder,
+      $$CachedExamsTableUpdateCompanionBuilder,
+      (
+        CachedExam,
+        BaseReferences<_$AppDatabase, $CachedExamsTable, CachedExam>,
+      ),
+      CachedExam,
+      PrefetchHooks Function()
+    >;
+typedef $$ExamCacheMetaTableCreateCompanionBuilder =
+    ExamCacheMetaCompanion Function({
+      Value<int> groupId,
+      Value<String?> etag,
+      required DateTime syncedAt,
+    });
+typedef $$ExamCacheMetaTableUpdateCompanionBuilder =
+    ExamCacheMetaCompanion Function({
+      Value<int> groupId,
+      Value<String?> etag,
+      Value<DateTime> syncedAt,
+    });
+
+class $$ExamCacheMetaTableFilterComposer
+    extends Composer<_$AppDatabase, $ExamCacheMetaTable> {
+  $$ExamCacheMetaTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get etag => $composableBuilder(
+    column: $table.etag,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get syncedAt => $composableBuilder(
+    column: $table.syncedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ExamCacheMetaTableOrderingComposer
+    extends Composer<_$AppDatabase, $ExamCacheMetaTable> {
+  $$ExamCacheMetaTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get etag => $composableBuilder(
+    column: $table.etag,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get syncedAt => $composableBuilder(
+    column: $table.syncedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ExamCacheMetaTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ExamCacheMetaTable> {
+  $$ExamCacheMetaTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get groupId =>
+      $composableBuilder(column: $table.groupId, builder: (column) => column);
+
+  GeneratedColumn<String> get etag =>
+      $composableBuilder(column: $table.etag, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get syncedAt =>
+      $composableBuilder(column: $table.syncedAt, builder: (column) => column);
+}
+
+class $$ExamCacheMetaTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ExamCacheMetaTable,
+          ExamCacheMetaData,
+          $$ExamCacheMetaTableFilterComposer,
+          $$ExamCacheMetaTableOrderingComposer,
+          $$ExamCacheMetaTableAnnotationComposer,
+          $$ExamCacheMetaTableCreateCompanionBuilder,
+          $$ExamCacheMetaTableUpdateCompanionBuilder,
+          (
+            ExamCacheMetaData,
+            BaseReferences<
+              _$AppDatabase,
+              $ExamCacheMetaTable,
+              ExamCacheMetaData
+            >,
+          ),
+          ExamCacheMetaData,
+          PrefetchHooks Function()
+        > {
+  $$ExamCacheMetaTableTableManager(_$AppDatabase db, $ExamCacheMetaTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ExamCacheMetaTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ExamCacheMetaTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ExamCacheMetaTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> groupId = const Value.absent(),
+                Value<String?> etag = const Value.absent(),
+                Value<DateTime> syncedAt = const Value.absent(),
+              }) => ExamCacheMetaCompanion(
+                groupId: groupId,
+                etag: etag,
+                syncedAt: syncedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> groupId = const Value.absent(),
+                Value<String?> etag = const Value.absent(),
+                required DateTime syncedAt,
+              }) => ExamCacheMetaCompanion.insert(
+                groupId: groupId,
+                etag: etag,
+                syncedAt: syncedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ExamCacheMetaTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ExamCacheMetaTable,
+      ExamCacheMetaData,
+      $$ExamCacheMetaTableFilterComposer,
+      $$ExamCacheMetaTableOrderingComposer,
+      $$ExamCacheMetaTableAnnotationComposer,
+      $$ExamCacheMetaTableCreateCompanionBuilder,
+      $$ExamCacheMetaTableUpdateCompanionBuilder,
+      (
+        ExamCacheMetaData,
+        BaseReferences<_$AppDatabase, $ExamCacheMetaTable, ExamCacheMetaData>,
+      ),
+      ExamCacheMetaData,
       PrefetchHooks Function()
     >;
 typedef $$CachedNewsTableCreateCompanionBuilder =
@@ -2908,8 +5359,16 @@ class $AppDatabaseManager {
   $AppDatabaseManager(this._db);
   $$CachedLessonsTableTableManager get cachedLessons =>
       $$CachedLessonsTableTableManager(_db, _db.cachedLessons);
+  $$CachedModulesTableTableManager get cachedModules =>
+      $$CachedModulesTableTableManager(_db, _db.cachedModules);
+  $$CachedWeekCalendarTableTableManager get cachedWeekCalendar =>
+      $$CachedWeekCalendarTableTableManager(_db, _db.cachedWeekCalendar);
   $$ScheduleCacheMetaTableTableManager get scheduleCacheMeta =>
       $$ScheduleCacheMetaTableTableManager(_db, _db.scheduleCacheMeta);
+  $$CachedExamsTableTableManager get cachedExams =>
+      $$CachedExamsTableTableManager(_db, _db.cachedExams);
+  $$ExamCacheMetaTableTableManager get examCacheMeta =>
+      $$ExamCacheMetaTableTableManager(_db, _db.examCacheMeta);
   $$CachedNewsTableTableManager get cachedNews =>
       $$CachedNewsTableTableManager(_db, _db.cachedNews);
   $$CachedContactsTableTableManager get cachedContacts =>

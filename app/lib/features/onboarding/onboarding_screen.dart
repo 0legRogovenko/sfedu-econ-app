@@ -67,7 +67,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     children: [
                       for (final group in courseGroups)
                         ChoiceChip(
-                          label: Text(group.number),
+                          label: Text(group.displayName),
                           selected: _group?.id == group.id,
                           onSelected: (_) => setState(() => _group = group),
                         ),
