@@ -14,6 +14,14 @@ router = APIRouter()
 def list_groups(
     request: Request, response: Response, db: Session = Depends(get_db)
 ):
-    groups = db.scalars(select(Group).order_by(Group.course, Group.number)).all()
+    # Порядок детерминированный: уровень → курс → номер (бакалавры) / программа
+    # (магистры). level пишется значением ('bachelor' < 'master'), так что
+    # бакалавры идут раньше магистров; внутри курса номер разводит бакалаврские
+    # группы, а программа — магистерские (у них number NULL и тождествен).
+    groups = db.scalars(
+        select(Group).order_by(
+            Group.level, Group.course, Group.number, Group.program
+        )
+    ).all()
     payload = [GroupOut.model_validate(g).model_dump(mode="json") for g in groups]
     return json_with_etag(request, response, payload)

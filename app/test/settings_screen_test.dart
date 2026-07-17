@@ -107,6 +107,10 @@ void main() {
     addTearDown(container.dispose);
     await _pumpSettings(tester, container);
 
+    // Пикер открыт на текущей группе 2.1 (курс 2). Чтобы выбрать 1.1,
+    // раскрываем первый курс, затем жмём группу.
+    await tester.tap(find.text('1 курс'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('1.1'));
     await tester.pumpAndSettle();
 
@@ -132,12 +136,15 @@ void main() {
     addTearDown(container.dispose);
     await _pumpSettings(tester, container);
 
-    expect(
-      find.text(
-        'Неофициальное приложение, сделано студентом. '
-        'Данные берутся с sfedu.ru.',
-      ),
-      findsOneWidget,
+    // Пикер стал выше — блок «О приложении» уходит за нижнюю границу ленивого
+    // ListView, поэтому прокручиваем до него.
+    final about = find.text(
+      'Неофициальное приложение, сделано студентом. '
+      'Данные берутся с sfedu.ru.',
     );
+    await tester.scrollUntilVisible(about, 200,
+        scrollable: find.byType(Scrollable).first);
+
+    expect(about, findsOneWidget);
   });
 }

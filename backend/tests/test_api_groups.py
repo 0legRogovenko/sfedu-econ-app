@@ -30,6 +30,38 @@ def test_groups_sorted_by_course_and_number(client, db_session):
     }
 
 
+def test_groups_sorted_by_level_course_then_number_or_program(client, db_session):
+    """Детерминированный порядок: уровень → курс → номер/программа.
+
+    Бакалавры (level 'bachelor') идут раньше магистров ('master'); внутри курса
+    бакалавров разводит номер группы, магистров — каноническая программа. Список
+    не перемешан и стабилен между запросами независимо от порядка вставки.
+    """
+    db_session.add_all(
+        [
+            Group(course=2, number=None, program="Экономическая аналитика",
+                  level=EducationLevel.MASTER),
+            Group(course=1, number="1.2"),
+            Group(course=1, number=None, program="Корпоративные финансы",
+                  level=EducationLevel.MASTER),
+            Group(course=1, number="1.1"),
+            Group(course=1, number=None, program="Учетные технологии и аудит",
+                  level=EducationLevel.MASTER),
+        ]
+    )
+    db_session.flush()
+
+    payload = client.get("/api/groups").json()
+    order = [(g["level"], g["course"], g["number"], g["program"]) for g in payload]
+    assert order == [
+        ("bachelor", 1, "1.1", None),
+        ("bachelor", 1, "1.2", None),
+        ("master", 1, None, "Корпоративные финансы"),
+        ("master", 1, None, "Учетные технологии и аудит"),
+        ("master", 2, None, "Экономическая аналитика"),
+    ]
+
+
 def test_master_group_serializes_with_program_and_level(client, db_session):
     """У магистров номера группы НЕТ — их идентифицирует программа.
 

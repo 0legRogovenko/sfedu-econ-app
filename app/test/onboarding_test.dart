@@ -69,7 +69,7 @@ Future<Widget> _app() async {
 }
 
 void main() {
-  testWidgets('онбординг: выбор курса и группы ведёт на расписание',
+  testWidgets('онбординг бакалавра: уровень → курс → группа → расписание',
       (tester) async {
     await tester.pumpWidget(await _app());
     await tester.pumpAndSettle();
@@ -77,7 +77,9 @@ void main() {
     // без выбранной группы показывается онбординг
     expect(find.text('Привет! 👋'), findsOneWidget);
 
-    // выбираем курс 2 — остаются группы второго курса
+    // сначала уровень, затем курс 2 — остаются группы второго курса
+    await tester.tap(find.text('Бакалавриат'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('2 курс'));
     await tester.pumpAndSettle();
     expect(find.text('1.1'), findsNothing);
@@ -92,19 +94,21 @@ void main() {
     expect(find.text('Расписание'), findsWidgets);
   });
 
-  testWidgets('магистр в списке подписан программой, а не пустым чипом',
+  testWidgets('онбординг магистра: уровень → направление → курс, без смешивания',
       (tester) async {
     await tester.pumpWidget(await _app());
     await tester.pumpAndSettle();
 
-    // На 1 курсе рядом с бакалаврской 1.1 стоит магистратура, у которой номера
-    // нет. Показать её нечем, кроме программы.
-    await tester.tap(find.text('1 курс'));
+    // Магистратура — отдельный уровень; бакалаврские номера сюда не примешаны.
+    await tester.tap(find.text('Магистратура'));
     await tester.pumpAndSettle();
-    expect(find.text('1.1'), findsOneWidget);
+    expect(find.text('1.1'), findsNothing);
     expect(find.text('Финансы и кредит'), findsOneWidget);
 
+    // Магистр выбирает направление, затем курс — номера у него нет.
     await tester.tap(find.text('Финансы и кредит'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('1 курс'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Начать'));
     await tester.pumpAndSettle();

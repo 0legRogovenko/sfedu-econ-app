@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme_mode.dart';
+import '../onboarding/group_picker.dart';
 import '../onboarding/group_repository.dart';
 import '../onboarding/selected_group.dart';
 
@@ -39,19 +40,18 @@ class SettingsScreen extends ConsumerWidget {
                 children: [
                   Text('Текущая группа: ${currentGroup?.displayName ?? '—'}'),
                   const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final group in groups)
-                        ChoiceChip(
-                          label: Text(group.displayName),
-                          selected: group.id == selectedGroupId,
-                          onSelected: (_) => ref
-                              .read(selectedGroupIdProvider.notifier)
-                              .select(group.id),
-                        ),
-                    ],
+                  GroupPicker(
+                    groups: groups,
+                    initialSelectedId: selectedGroupId,
+                    // Смена уровня/курса шлёт null — сохраняем группу только
+                    // при выборе конечного чипа, иначе стёрли бы текущий выбор.
+                    onSelected: (group) {
+                      if (group != null) {
+                        ref
+                            .read(selectedGroupIdProvider.notifier)
+                            .select(group.id);
+                      }
+                    },
                   ),
                 ],
               );

@@ -59,6 +59,7 @@ from src.schedule.extract_docx import extract_docx
 from src.schedule.extract_pdf import extract_pdf
 from src.schedule.fetch import Fetcher
 from src.schedule.grid import Grid
+from src.schedule.programs import canonical_program
 from src.schedule.source import parse_index
 from src.schedule.structure import (
     PAIR_HALVES,
@@ -1052,6 +1053,13 @@ class _GroupResolver:
         return int(match.group(1)) if match else 0
 
     def _get(self, course, *, number=None, program=None, level) -> Group:
+        # Единственная точка сведения магистерских программ: и путь пар (чистое
+        # имя из расписаний), и путь экзаменов (грязное имя в обёртке из сессий)
+        # проходят здесь. Канонизируем ДО ключа кэша и запроса — тогда оба
+        # написания дают одну группу на (курс, каноническая программа), сливая
+        # пары и экзамены независимо от порядка обработки файлов.
+        if program is not None:
+            program = canonical_program(program)
         key = (course, number, program)
         if key in self._cache:
             return self._cache[key]
