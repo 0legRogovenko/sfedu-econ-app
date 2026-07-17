@@ -270,11 +270,13 @@ class TestGoldenCorpus:
 
     prove() перепарсивает ячейки тем же parse_cell — мутацию самого парсера он
     не видит: соврут оба одинаково, инвариант сойдётся. Эталон — зафиксированный
-    внешний факт: счётчики и полные сигнатуры пар (группа/день/пара/предмет/
-    преподаватель/аудитория/неделя/подгруппа/даты модуля). Он ловит и
-    хирургические выпадения (−14 пар у 13497/13498 при зелёном ledger в атаке
-    раунда 4), и порчу содержимого. Перегенерация — ТОЛЬКО осознанным запуском
-    scripts/regen_golden.py, не починкой красного теста.
+    внешний факт: счётчики и полные сигнатуры пар (группа/день/пара/границы/
+    предмет/преподаватель/аудитория/неделя/подгруппа/даты модуля/окно действия)
+    И экзаменов (группа/предмет/преподаватель/консультация/экзамен/аудитория/
+    форма). Он ловит и хирургические выпадения (−14 пар у 13497/13498 при зелёном
+    ledger в атаке раунда 4), и порчу содержимого — сдвиг экзамена на сутки,
+    съехавшее начало пары, схлопнутое окно модуля. Перегенерация — ТОЛЬКО
+    осознанным запуском scripts/regen_golden.py, не починкой красного теста.
     """
 
     def test_corpus_matches_golden_reference(self, corpus):
@@ -293,10 +295,17 @@ class TestGoldenCorpus:
         problems: list[str] = []
         for p_doc_id, _doc in docs:
             expected = golden[p_doc_id]
-            # Фикстуру не правили руками: хэш обязан сходиться с её же строками.
+            # Фикстуру не правили руками: оба хэша обязаны сойтись со строками.
             assert goldens.signatures_hash(expected["signatures"]) == expected["hash"], (
-                f"{p_doc_id}: golden.json внутренне противоречив — сигнатуры "
+                f"{p_doc_id}: golden.json внутренне противоречив — сигнатуры пар "
                 "правлены в обход scripts/regen_golden.py"
+            )
+            assert (
+                goldens.signatures_hash(expected["exam_signatures"])
+                == expected["exam_hash"]
+            ), (
+                f"{p_doc_id}: golden.json внутренне противоречив — сигнатуры "
+                "экзаменов правлены в обход scripts/regen_golden.py"
             )
             document = session.scalar(
                 select(ScheduleDocument).where(
@@ -309,19 +318,51 @@ class TestGoldenCorpus:
             diff = "\n".join(
                 difflib.unified_diff(
                     expected["signatures"], actual["signatures"],
-                    fromfile=f"{p_doc_id}: эталон", tofile=f"{p_doc_id}: импорт",
+                    fromfile=f"{p_doc_id}: эталон пар", tofile=f"{p_doc_id}: импорт пар",
                     lineterm="",
                 )
             )
+            exam_diff = "\n".join(
+                difflib.unified_diff(
+                    expected["exam_signatures"], actual["exam_signatures"],
+                    fromfile=f"{p_doc_id}: эталон экз", tofile=f"{p_doc_id}: импорт экз",
+                    lineterm="",
+                )
+            )
+            body = "\n".join(part for part in (diff, exam_diff) if part)
             problems.append(
                 f"{p_doc_id}: пар {expected['lessons']}→{actual['lessons']}, "
                 f"экзаменов {expected['exams']}→{actual['exams']}, "
                 f"unparsed {expected['unparsed']}→{actual['unparsed']}\n"
-                f"{diff or '(сигнатуры пар совпали — разошлись счётчики)'}"
+                f"{body or '(сигнатуры совпали — разошлись счётчики)'}"
             )
         assert not problems, (
             "импорт разошёлся с золотым эталоном:\n\n" + "\n\n".join(problems)
         )
+
+
+class TestPairBounds:
+    """Границы пары — внешние края её половин, а не середина.
+
+    _pair_bounds берёт начало ПЕРВОЙ половины и конец ВТОРОЙ. Мутация,
+    возвращающая конец первой половины как начало пары, сдвигает старт всех пар
+    на 45 минут (08:00 → 08:45) — эталон это ловит, но прямой юнит против
+    PAIR_HALVES прибивает поле к таблице напрямую, без прогона всего корпуса.
+    """
+
+    def test_pair_bounds_are_the_outer_edges_of_each_pair(self):
+        from src.schedule.structure import PAIR_HALVES
+
+        for pair_number, (first, second) in PAIR_HALVES.items():
+            starts, ends = importer._pair_bounds(pair_number)
+            assert starts == importer._as_time(first[0]), (
+                f"пара {pair_number}: начало {starts} — не начало первой половины "
+                f"{importer._as_time(first[0])}"
+            )
+            assert ends == importer._as_time(second[1]), (
+                f"пара {pair_number}: конец {ends} — не конец второй половины "
+                f"{importer._as_time(second[1])}"
+            )
 
 
 class TestCategoryMustBeProvenNotJustAssigned:

@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sfedu_econ/core/prefs.dart';
 import 'package:sfedu_econ/features/onboarding/group_repository.dart';
 import 'package:sfedu_econ/features/onboarding/selected_group.dart';
-import 'package:sfedu_econ/features/schedule/lesson.dart';
+import 'package:sfedu_econ/features/schedule/schedule_data.dart';
 import 'package:sfedu_econ/features/schedule/schedule_providers.dart';
 import 'package:sfedu_econ/main.dart';
 import 'package:sfedu_econ/router.dart';
@@ -60,7 +60,8 @@ Future<Widget> _app() async {
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       groupsProvider.overrideWith((ref) async => _groups),
-      lessonsProvider.overrideWith((ref) => Stream.value(const <Lesson>[])),
+      scheduleDataProvider
+          .overrideWith((ref) => Stream.value(const ScheduleData.empty())),
       syncStatusProvider.overrideWith(_FakeSync.new),
     ],
     child: const SfeduEconApp(),
