@@ -11,9 +11,39 @@ import 'package:sfedu_econ/main.dart';
 import 'package:sfedu_econ/router.dart';
 
 const _groups = [
-  Group(id: 1, course: 1, number: '1.1', subgroupCount: 2),
-  Group(id: 3, course: 2, number: '2.1', subgroupCount: 2),
-  Group(id: 4, course: 2, number: '2.2', subgroupCount: 2),
+  Group(
+    id: 1,
+    course: 1,
+    number: '1.1',
+    program: null,
+    level: EducationLevel.bachelor,
+    subgroupCount: 2,
+  ),
+  Group(
+    id: 3,
+    course: 2,
+    number: '2.1',
+    program: null,
+    level: EducationLevel.bachelor,
+    subgroupCount: 2,
+  ),
+  Group(
+    id: 4,
+    course: 2,
+    number: '2.2',
+    program: null,
+    level: EducationLevel.bachelor,
+    subgroupCount: 2,
+  ),
+  // У магистра номера нет — в списке первого курса он подписан программой.
+  Group(
+    id: 7,
+    course: 1,
+    number: null,
+    program: 'Финансы и кредит',
+    level: EducationLevel.master,
+    subgroupCount: 1,
+  ),
 ];
 
 /// Экран расписания в фоне ходит в реальную drift-БД/dio — здесь это
@@ -58,6 +88,26 @@ void main() {
     await tester.pumpAndSettle();
 
     // попали на вкладки
+    expect(find.text('Расписание'), findsWidgets);
+  });
+
+  testWidgets('магистр в списке подписан программой, а не пустым чипом',
+      (tester) async {
+    await tester.pumpWidget(await _app());
+    await tester.pumpAndSettle();
+
+    // На 1 курсе рядом с бакалаврской 1.1 стоит магистратура, у которой номера
+    // нет. Показать её нечем, кроме программы.
+    await tester.tap(find.text('1 курс'));
+    await tester.pumpAndSettle();
+    expect(find.text('1.1'), findsOneWidget);
+    expect(find.text('Финансы и кредит'), findsOneWidget);
+
+    await tester.tap(find.text('Финансы и кредит'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Начать'));
+    await tester.pumpAndSettle();
+
     expect(find.text('Расписание'), findsWidgets);
   });
 

@@ -4,15 +4,24 @@ from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, StringConstraints
 
-from src.models import NewsSource, WeekType
+from src.models import EducationLevel, NewsSource, WeekType
 
 
 class GroupOut(BaseModel):
+    """Группа для онбординга.
+
+    У магистров номера группы НЕТ — их идентифицирует программа, и без неё
+    клиент видит только number:null и показать их не может. level говорит ему,
+    какое из двух полей брать, вместо догадки «number пустой → наверное магистр».
+    """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     course: int
-    number: str
+    number: str | None  # у магистров номера группы нет — тогда заполнена program
+    program: str | None  # у бакалавров None
+    level: EducationLevel
     subgroup_count: int
 
 
@@ -34,7 +43,7 @@ class LessonOut(BaseModel):
     ends_at: time_type
     subject: str
     room: str | None
-    week_type: WeekType
+    week_type: WeekType | None  # null = каждую неделю
     subgroup: int
     teacher: TeacherBrief | None
 

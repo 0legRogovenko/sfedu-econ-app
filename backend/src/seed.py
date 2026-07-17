@@ -66,37 +66,37 @@ def seed() -> None:
                 group_id=demo.id, weekday=0, pair_number=1,
                 starts_at=PAIR_TIMES[1][0], ends_at=PAIR_TIMES[1][1],
                 subject="Макроэкономика", teacher_id=teachers[0].id,
-                room="220", week_type=WeekType.BOTH,
+                room="220", week_type=None,
             ),
             Lesson(
                 group_id=demo.id, weekday=0, pair_number=2,
                 starts_at=PAIR_TIMES[2][0], ends_at=PAIR_TIMES[2][1],
                 subject="Эконометрика", teacher_id=teachers[1].id,
-                room="305", week_type=WeekType.NUMERATOR,
+                room="305", week_type=WeekType.UPPER,
             ),
             Lesson(
                 group_id=demo.id, weekday=0, pair_number=2,
                 starts_at=PAIR_TIMES[2][0], ends_at=PAIR_TIMES[2][1],
                 subject="Статистика", teacher_id=teachers[1].id,
-                room="307", week_type=WeekType.DENOMINATOR,
+                room="307", week_type=WeekType.LOWER,
             ),
             Lesson(
                 group_id=demo.id, weekday=1, pair_number=1,
                 starts_at=PAIR_TIMES[1][0], ends_at=PAIR_TIMES[1][1],
                 subject="Иностранный язык", teacher_id=teachers[2].id,
-                room="118", week_type=WeekType.BOTH, subgroup=1,
+                room="118", week_type=None, subgroup=1,
             ),
             Lesson(
                 group_id=demo.id, weekday=1, pair_number=1,
                 starts_at=PAIR_TIMES[1][0], ends_at=PAIR_TIMES[1][1],
                 subject="Иностранный язык", teacher_id=teachers[2].id,
-                room="119", week_type=WeekType.BOTH, subgroup=2,
+                room="119", week_type=None, subgroup=2,
             ),
             Lesson(
                 group_id=demo.id, weekday=2, pair_number=3,
                 starts_at=PAIR_TIMES[3][0], ends_at=PAIR_TIMES[3][1],
                 subject="Микроэкономика", teacher_id=teachers[0].id,
-                room="221", week_type=WeekType.BOTH,
+                room="221", week_type=None,
             ),
         ]
         session.add_all(lessons)

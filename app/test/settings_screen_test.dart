@@ -16,9 +16,30 @@ import 'package:sfedu_econ/main.dart';
 import 'package:sfedu_econ/router.dart';
 
 const _groups = [
-  Group(id: 1, course: 1, number: '1.1', subgroupCount: 2),
-  Group(id: 3, course: 2, number: '2.1', subgroupCount: 2),
-  Group(id: 4, course: 2, number: '2.2', subgroupCount: 2),
+  Group(
+    id: 1,
+    course: 1,
+    number: '1.1',
+    program: null,
+    level: EducationLevel.bachelor,
+    subgroupCount: 2,
+  ),
+  Group(
+    id: 3,
+    course: 2,
+    number: '2.1',
+    program: null,
+    level: EducationLevel.bachelor,
+    subgroupCount: 2,
+  ),
+  Group(
+    id: 4,
+    course: 2,
+    number: '2.2',
+    program: null,
+    level: EducationLevel.bachelor,
+    subgroupCount: 2,
+  ),
 ];
 
 /// Расписание, новости и контакты в фоне ходят в реальную drift-БД/dio —

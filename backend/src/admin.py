@@ -54,6 +54,77 @@ class LessonAdmin(ModelView, model=models.Lesson):
     ]
 
 
+class ScheduleDocumentAdmin(ModelView, model=models.ScheduleDocument):
+    name_plural = "Файлы расписания"
+    column_list = [
+        models.ScheduleDocument.p_doc_id,
+        models.ScheduleDocument.section,
+        models.ScheduleDocument.label,
+        models.ScheduleDocument.doc_type,
+        models.ScheduleDocument.fetched_at,
+    ]
+    column_searchable_list = [models.ScheduleDocument.label]
+    can_create = False  # документы заводит импортёр, руками их не выдумывают
+
+
+class UnparsedCellAdmin(ModelView, model=models.UnparsedCell):
+    """Очередь вычитки. Здесь лежит всё, что парсер честно не осилил — и это
+    единственная причина, по которой оно не потерялось молча."""
+
+    name = "Очередь вычитки"
+    name_plural = "Очередь вычитки"
+    column_list = [
+        models.UnparsedCell.id,
+        models.UnparsedCell.document,
+        models.UnparsedCell.page,
+        models.UnparsedCell.reason,
+        models.UnparsedCell.raw_text,
+        models.UnparsedCell.created_at,
+    ]
+    column_searchable_list = [models.UnparsedCell.reason, models.UnparsedCell.raw_text]
+    column_sortable_list = [models.UnparsedCell.created_at, models.UnparsedCell.page]
+    can_create = False
+    can_edit = False
+
+
+class ExamEventAdmin(ModelView, model=models.ExamEvent):
+    name_plural = "Экзамены"
+    column_list = [
+        models.ExamEvent.id,
+        models.ExamEvent.group,
+        models.ExamEvent.subject,
+        models.ExamEvent.consultation_at,
+        models.ExamEvent.exam_at,
+        models.ExamEvent.room,
+        models.ExamEvent.kind,
+    ]
+    column_searchable_list = [models.ExamEvent.subject]
+
+
+class ImportDiffAdmin(ModelView, model=models.ImportDiff):
+    name_plural = "Изменения расписания"
+    column_list = [
+        models.ImportDiff.id,
+        models.ImportDiff.document,
+        models.ImportDiff.added,
+        models.ImportDiff.removed,
+        models.ImportDiff.created_at,
+    ]
+    can_create = False
+    can_edit = False
+
+
+class ModuleAdmin(ModelView, model=models.Module):
+    name_plural = "Модули"
+    column_list = [
+        models.Module.id,
+        models.Module.document,
+        models.Module.name,
+        models.Module.date_from,
+        models.Module.date_to,
+    ]
+
+
 class NewsAdmin(ModelView, model=models.News):
     name_plural = "Новости"
     column_list = [
@@ -102,6 +173,11 @@ def setup_admin(app: FastAPI) -> None:
         GroupAdmin,
         TeacherAdmin,
         LessonAdmin,
+        UnparsedCellAdmin,
+        ScheduleDocumentAdmin,
+        ExamEventAdmin,
+        ImportDiffAdmin,
+        ModuleAdmin,
         NewsAdmin,
         ContactAdmin,
         KbArticleAdmin,

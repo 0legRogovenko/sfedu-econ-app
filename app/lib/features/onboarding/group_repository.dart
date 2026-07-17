@@ -2,23 +2,54 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api_client.dart';
 
+/// Уровень обучения. Он же говорит, чем подписана группа: у бакалавра — номер,
+/// у магистра — программа.
+enum EducationLevel {
+  bachelor,
+  master;
+
+  /// Незнакомое значение (бэкенд завёл новый уровень) не должно ронять декод
+  /// всего списка: одна такая группа оставила бы без онбординга всех.
+  static EducationLevel parse(Object? raw) => EducationLevel.values.firstWhere(
+        (level) => level.name == raw,
+        orElse: () => EducationLevel.bachelor,
+      );
+}
+
 class Group {
   const Group({
     required this.id,
     required this.course,
     required this.number,
+    required this.program,
+    required this.level,
     required this.subgroupCount,
   });
 
   final int id;
   final int course;
-  final String number;
+
+  /// У магистров номера группы НЕТ — тогда заполнена [program]. Отсюда String?:
+  /// приведение null к String бросало TypeError внутри декода списка, и одна
+  /// магистерская группа отравляла весь ответ /api/groups — включая бакалавров.
+  final String? number;
+
+  /// Программа магистратуры. У бакалавров null.
+  final String? program;
+
+  final EducationLevel level;
   final int subgroupCount;
+
+  /// Подпись группы в списке. Магистру показывать нечего кроме программы —
+  /// пустой чип, по которому не понять, что выбираешь, хуже.
+  String get displayName => number ?? program ?? 'Группа $id';
 
   factory Group.fromJson(Map<String, dynamic> json) => Group(
         id: json['id'] as int,
         course: json['course'] as int,
-        number: json['number'] as String,
+        number: json['number'] as String?,
+        program: json['program'] as String?,
+        level: EducationLevel.parse(json['level']),
         subgroupCount: json['subgroup_count'] as int,
       );
 }

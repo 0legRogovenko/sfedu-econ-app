@@ -1,4 +1,4 @@
-from src.models import Group
+from src.models import EducationLevel, Group
 
 
 def _add_groups(db_session):
@@ -24,8 +24,36 @@ def test_groups_sorted_by_course_and_number(client, db_session):
         "id": response.json()[0]["id"],
         "course": 1,
         "number": "1.1",
+        "program": None,
+        "level": "bachelor",
         "subgroup_count": 1,
     }
+
+
+def test_master_group_serializes_with_program_and_level(client, db_session):
+    """У магистров номера группы НЕТ — их идентифицирует программа.
+
+    Без program и level в контракте клиент получает 52 группы с number:null и
+    ничем не может их различить и показать: онбординг перестаёт открываться
+    у ВСЕХ, включая бакалавров.
+    """
+    db_session.add(
+        Group(
+            course=1,
+            number=None,
+            program="Экономика фирмы и отраслевых рынков",
+            level=EducationLevel.MASTER,
+        )
+    )
+    db_session.flush()
+
+    response = client.get("/api/groups")
+
+    assert response.status_code == 200
+    master = response.json()[0]
+    assert master["number"] is None
+    assert master["program"] == "Экономика фирмы и отраслевых рынков"
+    assert master["level"] == "master"
 
 
 def test_groups_empty_list(client):

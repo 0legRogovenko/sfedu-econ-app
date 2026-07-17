@@ -19,7 +19,7 @@ def _seed_schedule(db_session):
                 starts_at=time(10, 50),
                 ends_at=time(12, 25),
                 subject="Эконометрика",
-                week_type=WeekType.BOTH,
+                week_type=None,
                 subgroup=0,
             ),
             Lesson(
@@ -31,7 +31,7 @@ def _seed_schedule(db_session):
                 subject="Макроэкономика",
                 teacher_id=teacher.id,
                 room="220",
-                week_type=WeekType.NUMERATOR,
+                week_type=WeekType.UPPER,
                 subgroup=0,
             ),
             Lesson(
@@ -42,7 +42,7 @@ def _seed_schedule(db_session):
                 ends_at=time(10, 35),
                 subject="Философия",
                 teacher_id=teacher.id,
-                week_type=WeekType.BOTH,
+                week_type=None,
                 subgroup=0,
             ),
         ]
@@ -60,7 +60,8 @@ def test_schedule_by_group_sorted(client, db_session):
     lessons = response.json()
     assert [item["subject"] for item in lessons] == ["Макроэкономика", "Эконометрика"]
     first = lessons[0]
-    assert first["week_type"] == "numerator"
+    assert first["week_type"] == "upper"
+    assert lessons[1]["week_type"] is None  # каждую неделю
     assert first["starts_at"] == "09:00:00"
     assert first["teacher"] == {
         "id": first["teacher"]["id"],
