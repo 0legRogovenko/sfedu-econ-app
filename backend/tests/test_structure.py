@@ -21,6 +21,7 @@ from src.schedule.structure import (
     parse_header,
     parse_pair_number,
     parse_rows,
+    parse_time_bounds,
     place_row,
     week_type_from_heading,
 )
@@ -113,24 +114,63 @@ def test_double_dash_is_still_a_pair():
 @pytest.mark.parametrize(
     "time_raw",
     [
-        "800- 1025",  # блок в 3 ак. часа
-        "1055-1320",
-        "1350-1615",
-        "1040-1125",  # одинокая половина
-        "800-845\n850-935\n950-1035",  # полторы пары (иняз)
+        "1040-1125",  # одинокая половина — второй половине пары 2 не место одной
         "1825-1910\n1915-2000",  # съехало на половину: между парами 6 и 7
-        "1640-1725\n1735-1820",
-        "1345-1430\n1435-152",  # артефакт извлечения — обрезано
+        "1640-1725\n1735-1820",  # то же между 5 и 6 — старт не на границе пары
+        "1345-1430\n1435-152",  # артефакт извлечения — обрезано, вторая половина битая
         "9501125",  # артефакт: дефис потерян
+        "800-1725",  # весь день в одной строке — склейка колонки времени, не блок
     ],
 )
 def test_time_outside_the_pair_grid_is_not_guessed(time_raw):
     """Время вне сетки пар → UnparsedCell. НЕ угадывать.
 
     Соблазн «ну это же примерно вторая пара» — прямой путь к тому, что студент
-    придёт к 9:50 на занятие, которое началось в 8:00.
+    придёт к 9:50 на занятие, которое началось в 8:00. Сюда попадают одинокие
+    половины, окна, съехавшие на полпары мимо границы пары, битые артефакты
+    извлечения и склейка всей колонки времени в одну строку.
     """
     assert parse_pair_number(time_raw) is None
+
+
+@pytest.mark.parametrize(
+    "time_raw, pair",
+    [
+        ("800- 1025", 1),  # языковой блок в 3 ак. часа — начинается в 8:00 → пара 1
+        ("1055-1320", 3),  # старт вне сетки → ближайшая пара по началу (1155 → 3)
+        ("1350-1615", 4),  # 13:50 ≈ начало пары 4 (13:45)
+        ("800-845\n850-935\n950-1035", 1),  # полторы пары иняза — три реальные половины
+        ("1735-1820\n1825-1910\n1915-2000", 6),  # вечерний блок магистров
+    ],
+)
+def test_language_block_maps_to_pair_by_start(time_raw, pair):
+    """Блок в 3 ак. часа — легитимное занятие, а не «время вне сетки».
+
+    Занятия по языку (вторник у бакалавров) и вечерние блоки магистров идут
+    сплошным окном в несколько пар. Номер пары выводим по времени НАЧАЛА
+    (ближайшая пара сетки), а реальные границы отдаём как есть — UI покажет по
+    времени. Два признака отделяют блок от артефакта: он длиннее одной пары
+    (≥ 3 ак. часа) и начинается у границы пары, а не на середине.
+    """
+    assert parse_pair_number(time_raw) == pair
+
+
+@pytest.mark.parametrize(
+    "time_raw, starts, ends",
+    [
+        ("800- 1025", (8, 0), (10, 25)),
+        ("1055-1320", (10, 55), (13, 20)),
+        ("800-845\n850-935\n950-1035", (8, 0), (10, 35)),
+        ("800-845\n850-935", (8, 0), (9, 35)),  # обычная пара — те же внешние края
+    ],
+)
+def test_time_bounds_are_the_real_span_of_the_cell(time_raw, starts, ends):
+    """Границы занятия — реальные края диапазона (начало первого, конец
+    последнего), а не клетка сетки. Для блока это его настоящее окно, для
+    обычной пары — те же 08:00–09:35, что и раньше."""
+    from datetime import time
+
+    assert parse_time_bounds(time_raw) == (time(*starts), time(*ends))
 
 
 # --- день недели -----------------------------------------------------------
@@ -338,8 +378,60 @@ def test_row_with_off_grid_time_is_flagged(grids_13469):
     grid = grids_13469[1]
     header = parse_header(grid)
     rows = [r for r in parse_rows(grid, header) if r.reason == REASON_TIME_OFF_GRID]
-    assert rows, "в 13469 T2 есть '800-845 850-935 950-1035' — полторы пары"
+    assert rows, "в 13469 T2 есть '1040-1125' — одинокая половина пары"
     assert all(r.pair_number is None for r in rows)
+
+
+def test_tuesday_language_block_is_recovered(grids_13470):
+    """БАГ 1. Вторник 13470 — языковые блоки «800- 1025» / «1055-1320» /
+    «1350-1615». До фикса parse_pair_number отвергал их как «время вне сетки»,
+    и весь вторник у всех групп исчезал. Теперь строки получают пару по началу
+    и реальные границы."""
+    from datetime import time
+
+    grid = page(grids_13470, 2)
+    header = parse_header(grid)
+    tuesday = [r for r in parse_rows(grid, header) if r.weekday == 1 and not r.is_separator]
+
+    assert tuesday, "вторник на странице обязан быть"
+    assert all(r.reason is None for r in tuesday), "блоки больше не «вне сетки»"
+    assert all(r.pair_number is not None for r in tuesday)
+
+    by_pair = {r.pair_number: r for r in tuesday}
+    assert by_pair[1].starts_at == time(8, 0) and by_pair[1].ends_at == time(10, 25)
+    assert by_pair[3].starts_at == time(10, 55) and by_pair[3].ends_at == time(13, 20)
+    assert by_pair[4].starts_at == time(13, 50) and by_pair[4].ends_at == time(16, 15)
+
+
+def test_phantom_subgroup_from_column_bleed_is_rejected(grids_13470):
+    """БАГ 3. 13470 стр.3, СРЕДА пара 2: ячейки семинаров чуть заходят на
+    соседнюю колонку через тонкие столбцы-границы. До фикса группа 2.3 получала
+    СВОЙ предмет (Монетарная) ПЛЮС предмет левого соседа 2.2 (Безопасность
+    жизнедеятельности) как выдуманную подгруппу.
+
+    Порог значимого перекрытия убирает касание края: у каждой группы ровно
+    её занятие, целиком (подгруппа 0), без фантома соседа.
+    """
+    grid = page(grids_13470, 3)
+    header = parse_header(grid)
+    row = next(
+        r.row
+        for r in parse_rows(grid, header)
+        if r.weekday == 2 and r.pair_number == 2
+    )
+    by_group = {}
+    for p in place_row(grid, row, header):
+        by_group.setdefault(p.group.number, []).append(p)
+
+    g23 = by_group["2.3"]
+    assert len(g23) == 1, [p.cell.text[:30] for p in g23]
+    assert "Монетарная" in g23[0].cell.text
+    assert "Безопасность" not in g23[0].cell.text
+    assert g23[0].subgroup == 0, "занятие всей группы, а не подгруппа"
+
+    # соседи тоже получают ровно по одному своему занятию, без чужих кусков
+    assert len(by_group["2.4"]) == 1 and "Теория и практика" in by_group["2.4"][0].cell.text
+    assert len(by_group["2.5"]) == 1 and "Анализ данных" in by_group["2.5"][0].cell.text
 
 
 # --- привязка занятия к группе --------------------------------------------
