@@ -593,18 +593,22 @@ def _import_grid_document(session, document, content: bytes, link, report) -> No
         found = parse_header(grid)
         first_row: int | None = None
         if found is not None:
+            # Тот же блок групп на новой странице — модуль тянем вперёд. Заголовок
+            # модуля стоит только на ПЕРВОЙ странице модуля: 13470 — три страницы
+            # одних и тех же 6 групп (Пн/Вт, Ср/Чт, Пт/Сб), '(1 сентября – 2
+            # ноября)' лишь на первой. Без переноса Ср/Чт/Пт получали module=NULL,
+            # шли круглый год и сталкивались с парами других модулей в один слот.
+            # Другой блок групп (13471 стр.8 — отдельная группа 3.7 на весь
+            # семестр без модуля) СБРАСЫВАЕТ: чужой модуль ей не идёт, иначе её
+            # 35 пар пропали бы у студента вне окна модуля.
+            if header is None or not _same_group_block(header, found):
+                carry_module = None
             header, prev_shape, carry_day = found, _shape(grid), None
             # Строки шапки (0..header_row) — направления, номера групп, 'Время',
             # периоды модулей. parse_rows начинает с header_row+1 и их не видит,
             # поэтому пометить их обязан вызывающий: иначе они не попадут ни в
             # одну категорию и молча выпадут из инварианта.
             _mark_header_rows(report.ledger, index, grid, found.header_row)
-            # Своя шапка = новый блок, и чужой модуль в него не тянется. Модуль
-            # carry-forward'ится только на страницы-продолжения (ветка ниже).
-            # 13471 стр.8 — семестровая страница группы 3.7 без модуля: унаследовав
-            # '2 модуль' (4 ноября – 11 января) со стр.5, её 35 пар пропали бы у
-            # студента в сентябре и октябре, хотя идут весь семестр.
-            carry_module = None
         elif header is not None and _shape(grid) == prev_shape:
             # Страница-продолжение: своей шапки нет, геометрия колонок совпадает
             # (13472 p3/p5). Разрыв проходит посреди дня — день тянем с прошлой.
@@ -752,7 +756,10 @@ def _add_lesson(
         return False
     slot_keys.add(key)
 
-    starts, ends = _pair_bounds(slot.pair_number)
+    # Границы занятия — реальное окно из ячейки времени (у блока в 3 ак. часа
+    # оно шире одной пары); для обычной пары это те же внешние края её половин.
+    starts = slot.starts_at or _pair_bounds(slot.pair_number)[0]
+    ends = slot.ends_at or _pair_bounds(slot.pair_number)[1]
     session.add(
         Lesson(
             group_id=group.id,
@@ -1175,6 +1182,19 @@ def _mark_structural_grid(ledger: Ledger, index: int, grid: Grid) -> None:
             ledger.mark(index, cell, CELL_EMPTY)
         else:
             ledger.mark_structural(index, cell)
+
+
+def _group_ids(header: GridHeader) -> tuple:
+    return tuple((group.number, group.program) for group in header.groups)
+
+
+def _same_group_block(prev: GridHeader, found: GridHeader) -> bool:
+    """Одни и те же группы у двух шапок — значит это один блок расписания,
+    разложенный по страницам (13470: Пн/Вт, Ср/Чт, Пт/Сб — одни 6 групп на трёх
+    страницах с разной шириной колонок). Сравниваем ИДЕНТИЧНОСТЬ групп (номер/
+    программа), а не геометрию: у разных дней число тонких столбцов-границ
+    отличается, и _shape по страницам блока не совпадает."""
+    return _group_ids(prev) == _group_ids(found)
 
 
 def _shape(grid: Grid) -> tuple:

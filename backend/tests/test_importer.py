@@ -738,11 +738,18 @@ class TestSemesterHeadingIsNotAModule:
         assert len(modules) == 2, modules
 
     def test_pages_of_the_semester_wide_block_keep_their_lessons(self):
-        """Обратная сторона: фантом убираем, пары — нет.
+        """Обратная сторона: фантом-семестр убираем, пары — нет.
 
-        7 пар блока 13822 p13 идут весь семестр. Модуля у них теперь нет — и
-        правильно: нет модуля → нет ограничения по датам, как на 13471 T7.
-        Потерять сами пары было бы хуже фантома.
+        Модуля у настоящего семестрового блока (13822 p13) нет — и правильно:
+        нет модуля → нет ограничения по датам, как на 13471 T7. Их 7 (Чт ×6 +
+        восстановленный языковой блок Вт ×1). Раньше в module=None падали ещё и
+        страницы-продолжения, потерявшие свой модуль (БАГ 2): их было 77. После
+        переноса модуля вперёд по страницам-продолжениям module=None остаётся
+        ровно у семестровых 7 — остальные вернулись к своим модулям.
+
+        Всего пар 239, а не 241: две «подгруппы» на p11 были фантомом от съезда
+        ячейки семинара на 6% в колонку соседней группы (БАГ 3) — порог
+        значимого перекрытия их убрал, настоящая пара соседа осталась.
         """
         session = make_session()
         fetcher = FakeFetcher()
@@ -754,11 +761,11 @@ class TestSemesterHeadingIsNotAModule:
         importer.import_all(session, fetcher, links=links)
 
         lessons = session.scalars(select(Lesson)).all()
-        assert len(lessons) == 241, "пары потеряны вместе с фантомом"
+        assert len(lessons) == 239, "пары потеряны вместе с фантомом"
         by_module = Counter(lesson.module_id for lesson in lessons)
-        assert by_module[None] == 77, (
-            "7 пар блока p13 не вернулись к «идут весь семестр»: "
-            f"{dict(by_module)}"
+        assert by_module[None] == 7, (
+            "module=None должен остаться только у семестрового блока p13, "
+            f"а не у страниц-продолжений: {dict(by_module)}"
         )
         weekly = [lesson for lesson in lessons if lesson.module_id is None]
         assert all(
@@ -922,3 +929,116 @@ def _mutated_docx(content: bytes) -> bytes:
                 )
             dst.writestr(item, data)
     return target.getvalue()
+
+
+class TestScheduleParseFixes:
+    """Три системных бага разбора PDF, найденные аудитом сверки БД с файлами.
+
+    Все три — на настоящем 13470.pdf (2 курс бакалавриата, осенний семестр,
+    три модуля по страницам). Родной docx-близнец 13469 те же данные разбирает
+    иначе, поэтому проверяем именно PDF-путь.
+    """
+
+    def _lessons_13470(self, session):
+        doc = session.scalar(
+            select(ScheduleDocument).where(ScheduleDocument.p_doc_id == 13470)
+        )
+        return session.scalars(
+            select(Lesson).where(Lesson.document_id == doc.id)
+        ).all(), doc
+
+    def test_bug1_tuesday_language_block_is_present(self, corpus):
+        """БАГ 1. Вторник — языковые блоки по 3 ак. часа ('800- 1025' и т.д.).
+        Парсер отвергал их как «время вне сетки» → весь вторник у всех 6 групп
+        исчезал. Теперь пары вторника есть, с предметом «Иностранный язык» и
+        реальными границами из файла (08:00–10:25)."""
+        from datetime import time
+
+        session, _ = corpus
+        lessons, _doc = self._lessons_13470(session)
+
+        tuesday = [lesson for lesson in lessons if lesson.weekday == 1]
+        assert tuesday, "вторник 13470 снова пуст — блоки не разобраны"
+
+        groups_with_language = {
+            lesson.group.number
+            for lesson in tuesday
+            if "Иностранный язык" in lesson.subject
+        }
+        assert groups_with_language == {"2.1", "2.2", "2.3", "2.4", "2.5", "2.6"}
+
+        first_block = [lesson for lesson in tuesday if lesson.starts_at == time(8, 0)]
+        assert first_block, "блок 08:00 не найден"
+        assert all(lesson.ends_at == time(10, 25) for lesson in first_block), (
+            "конец блока должен быть реальным (10:25), а не концом первой пары"
+        )
+
+    def test_bug2_continuation_pages_inherit_their_module(self, corpus):
+        """БАГ 2. Заголовок модуля стоит только на ПЕРВОЙ странице модуля;
+        страницы-продолжения (Ср/Чт/Пт) получали module_id=NULL → пары шли
+        круглый год и три модуля сваливались в один слот. Теперь у пар Ср/Чт/Пт
+        есть окно действия, совпадающее с их модулем."""
+        session, _ = corpus
+        lessons, _doc = self._lessons_13470(session)
+
+        continuation = [lesson for lesson in lessons if lesson.weekday in (2, 3, 4)]
+        assert continuation, "Ср/Чт/Пт 13470 пусты — сверять нечего"
+        without_window = [
+            lesson for lesson in continuation if lesson.valid_from is None
+        ]
+        assert without_window == [], (
+            f"{len(without_window)} пар Ср/Чт/Пт без окна действия — модуль не "
+            "перенесён на страницу-продолжение"
+        )
+        # окно совпадает с модулем пары, а не выдумано
+        assert all(
+            lesson.valid_from == lesson.module.date_from
+            and lesson.valid_to == lesson.module.date_to
+            for lesson in continuation
+        )
+
+    def test_bug2_three_modules_do_not_collapse_into_one_slot(self, corpus):
+        """Следствие бага 2: без модуля три параллельных модуля Ср/Чт/Пт лезли
+        в один (день, пара) и половина пар уходила в очередь как «слот занят».
+        13470 объявляет три разных модуля — и все три несут пары."""
+        session, _ = corpus
+        doc = session.scalar(
+            select(ScheduleDocument).where(ScheduleDocument.p_doc_id == 13470)
+        )
+        modules = session.scalars(
+            select(Module).where(Module.document_id == doc.id)
+        ).all()
+        assert len(modules) == 3, f"ожидали три модуля, получили {len(modules)}"
+
+        taken = session.scalars(
+            select(UnparsedCell).where(
+                UnparsedCell.document_id == doc.id,
+                UnparsedCell.reason == importer.REASON_SLOT_TAKEN,
+            )
+        ).all()
+        assert taken == [], (
+            f"{len(taken)} ячеек ушли в очередь как «слот занят» — модули всё ещё "
+            "сливаются в один бакет"
+        )
+
+    def test_bug3_no_phantom_subgroup_from_column_bleed(self, corpus):
+        """БАГ 3. 13470 СРЕДА пара 2: узкие семинары чуть заходили на соседнюю
+        колонку, и группа 2.3 получала свой предмет (Монетарная) ПЛЮС предмет
+        соседа 2.2 (Безопасность жизнедеятельности) как выдуманную подгруппу.
+        Теперь у 2.3 ровно одна пара — Монетарная, целиком, без фантома."""
+        session, _ = corpus
+        lessons, _doc = self._lessons_13470(session)
+
+        g23_wed2 = [
+            lesson
+            for lesson in lessons
+            if lesson.group.number == "2.3" and lesson.weekday == 2 and lesson.pair_number == 2
+        ]
+        subjects = {lesson.subject for lesson in g23_wed2}
+        assert not any("Безопасность" in s for s in subjects), (
+            f"у 2.3 остался фантом соседа: {sorted(subjects)}"
+        )
+        assert any("Монетарная" in s for s in subjects), sorted(subjects)
+        assert all(lesson.subgroup == 0 for lesson in g23_wed2), (
+            "занятие всей группы, а не выдуманная подгруппа"
+        )
