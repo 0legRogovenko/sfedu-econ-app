@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/clock.dart';
+import '../../core/room_format.dart';
 import 'exam_event.dart';
 import 'exams_logic.dart';
 import 'exams_providers.dart';
@@ -173,7 +174,7 @@ class _ExamCard extends StatelessWidget {
             row(Icons.co_present_outlined, 'Консультация',
                 formatExamDateTime(exam.consultationAt)),
             row(Icons.meeting_room_outlined, 'Аудитория',
-                exam.room ?? 'уточняется'),
+                exam.room == null ? 'уточняется' : formatRoom(exam.room!)),
             row(Icons.assignment_outlined, 'Форма', exam.kind ?? 'уточняется'),
           ],
         ),

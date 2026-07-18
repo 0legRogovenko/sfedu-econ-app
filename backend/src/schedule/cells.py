@@ -29,6 +29,7 @@ import re
 from dataclasses import dataclass
 
 from src.models import LessonKind, WeekType
+from src.schedule.rooms import normalize_room
 
 # Вид занятия. 'c' — ЛАТИНСКАЯ: опечатка ЮФУ (13498 p10 R9), глазом не видна.
 # 'лаб' раньше 'л' — иначе '(лаб)' не соберётся.
@@ -178,7 +179,7 @@ def parse_lesson(text: str, cell_raw: str) -> ParsedLesson | None:
     tail = tail.strip()
     room_match = _ROOM_TAIL.search(tail)
     if room_match:
-        room = room_match.group(1).strip()
+        room = normalize_room(room_match.group(1))
         tail = tail[: room_match.start(1)].strip()
 
     teachers = tuple(part.strip() for part in tail.split(",") if part.strip())

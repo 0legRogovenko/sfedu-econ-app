@@ -80,14 +80,15 @@ def test_13984_parses_three_exams_of_group_4_1(exams_13984):
 
     assert first.consultation.date == date(2026, 4, 8)
     assert first.consultation.time_start == time(11, 0)
-    assert first.consultation.room == "ауд.306"
+    # префикс «ауд.» срезан при разборе (src/schedule/rooms.py)
+    assert first.consultation.room == "306"
     assert first.consultation.kind is None
 
     assert first.exam.date == date(2026, 4, 9)
     assert first.exam.time_start == time(9, 0)
     assert first.exam.time_end == time(13, 30)
     assert first.exam.kind == "устный"
-    assert first.exam.room == "ауд.214"
+    assert first.exam.room == "214"
 
 
 def test_13984_teacher_on_the_same_line_as_subject(exams_13984):
@@ -157,7 +158,7 @@ def test_13745_form_wrapped_across_two_lines(exams_13745):
     а аудитория двойная: «ауд.324, 325»."""
     exam = exams_13745.exams[1]
     assert exam.exam.kind == "компьютерное тестирование"
-    assert exam.exam.room == "ауд.324, 325"
+    assert exam.exam.room == "324, 325"
     assert exam.exam.time_start == time(9, 0)
     assert exam.exam.time_end == time(13, 30)
 
@@ -284,7 +285,7 @@ def test_13747_form_may_be_absent():
     result = parse_exams(_grids("13746.pdf"))
     exam = next(e for e in result.exams if e.subject == "Поведенческий бизнес-анализ")
     assert exam.exam.kind is None
-    assert exam.exam.room == "ауд.217"
+    assert exam.exam.room == "217"
     assert exam.exam.date == date(2026, 1, 23)
 
 
@@ -296,7 +297,7 @@ def test_13747_form_before_time_is_still_found():
     assert exam.exam.kind == "компьютерное тестирование"
     assert exam.exam.time_start == time(9, 0)
     assert exam.exam.time_end == time(13, 30)  # тире здесь длинное: «–»
-    assert exam.exam.room == "ауд.324"
+    assert exam.exam.room == "324"
 
 
 def test_13747_address_goes_to_room_not_to_form():
@@ -445,7 +446,7 @@ def test_13768_rows_drawn_off_grid_are_bound_by_x_not_by_column_index():
     assert shifted.master_program.endswith("«Учетные технологии и аудит»")
     assert shifted.exam.date == date(2026, 1, 14)
     assert shifted.exam.kind == "устный"
-    assert shifted.exam.room == "ауд.209"
+    assert shifted.exam.room == "209"
     assert shifted.consultation.date == date(2026, 1, 12)
 
     for exam in result.exams:

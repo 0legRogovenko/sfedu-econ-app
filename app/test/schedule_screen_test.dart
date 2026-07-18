@@ -164,6 +164,43 @@ void main() {
     expect(find.text('Иностранный язык'), findsNothing); // вторник
   });
 
+  testWidgets('аудитория-номер: в карточке ровно одно «ауд.»', (tester) async {
+    // Регрессия «ауд. ауд.118»: бэкенд теперь отдаёт голое «220», а префикс
+    // дописывает карточка — и только один раз.
+    await tester.pumpWidget(_screen());
+    await tester.pumpAndSettle();
+
+    expect(find.text('ауд. 220 · Иванова Е. П.'), findsOneWidget);
+    expect(find.textContaining('ауд. ауд.'), findsNothing);
+  });
+
+  testWidgets('«Онлайн» показывается без префикса «ауд.»', (tester) async {
+    final data = ScheduleData(
+      lessons: const [
+        Lesson(
+          id: 4,
+          groupId: 3,
+          weekday: 0,
+          pairNumber: 3,
+          startsAt: '13:00:00',
+          endsAt: '14:35:00',
+          subject: 'Физкультура',
+          room: 'Онлайн',
+          weekType: null,
+          subgroup: 0,
+          teacherName: 'Бондин В.И.',
+        ),
+      ],
+      modules: const [],
+      weekCalendar: _calendar,
+    );
+    await tester.pumpWidget(_screen(data: data));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Онлайн · Бондин В.И.'), findsOneWidget);
+    expect(find.textContaining('ауд. Онлайн'), findsNothing);
+  });
+
   testWidgets('текущая пара помечена «Сейчас»', (tester) async {
     await tester.pumpWidget(_screen());
     await tester.pumpAndSettle();
