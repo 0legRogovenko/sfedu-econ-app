@@ -42,7 +42,9 @@ def test_subject_kind_teacher_room(grids_13469):
     assert lesson.subject == "Математика"
     assert lesson.lesson_kind is LessonKind.SEMINAR
     assert lesson.teachers == ("Кораблина Ю.В.",)
-    assert lesson.room == "ауд. 106"
+    # префикс «ауд.» срезан при разборе: в БД лежит голое значение,
+    # канцелярию дописывает интерфейс (см. src/schedule/rooms.py)
+    assert lesson.room == "106"
     # cell_raw хранится ВСЕГДА и не тронут: пробелы и \n как в источнике
     assert lesson.cell_raw == cell.text
 
@@ -52,7 +54,7 @@ def test_two_teachers_split_by_comma():
     lesson = only(parse_cell(text))
     assert lesson.subject == "Экономическая теория"
     assert lesson.teachers == ("Кот В.В.", "Стрельченко Е.А.")
-    assert lesson.room == "ауд. 217"
+    assert lesson.room == "217"
 
 
 def test_moodle_instead_of_room():
@@ -84,15 +86,27 @@ def test_room_glued_to_teacher_without_space(grids_13469):
     lesson = only(parse_cell(text))
     assert lesson.subject == "Основы современной аналитики персонала"
     assert lesson.teachers == ("Маличенко И.П.",)
-    assert lesson.room == "ауд.Креат.пр"
+    assert lesson.room == "Креат.пр"
 
 
 def test_multiword_room_is_not_cut_at_first_space():
     """'ауд.Креативное пр-во' — аудитория из двух слов, режущий \\S+ её теряет."""
     text = "Основы российской государственности (с) Абросимов Д.В. ауд.Креативное пр-во"
     lesson = only(parse_cell(text))
-    assert lesson.room == "ауд.Креативное пр-во"
+    assert lesson.room == "Креативное пр-во"
     assert lesson.teachers == ("Абросимов Д.В.",)
+
+
+def test_short_room_prefix_is_normalized_too():
+    """«а.218» — краткая форма того же префикса; в БД обе дают «218»."""
+    lesson = only(parse_cell("Эконометрика (с) Житников И.В. а.218"))
+    assert lesson.room == "218"
+
+
+def test_double_dot_room_prefix_is_tolerated():
+    """«ауд..405» — опечатка источника (2 вхождения в живой базе)."""
+    lesson = only(parse_cell("Экономика фирмы (л) Ермишина А.В. ауд..405"))
+    assert lesson.room == "405"
 
 
 def test_leading_dot_is_not_part_of_the_subject():
@@ -127,7 +141,7 @@ def test_date_prefix_without_space_before_subject():
     lesson = only(parse_cell("До 14.05Анализ данных (л) Шаль А.В.  ауд.118  "))
     assert lesson.date_constraint_raw == "До 14.05"
     assert lesson.subject == "Анализ данных"
-    assert lesson.room == "ауд.118"
+    assert lesson.room == "118"
 
 
 def test_date_prefix_with_enumeration():
@@ -184,7 +198,7 @@ def test_second_subgroup():
     text = "Проектирование и разработка информационных систем (лаб) 2п/г Жуков А.А. ауд.Г-138"
     lesson = only(parse_cell(text))
     assert lesson.subgroup == 2
-    assert lesson.room == "ауд.Г-138"
+    assert lesson.room == "Г-138"
 
 
 def test_no_label_means_no_subgroup_from_text():
@@ -220,7 +234,7 @@ def test_lecture_slash_seminar_does_not_poison_teachers():
     assert lesson.lesson_kind is None
     assert lesson.subject == "Международные стандарты финансовой отчетности"
     assert lesson.teachers == ("Полховская Т.Ю.", "Шевченко А.А.")
-    assert lesson.room == "ауд.310"
+    assert lesson.room == "310"
 
 
 def test_lecture_slash_seminar_spaced_variants():
@@ -276,7 +290,7 @@ def test_two_parallel_lessons_in_one_cell(grids_13469):
     assert first.room == "Онлайн"
     assert second.subject == "Русский язык для иностранных студентов"
     assert second.teachers == ("Груданова И.Ю.",)
-    assert second.room == "ауд.222"
+    assert second.room == "222"
     # обе половины несут исходный текст ячейки целиком
     assert first.cell_raw == cell.text == second.cell_raw
 
@@ -294,7 +308,7 @@ def test_two_lessons_with_date_prefixes_in_one_cell():
     first, second = parse.lessons
     assert first.date_constraint_raw == "До 17.12"
     assert first.subject == "История менеджмента"
-    assert first.room == "ауд.220"
+    assert first.room == "220"
     assert second.date_constraint_raw == "24.12"
     assert second.subject == "Основы российской государственности"
 
@@ -312,7 +326,7 @@ def test_newline_is_not_a_lesson_separator():
     lesson = only(parse_cell(text))
     assert lesson.subject == "Кросс-культурный менеджмент"
     assert lesson.teachers == ("Костенко Е.П.", "Несоленая О.В.", "Кузнецова С.Ю.")
-    assert lesson.room == "ауд.301"
+    assert lesson.room == "301"
 
 
 def test_elective_list_without_rooms_cannot_be_split():

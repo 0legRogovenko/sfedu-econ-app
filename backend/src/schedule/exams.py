@@ -26,6 +26,7 @@ from datetime import date, time
 from enum import Enum
 
 from .grid import Grid
+from .rooms import normalize_room
 
 
 class _Role(str, Enum):
@@ -398,7 +399,7 @@ def _parse_slot(text: str) -> ExamSlot:
     room = None
     start = next((i for i, line in enumerate(lines) if _LOCATION.match(line)), None)
     if start is not None:
-        room = _flat(" ".join(lines[start:]))
+        room = normalize_room(_flat(" ".join(lines[start:])))
         lines = lines[:start]
 
     rest = " ".join(lines)

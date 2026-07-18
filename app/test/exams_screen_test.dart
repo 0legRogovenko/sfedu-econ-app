@@ -67,8 +67,26 @@ void main() {
     expect(find.text('Экосистема организации'), findsOneWidget);
     expect(find.text('Чернова О.А.'), findsOneWidget);
     expect(find.textContaining('21.04.2026, 09:00'), findsOneWidget);
-    expect(find.textContaining('214'), findsOneWidget);
+    // номер аудитории — с префиксом, и ровно одним (регрессия «ауд. ауд.118»)
+    expect(find.textContaining('ауд. 214'), findsOneWidget);
+    expect(find.textContaining('ауд. ауд.'), findsNothing);
     expect(find.textContaining('устный'), findsOneWidget);
+  });
+
+  testWidgets('площадка вместо номера — без префикса «ауд.»', (tester) async {
+    await tester.pumpWidget(_screen(ExamsFeed(
+      items: [
+        _exam(
+          examAt: DateTime(2026, 4, 21, 9),
+          room: 'Microsoft Teams',
+        ),
+      ],
+      offline: false,
+    )));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Microsoft Teams'), findsOneWidget);
+    expect(find.textContaining('ауд. Microsoft Teams'), findsNothing);
   });
 
   testWidgets('null-поля показываются как «уточняется», запись не прячется',

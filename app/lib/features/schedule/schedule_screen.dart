@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/clock.dart';
+import '../../core/room_format.dart';
 import '../onboarding/selected_group.dart';
 import 'lesson.dart';
 import 'schedule_providers.dart';
@@ -278,7 +279,7 @@ class _LessonCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final details = [
-      if (lesson.room != null) 'ауд. ${lesson.room}',
+      if (lesson.room != null) formatRoom(lesson.room!),
       if (lesson.teacherName != null) lesson.teacherName!,
       if (lesson.subgroup != 0) '${lesson.subgroup}-я подгруппа',
     ].join(' · ');
