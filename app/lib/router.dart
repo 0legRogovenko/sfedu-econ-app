@@ -12,6 +12,9 @@ import 'features/onboarding/onboarding_screen.dart';
 import 'features/onboarding/selected_group.dart';
 import 'features/schedule/schedule_screen.dart';
 import 'features/settings/settings_screen.dart';
+import 'features/teachers/teacher.dart';
+import 'features/teachers/teacher_schedule_screen.dart';
+import 'features/teachers/teacher_search_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   // ref.read, не watch: роутер создаётся один раз на старте; после выбора
@@ -72,6 +75,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/teachers',
+        builder: (context, state) => const TeacherSearchScreen(),
+      ),
+      // Преподаватель передаётся объектом (extra), а не id в пути: ФИО нужно
+      // в заголовке сразу, а отдельной ручки «преподаватель по id» нет.
+      GoRoute(
+        path: '/teachers/schedule',
+        builder: (context, state) =>
+            TeacherScheduleScreen(teacher: state.extra! as Teacher),
       ),
     ],
   );

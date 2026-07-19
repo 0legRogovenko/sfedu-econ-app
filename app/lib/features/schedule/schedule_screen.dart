@@ -3,17 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/clock.dart';
-import '../../core/room_format.dart';
 import '../onboarding/favorite_groups.dart';
 import '../onboarding/group_repository.dart';
 import '../onboarding/selected_group.dart';
-import 'lesson.dart';
 import 'schedule_providers.dart';
 import 'schedule_repository.dart';
+import 'schedule_widgets.dart';
 import 'subgroup_filter.dart';
 import 'week_logic.dart';
-
-const _weekdayShort = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
 
 class ScheduleScreen extends ConsumerStatefulWidget {
   const ScheduleScreen({super.key});
@@ -125,6 +122,11 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
               ),
             ),
           IconButton(
+            icon: const Icon(Icons.person_search_outlined),
+            tooltip: 'Расписание преподавателя',
+            onPressed: () => context.push('/teachers'),
+          ),
+          IconButton(
             icon: const Icon(Icons.event_note_outlined),
             tooltip: 'Экзамены',
             // push, не go: аппаратная «назад» вернёт на расписание, а не
@@ -140,7 +142,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
             MaterialBanner(
               content: Text(
                 'Нет сети. Данные от '
-                '${_formatDate(syncStatus.syncedAt!)}',
+                '${formatScheduleDate(syncStatus.syncedAt!)}',
               ),
               actions: [
                 TextButton(
@@ -150,7 +152,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                 ),
               ],
             ),
-          _DayStrip(
+          DayStrip(
             selected: _dayIndex,
             onSelect: (index) {
               setState(() => _dayIndex = index);
@@ -172,7 +174,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                 itemCount: 6,
                 onPageChanged: (index) =>
                     setState(() => _dayIndex = index),
-                itemBuilder: (context, index) => _DayPage(
+                itemBuilder: (context, index) => DayPage(
                   lessons: lessonsForDay(data, _dateForIndex(index),
                       subgroup: subgroup),
                   nowWeekType: nowWeekType,
@@ -237,155 +239,6 @@ class _GroupSwitcherTitle extends ConsumerWidget {
           ),
       ],
       child: title,
-    );
-  }
-}
-
-String _formatDate(DateTime date) =>
-    '${date.day.toString().padLeft(2, '0')}.'
-    '${date.month.toString().padLeft(2, '0')}.${date.year}';
-
-class _DayStrip extends StatelessWidget {
-  const _DayStrip({required this.selected, required this.onSelect});
-
-  final int selected;
-  final ValueChanged<int> onSelect;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          for (var i = 0; i < 6; i++)
-            ChoiceChip(
-              label: Text(_weekdayShort[i]),
-              selected: selected == i,
-              selectedColor: scheme.primary,
-              labelStyle: TextStyle(
-                color: selected == i ? scheme.onPrimary : null,
-              ),
-              onSelected: (_) => onSelect(i),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DayPage extends ConsumerWidget {
-  const _DayPage({
-    required this.lessons,
-    required this.nowWeekType,
-    required this.noData,
-    required this.onRefresh,
-  });
-
-  final List<Lesson> lessons;
-  final WeekType? nowWeekType; // тип текущей недели для метки «Сейчас»
-  final bool noData; // кэш пуст из-за неудачного первого синка (не «пар нет»)
-  final Future<void> Function() onRefresh;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final now = ref.watch(clockProvider)();
-
-    // Пустой день при пустом кэше и неудачном первом синке — не «пар нет», а
-    // «данные ещё не загружены». Честная плашка вместо «Пар нет — отдыхаем».
-    final emptyText = noData
-        ? 'Нет данных. Для первой загрузки нужна сеть'
-        : 'Пар нет — отдыхаем';
-
-    return RefreshIndicator(
-      onRefresh: onRefresh,
-      child: lessons.isEmpty
-          ? ListView(
-              children: [
-                const SizedBox(height: 120),
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Text(emptyText, textAlign: TextAlign.center),
-                  ),
-                ),
-              ],
-            )
-          : ListView.separated(
-              padding: const EdgeInsets.all(12),
-              itemCount: lessons.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 8),
-              itemBuilder: (context, index) => _LessonCard(
-                lesson: lessons[index],
-                isNow: isLessonNow(lessons[index], nowWeekType, now),
-              ),
-            ),
-    );
-  }
-}
-
-class _LessonCard extends StatelessWidget {
-  const _LessonCard({required this.lesson, required this.isNow});
-
-  final Lesson lesson;
-  final bool isNow;
-
-  String _hhmm(String hhmmss) => hhmmss.substring(0, 5);
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final details = [
-      if (lesson.room != null) formatRoom(lesson.room!),
-      if (lesson.teacherName != null) lesson.teacherName!,
-      if (lesson.subgroup != 0) '${lesson.subgroup}-я подгруппа',
-    ].join(' · ');
-
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: isNow
-            ? BorderSide(color: scheme.primary, width: 2)
-            : BorderSide.none,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(
-                  '${_hhmm(lesson.startsAt)}–${_hhmm(lesson.endsAt)}',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const Spacer(),
-                if (isNow)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: scheme.primary,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      'Сейчас',
-                      style: TextStyle(color: scheme.onPrimary, fontSize: 12),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(lesson.subject,
-                style: Theme.of(context).textTheme.titleMedium),
-            if (details.isNotEmpty) ...[
-              const SizedBox(height: 2),
-              Text(details, style: Theme.of(context).textTheme.bodySmall),
-            ],
-          ],
-        ),
-      ),
     );
   }
 }
