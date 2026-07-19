@@ -9,6 +9,7 @@ import '../onboarding/selected_group.dart';
 import 'schedule_providers.dart';
 import 'schedule_repository.dart';
 import 'schedule_widgets.dart';
+import 'semester.dart';
 import 'subgroup_filter.dart';
 import 'week_logic.dart';
 
@@ -21,20 +22,22 @@ class ScheduleScreen extends ConsumerStatefulWidget {
 
 class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   late final PageController _pageController;
-  late final DateTime _baseMonday;
+  // Пересчитывается на каждый build от выбранного семестра, поэтому НЕ final.
+  late DateTime _baseMonday;
   late int _dayIndex; // 0 = понедельник … 5 = суббота
+
+  /// Дата начала выбранного вручную семестра; null — следовать текущему
+  /// (по дате). Храним ДАТУ, а не объект Semester: detectSemesters создаёт
+  /// новые объекты на каждый build, и сравнение по идентичности сбивало бы
+  /// выбор при каждом переэмите расписания.
+  DateTime? _chosenSemesterFrom;
 
   @override
   void initState() {
     super.initState();
     final now = ref.read(clockProvider)();
-    // Воскресенье: показываем следующую неделю с понедельника —
-    // студент планирует предстоящие пары
-    final isSunday = now.weekday == DateTime.sunday;
-    final monday = now.subtract(Duration(days: now.weekday - 1));
-    _baseMonday = DateTime(monday.year, monday.month, monday.day)
-        .add(Duration(days: isSunday ? 7 : 0));
-    _dayIndex = isSunday ? 0 : now.weekday - 1;
+    _baseMonday = _currentWeekMonday(now);
+    _dayIndex = now.weekday == DateTime.sunday ? 0 : now.weekday - 1;
     _pageController = PageController(initialPage: _dayIndex);
     // фоновая синхронизация при открытии экрана
     Future.microtask(() => ref.read(syncStatusProvider.notifier).sync());
@@ -44,6 +47,24 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  /// Понедельник текущей недели. Воскресенье: показываем следующую неделю —
+  /// студент планирует предстоящие пары.
+  DateTime _currentWeekMonday(DateTime now) {
+    final isSunday = now.weekday == DateTime.sunday;
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    return DateTime(monday.year, monday.month, monday.day)
+        .add(Duration(days: isSunday ? 7 : 0));
+  }
+
+  /// Неделя, с которой открывается выбранный семестр: если он текущий —
+  /// сегодняшняя неделя, иначе первая неделя семестра.
+  DateTime _mondayFor(Semester? semester, DateTime now) {
+    if (semester == null) return _currentWeekMonday(now);
+    return semester.contains(now)
+        ? _currentWeekMonday(now)
+        : semester.firstMonday;
   }
 
   /// Дата, соответствующая выбранному дню отображаемой недели.
@@ -62,6 +83,23 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
     final scheduleAsync = ref.watch(scheduleDataProvider);
     final syncStatus = ref.watch(syncStatusProvider);
+    final now = ref.read(clockProvider)();
+
+    // Семестры из данных расписания; переключатель — только если их больше
+    // одного. Выбранный семестр задаёт, какую неделю показываем.
+    final semesters = scheduleAsync.maybeWhen(
+      data: detectSemesters,
+      orElse: () => const <Semester>[],
+    );
+    Semester? selectedSemester;
+    if (_chosenSemesterFrom != null) {
+      for (final s in semesters) {
+        if (s.from == _chosenSemesterFrom) selectedSemester = s;
+      }
+    }
+    selectedSemester ??= currentSemester(semesters, now);
+    _baseMonday = _mondayFor(selectedSemester, now);
+
     // Тип недели выбранного дня — из календаря сервера (не формула).
     final weekType = scheduleAsync.maybeWhen(
       data: (data) =>
@@ -86,7 +124,6 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         );
     // Фильтр «моя подгруппа» активной группы; null — показывать все пары.
     final subgroup = ref.watch(activeSubgroupProvider);
-    final now = ref.read(clockProvider)();
     final nowWeekType = scheduleAsync.maybeWhen(
       data: (data) => weekTypeForDate(
           data.weekCalendar, DateTime(now.year, now.month, now.day)),
@@ -151,6 +188,24 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                   child: const Text('Обновить'),
                 ),
               ],
+            ),
+          if (semesters.length >= 2 && selectedSemester != null)
+            _SemesterSwitcher(
+              semesters: semesters,
+              selected: selectedSemester,
+              onSelect: (semester) {
+                if (semester.from == selectedSemester!.from) return; // тот же
+                setState(() {
+                  _chosenSemesterFrom = semester.from;
+                  // Возврат к понедельнику: у не текущего семестра осмысленна
+                  // первая неделя целиком, а сегодняшний день недели там ни при
+                  // чём. Страницу перематываем, чтобы день совпал с полосой.
+                  _dayIndex = 0;
+                });
+                if (_pageController.hasClients) {
+                  _pageController.jumpToPage(0);
+                }
+              },
             ),
           DayStrip(
             selected: _dayIndex,
@@ -245,6 +300,36 @@ class _GroupSwitcherTitle extends ConsumerWidget {
           ),
       ],
       child: title,
+    );
+  }
+}
+
+/// Переключатель семестров в шапке расписания. Показывается, только когда
+/// семестров больше одного (у группы обычно осенний и весенний).
+class _SemesterSwitcher extends StatelessWidget {
+  const _SemesterSwitcher({
+    required this.semesters,
+    required this.selected,
+    required this.onSelect,
+  });
+
+  final List<Semester> semesters;
+  final Semester selected;
+  final ValueChanged<Semester> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      child: SegmentedButton<Semester>(
+        segments: [
+          for (final semester in semesters)
+            ButtonSegment(value: semester, label: Text(semester.label)),
+        ],
+        selected: {selected},
+        showSelectedIcon: false,
+        onSelectionChanged: (set) => onSelect(set.first),
+      ),
     );
   }
 }

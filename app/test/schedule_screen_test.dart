@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,6 +12,7 @@ import 'package:sfedu_econ/features/schedule/schedule_data.dart';
 import 'package:sfedu_econ/features/schedule/schedule_providers.dart';
 import 'package:sfedu_econ/features/schedule/schedule_repository.dart';
 import 'package:sfedu_econ/features/schedule/schedule_screen.dart';
+import 'package:sfedu_econ/features/schedule/semester.dart';
 
 // 13.07.2026 — понедельник, 09:30 — идёт 1-я пара. Неделя 13–19.07 — верхняя.
 final _now = DateTime(2026, 7, 13, 9, 30);
@@ -200,6 +202,178 @@ void main() {
     expect(find.text('Макроэкономика'), findsOneWidget);
     expect(find.text('Эконометрика'), findsOneWidget);
     expect(find.text('Иностранный язык'), findsNothing); // вторник
+  });
+
+  group('выбор семестра', () {
+    // Осень (пн 15.09.2025) и весна (пн 09.02.2026), разрыв на каникулы.
+    final data = ScheduleData(
+      lessons: [
+        // Окна пар совпадают со своими семестрами: осенняя пара видна только
+        // осенью, весенняя — только весной. Без этого тест на переключение
+        // прошёл бы тривиально (обе пары видны в любой понедельник).
+        Lesson(
+          id: 1,
+          groupId: 3,
+          weekday: 0,
+          pairNumber: 1,
+          startsAt: '09:00:00',
+          endsAt: '10:35:00',
+          subject: 'Осенний предмет',
+          room: '220',
+          weekType: null,
+          subgroup: 0,
+          teacherName: null,
+          validFrom: DateTime(2025, 9, 1),
+          validTo: DateTime(2026, 1, 11),
+        ),
+        Lesson(
+          id: 2,
+          groupId: 3,
+          weekday: 0,
+          pairNumber: 1,
+          startsAt: '09:00:00',
+          endsAt: '10:35:00',
+          subject: 'Весенний предмет',
+          room: '221',
+          weekType: null,
+          subgroup: 0,
+          teacherName: null,
+          validFrom: DateTime(2026, 2, 9),
+          validTo: DateTime(2026, 6, 22),
+        ),
+      ],
+      modules: [
+        Module(
+            id: 1,
+            name: 'Осень',
+            dateFrom: DateTime(2025, 9, 1),
+            dateTo: DateTime(2026, 1, 11)),
+        Module(
+            id: 2,
+            name: 'Весна',
+            dateFrom: DateTime(2026, 2, 9),
+            dateTo: DateTime(2026, 6, 22)),
+      ],
+      weekCalendar: const [],
+    );
+    final autumnNow = DateTime(2025, 9, 15, 9, 30); // понедельник осени
+
+    testWidgets('переключатель показан, когда семестров два', (tester) async {
+      await tester.pumpWidget(await _screen(data: data, now: autumnNow));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Осенний'), findsOneWidget);
+      expect(find.text('Весенний'), findsOneWidget);
+    });
+
+    testWidgets('по умолчанию — семестр текущей даты (осень)', (tester) async {
+      await tester.pumpWidget(await _screen(data: data, now: autumnNow));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Осенний предмет'), findsOneWidget);
+      expect(find.text('Весенний предмет'), findsNothing);
+    });
+
+    testWidgets('выбор весеннего перематывает на его неделю', (tester) async {
+      await tester.pumpWidget(await _screen(data: data, now: autumnNow));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Весенний'));
+      await tester.pumpAndSettle();
+
+      // Расписание прыгнуло на весну: видна весенняя пара, осенней нет.
+      expect(find.text('Весенний предмет'), findsOneWidget);
+      expect(find.text('Осенний предмет'), findsNothing);
+    });
+
+    testWidgets('выбор весны переживает переэмит расписания (регрессия)',
+        (tester) async {
+      // Каждый билд создаёт новые объекты Semester, а drift-watch переэмитит
+      // расписание НОВЫМИ объектами дат. Пока выбор хранился ОБЪЕКТОМ, при
+      // переэмите он слетал на другой семестр. Ключ теста — эмитить данные с
+      // НЕидентичными (но равными) DateTime, иначе идентичность случайно
+      // совпадёт и баг не воспроизведётся.
+      ScheduleData freshData() => ScheduleData(
+            lessons: [
+              for (final l in data.lessons)
+                Lesson(
+                  id: l.id,
+                  groupId: l.groupId,
+                  weekday: l.weekday,
+                  pairNumber: l.pairNumber,
+                  startsAt: l.startsAt,
+                  endsAt: l.endsAt,
+                  subject: l.subject,
+                  room: l.room,
+                  weekType: l.weekType,
+                  subgroup: l.subgroup,
+                  teacherName: l.teacherName,
+                  validFrom: l.validFrom == null
+                      ? null
+                      : DateTime.parse(l.validFrom!.toIso8601String()),
+                  validTo: l.validTo == null
+                      ? null
+                      : DateTime.parse(l.validTo!.toIso8601String()),
+                ),
+            ],
+            modules: [
+              for (final m in data.modules)
+                Module(
+                  id: m.id,
+                  name: m.name,
+                  dateFrom: DateTime.parse(m.dateFrom.toIso8601String()),
+                  dateTo: DateTime.parse(m.dateTo.toIso8601String()),
+                ),
+            ],
+            weekCalendar: const [],
+          );
+
+      final controller = StreamController<ScheduleData>();
+      addTearDown(controller.close);
+      SharedPreferences.setMockInitialValues(const {});
+      final prefs = await SharedPreferences.getInstance();
+      final container = ProviderContainer(overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        groupsProvider.overrideWith((ref) async => _groups),
+        selectedGroupIdProvider.overrideWith(() => FakeSelectedGroupId(3)),
+        scheduleDataProvider.overrideWith((ref) => controller.stream),
+        clockProvider.overrideWithValue(() => autumnNow),
+        syncStatusProvider.overrideWith(_FakeSync.new),
+      ]);
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: ScheduleScreen()),
+      ));
+      controller.add(freshData());
+      await tester.pumpAndSettle();
+
+      // Пользователь выбрал весну.
+      await tester.tap(find.text('Весенний'));
+      await tester.pumpAndSettle();
+      expect(find.text('Весенний предмет'), findsOneWidget);
+
+      // Фоновый синк переэмитил расписание новыми объектами дат.
+      controller.add(freshData());
+      await tester.pumpAndSettle();
+
+      // Выбор весны не должен слететь обратно на осень.
+      expect(find.text('Весенний предмет'), findsOneWidget);
+      expect(find.text('Осенний предмет'), findsNothing);
+    });
+
+    testWidgets('у одного семестра переключателя нет', (tester) async {
+      final single = ScheduleData(
+        lessons: data.lessons,
+        modules: [data.modules.first],
+        weekCalendar: const [],
+      );
+      await tester.pumpWidget(await _screen(data: single, now: autumnNow));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SegmentedButton<Semester>), findsNothing);
+    });
   });
 
   group('фильтр подгруппы', () {
