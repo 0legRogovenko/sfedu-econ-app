@@ -13,6 +13,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 from src.config import settings
 from src.parsers.runner import run_news_parsers
+from src.parsers.econ_staff_runner import main as run_staff_import
 from src.schedule.importer import run_schedule_import
 
 logger = logging.getLogger(__name__)
@@ -43,6 +44,16 @@ def create_scheduler() -> BackgroundScheduler:
         max_instances=1,
         coalesce=True,
     )
+    scheduler.add_job(
+        _run_staff_job,
+        trigger="interval",
+        hours=settings.staff_import_hours,
+        # Ещё позже расписания: 10 страниц сайта факультета, спешить некуда.
+        next_run_time=datetime.now(timezone.utc) + timedelta(minutes=10),
+        id="staff_import",
+        max_instances=1,
+        coalesce=True,
+    )
     return scheduler
 
 
@@ -50,6 +61,11 @@ def _run_news_job() -> None:
     logger.info("Запуск парсеров новостей по расписанию")
     result = run_news_parsers()
     logger.info("Парсеры новостей завершены: %s", result)
+
+
+def _run_staff_job() -> None:
+    logger.info("Запуск обновления справочника сотрудников")
+    run_staff_import()
 
 
 def _run_schedule_job() -> None:

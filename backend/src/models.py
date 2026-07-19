@@ -319,6 +319,11 @@ class News(Base):
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
 
+class ContactSource(str, enum.Enum):
+    MANUAL = "manual"          # заведено админом
+    ECON_SITE = "econ_site"    # автозабор с econ-sfedu.ru
+
+
 class Contact(Base):
     __tablename__ = "contacts"
 
@@ -331,6 +336,12 @@ class Contact(Base):
     phone: Mapped[str | None] = mapped_column(String(50))
     office_hours: Mapped[str | None] = mapped_column(String(200))
     sort_order: Mapped[int] = mapped_column(default=0)
+
+    # Кто завёл запись. Автозабор с econ-sfedu.ru владеет ТОЛЬКО своими
+    # строками и при повторном запуске заменяет именно их: иначе он стирал бы
+    # то, что админ вписал руками (кабинеты, часы приёма, почты — их на сайте
+    # факультета нет).
+    source: Mapped[str] = mapped_column(String(20), default=ContactSource.MANUAL)
 
 
 class KbArticle(Base):
