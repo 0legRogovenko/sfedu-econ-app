@@ -1,22 +1,42 @@
-# Brainstorm artifacts (visual companion)
-.superpowers/
+# ── Secrets ──────────────────────────────────────────────────────────────
+.env
+*.env
+!.env.example
 
-# Python
+# ── Python (backend) ─────────────────────────────────────────────────────
 venv/
+.venv/
 __pycache__/
 *.pyc
-.env
+*.pyo
+*.egg-info/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
-# Flutter
+# ── Flutter / Dart (app) ─────────────────────────────────────────────────
 build/
 .dart_tool/
 .flutter-plugins*
+*.iml
+.idea/
+# Платформы не используются — приложение только iOS + Android
+app/linux/
+app/macos/
+app/windows/
+app/web/
 
-# OS
-.DS_Store
-
-# Local assets scratch
-logo.png
-
-# Workflow worktrees
+# ── AI tooling (никогда не коммитить) ────────────────────────────────────
+# graphify: локальный граф знаний и его инструкции — не часть проекта
+.claude/
+CLAUDE.md
+graphify-out/
+# superpowers: артефакты брейнсторма и рабочие worktree
+.superpowers/
 .worktrees/
+
+# ── OS / прочее ──────────────────────────────────────────────────────────
+.DS_Store
+logo.png

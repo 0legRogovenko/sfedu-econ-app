@@ -40,15 +40,15 @@ Android-эмулятор не видит localhost хоста — использ
 
     lib/core/       тема ЮФУ, API-клиент, prefs
     lib/router.dart go_router: онбординг + 4 вкладки
-    lib/features/   onboarding, schedule, exams, teachers, news, assistant, contacts
+    lib/features/   onboarding, schedule, exams, people, news, assistant, contacts
     lib/features/schedule/  расписание: drift-кэш со скоупом (группа|преподаватель),
                             ETag-синк, тип недели и активный модуль из календаря
-                            сервера, фильтр подгруппы
+                            сервера, фильтр подгруппы, выбор семестра
     lib/features/exams/     ближайшая сессия: консультация, экзамен, аудитория
-    lib/features/teachers/  поиск преподавателя и его расписание
+    lib/features/people/    единый справочник людей: карточка, поиск и
+                            расписание преподавателя (следует выбору семестра)
     lib/features/news/      лента новостей: drift-кэш, keyset-пагинация, детальный экран, офлайн-плашка
-    lib/features/contacts/  справочник: drift-кэш, поиск, mailto/tel
-    lib/features/settings/  настройки: группа, избранные, подгруппа, тема, о приложении
+    lib/features/contacts/  справочник (деканат + кафедры): drift-кэш, поиск, mailto
 
 Тип недели НЕ вычисляется формулой чётности. Прежняя формула («нечётная
 ISO-неделя — числитель») давала результат, обратный реальному календарю ЮФУ,
