@@ -66,6 +66,14 @@ class _TeacherScheduleScreenState extends ConsumerState<TeacherScheduleScreen> {
           activeModule(data.modules, _dateForIndex(_dayIndex))?.name,
       orElse: () => null,
     );
+    // Тип недели ВЫБРАННОГО дня. Пары с чередованием фильтруются по нему, и
+    // без бейджа студент не понимает, какую неделю видит, — на экране группы
+    // бейдж есть, здесь его не хватало.
+    final weekType = scheduleAsync.maybeWhen(
+      data: (data) =>
+          weekTypeForDate(data.weekCalendar, _dateForIndex(_dayIndex)),
+      orElse: () => null,
+    );
     final noData = syncStatus.lastResult == SyncResult.failed &&
         syncStatus.syncedAt == null &&
         scheduleAsync.maybeWhen(
@@ -86,9 +94,21 @@ class _TeacherScheduleScreenState extends ConsumerState<TeacherScheduleScreen> {
           if (moduleName != null)
             Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Text(
                   moduleName,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+            ),
+          // Скрыт, если дата вне календаря: тип недели тогда неизвестен, и
+          // показывать было бы нечего (как на экране группы).
+          if (weekType != null)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: Text(
+                  weekType.label,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),

@@ -184,6 +184,30 @@ void main() {
       expect(find.textContaining('220 · Ласкова'), findsNothing);
     });
 
+    testWidgets('бейдж типа недели показывается, как на экране группы',
+        (tester) async {
+      // Пары с чередованием фильтруются по типу недели, поэтому студент
+      // должен видеть, какую неделю он смотрит. На экране группы бейдж есть,
+      // на экране преподавателя его не было — те же пары без объяснения.
+      final data = ScheduleData(
+        lessons: _data.lessons,
+        modules: const [],
+        weekCalendar: [
+          WeekCalendarEntry(
+            dateFrom: DateTime(2026, 7, 13),
+            dateTo: DateTime(2026, 7, 19),
+            weekType: WeekType.upper,
+          ),
+        ],
+      );
+      final container = _container(data: data);
+      addTearDown(container.dispose);
+      await _pump(
+          tester, container, const TeacherScheduleScreen(teacher: _teacher));
+
+      expect(find.text('верхняя'), findsOneWidget);
+    });
+
     testWidgets('заголовок — ФИО преподавателя', (tester) async {
       final container = _container();
       addTearDown(container.dispose);
