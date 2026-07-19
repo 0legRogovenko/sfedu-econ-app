@@ -62,14 +62,25 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 24),
           Text('Избранные группы', style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
-          groupsAsync.maybeWhen(
-            data: (groups) => _FavoriteGroupsSection(groups: groups),
-            orElse: () => const SizedBox.shrink(),
+          // Пустой справочник, а не пустая секция: офлайн заголовок «Избранные
+          // группы» висел бы над пустотой, и убрать избранную было бы нельзя.
+          // Имена подставит groupNameOf («Группа N»), как в заголовке
+          // расписания.
+          _FavoriteGroupsSection(
+            groups: groupsAsync.maybeWhen(
+              data: (groups) => groups,
+              orElse: () => const <Group>[],
+            ),
           ),
           const SizedBox(height: 24),
           Text('Моя подгруппа', style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
-          const _SubgroupSection(),
+          _SubgroupSection(
+            groups: groupsAsync.maybeWhen(
+              data: (groups) => groups,
+              orElse: () => const <Group>[],
+            ),
+          ),
           const SizedBox(height: 24),
           Text('Тема', style: theme.textTheme.titleMedium),
           RadioGroup<ThemeMode>(
@@ -125,13 +136,24 @@ class SettingsScreen extends ConsumerWidget {
 /// Выбор подгруппы для АКТИВНОЙ группы: «Все» снимает фильтр. Хранится по
 /// группам, поэтому переключение активной показывает её собственный выбор.
 class _SubgroupSection extends ConsumerWidget {
-  const _SubgroupSection();
+  const _SubgroupSection({required this.groups});
+
+  final List<Group> groups;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final groupId = ref.watch(selectedGroupIdProvider);
     final current = ref.watch(activeSubgroupProvider);
     if (groupId == null) return const Text('Сначала выберите группу');
+
+    // Число подгрупп берём у группы, а не «всегда две»: разбиение приходит из
+    // файла ЮФУ и не ограничено двумя. При жёстких 1/2 студент третьей
+    // подгруппы не смог бы выбрать свою. Фолбэк 2 — офлайн, когда справочник
+    // групп ещё не загрузился.
+    var count = 2;
+    for (final g in groups) {
+      if (g.id == groupId) count = g.subgroupCount;
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,10 +166,9 @@ class _SubgroupSection extends ConsumerWidget {
         Wrap(
           spacing: 8,
           children: [
-            for (final (value, label) in const [
+            for (final (value, label) in [
               (null, 'Все'),
-              (1, '1-я'),
-              (2, '2-я'),
+              for (var i = 1; i <= count; i++) (i, '$i-я'),
             ])
               ChoiceChip(
                 label: Text(label),

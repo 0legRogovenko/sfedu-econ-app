@@ -104,8 +104,13 @@ ProviderContainer _container({
           if (teachersError != null) throw teachersError;
           return teachers ?? const [_teacher];
         }),
-        teacherScheduleProvider
-            .overrideWith((ref, teacherId) => Stream.value(data ?? _data)),
+        // Данные отдаём ТОЛЬКО для запрошенного id: иначе тест прошёл бы и
+        // при обращении экрана к чужому преподавателю (проверено мутацией
+        // teacherScheduleProvider(999)).
+        teacherScheduleProvider.overrideWith((ref, teacherId) =>
+            teacherId == _teacher.id
+                ? Stream.value(data ?? _data)
+                : Stream.value(const ScheduleData.empty())),
         // Подменяем ЭЛЕМЕНТ семейства (id 7), а не семейство целиком:
         // override семейства не получает аргумент, и нотифаер пришлось бы
         // строить с чужим id.
@@ -186,6 +191,36 @@ void main() {
           tester, container, const TeacherScheduleScreen(teacher: _teacher));
 
       expect(find.widgetWithText(AppBar, 'Ласкова Т.С.'), findsOneWidget);
+    });
+
+    testWidgets('тап по дню во время загрузки не падает', (tester) async {
+      // Регрессия: полоса дней живёт вне scheduleAsync.when, поэтому доступна
+      // и пока данных нет. animateToPage на неприкреплённом PageController
+      // бросал ассерт в debug и StateError в release. У преподавателя кэш при
+      // первом открытии всегда холодный, так что окно реальное.
+      final container = ProviderContainer(overrides: [
+        clockProvider.overrideWithValue(() => _now),
+        groupsProvider.overrideWith((ref) async => _groups),
+        teachersProvider.overrideWith((ref) async => const [_teacher]),
+        // Поток, который никогда не эмитит — экран остаётся в loading.
+        teacherScheduleProvider
+            .overrideWith((ref, teacherId) => const Stream.empty()),
+        teacherSyncProvider(_teacher.id)
+            .overrideWith(() => _FakeTeacherSync(_teacher.id)),
+      ]);
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+            home: TeacherScheduleScreen(teacher: _teacher)),
+      ));
+      await tester.pump();
+
+      await tester.tap(find.text('Ср'));
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('пустой кэш после неудачного синка — «нужна сеть»',

@@ -32,8 +32,14 @@ final scheduleDataProvider = StreamProvider<ScheduleData>((ref) {
 
 /// Расписание преподавателя из кэша. Семейство по teacherId: экранов
 /// преподавателей может быть открыто несколько (переход из карточки в карточку).
+///
+/// autoDispose обязателен: по умолчанию семейство не освобождается, и каждый
+/// просмотренный преподаватель навсегда оставлял бы живой drift-запрос к
+/// cached_lessons. За сессию из 20 преподавателей — 20 потоков, и КАЖДАЯ
+/// последующая запись в таблицу (в том числе обычный синк группы) заново
+/// прогоняла бы их все.
 final teacherScheduleProvider =
-    StreamProvider.family<ScheduleData, int>((ref, teacherId) => ref
+    StreamProvider.autoDispose.family<ScheduleData, int>((ref, teacherId) => ref
         .watch(scheduleRepositoryProvider)
         .watch(ScheduleScope.teacher(teacherId)));
 
@@ -79,6 +85,9 @@ class TeacherSyncNotifier extends Notifier<SyncStatus> {
     final scope = ScheduleScope.teacher(teacherId);
     final repo = ref.read(scheduleRepositoryProvider);
     final result = await repo.sync(scope);
+    // Экран мог закрыться, пока шёл запрос: у autoDispose-семейства нотифаер
+    // к этому моменту уже утилизирован, и запись в state бросила бы.
+    if (!ref.mounted) return;
     state = SyncStatus(
       lastResult: result,
       syncedAt: await repo.syncedAt(scope),
@@ -86,6 +95,7 @@ class TeacherSyncNotifier extends Notifier<SyncStatus> {
   }
 }
 
+/// autoDispose по той же причине, что и у teacherScheduleProvider.
 final teacherSyncProvider =
-    NotifierProvider.family<TeacherSyncNotifier, SyncStatus, int>(
+    NotifierProvider.autoDispose.family<TeacherSyncNotifier, SyncStatus, int>(
         (teacherId) => TeacherSyncNotifier(teacherId));

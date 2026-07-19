@@ -42,6 +42,15 @@ const _groups = [
     level: EducationLevel.bachelor,
     subgroupCount: 2,
   ),
+  // Разбиение на три подгруппы — для проверки, что чипы не зашиты как 1/2.
+  Group(
+    id: 5,
+    course: 3,
+    number: '3.1',
+    program: null,
+    level: EducationLevel.bachelor,
+    subgroupCount: 3,
+  ),
 ];
 
 /// Расписание, новости и контакты в фоне ходят в реальную drift-БД/dio —
@@ -230,8 +239,29 @@ void main() {
       await _pumpSettings(tester, container);
       await _scrollTo(tester, find.text('Моя подгруппа'));
 
+      // Проверяем именно ВЫБРАННОСТЬ чипа: сам по себе он есть всегда, и
+      // ассерт на его наличие прошёл бы даже при selected: false.
+      expect(
+        tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Все')).selected,
+        isTrue,
+      );
+      expect(
+        tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '1-я')).selected,
+        isFalse,
+      );
       expect(container.read(activeSubgroupProvider), isNull);
-      expect(find.text('Все'), findsOneWidget);
+    });
+
+    testWidgets('чипов столько, сколько подгрупп у группы', (tester) async {
+      // Разбиение приходит из файла ЮФУ и не ограничено двумя: у группы с
+      // тремя подгруппами студент третьей должен видеть свой чип.
+      final container = await _container(prefsValues: {'selected_group_id': 5});
+      addTearDown(container.dispose);
+      await _pumpSettings(tester, container);
+      await _scrollTo(tester, find.text('Моя подгруппа'));
+
+      expect(find.widgetWithText(ChoiceChip, '3-я'), findsOneWidget);
+      expect(find.widgetWithText(ChoiceChip, '4-я'), findsNothing);
     });
 
     testWidgets('выбор подгруппы сохраняется для активной группы',

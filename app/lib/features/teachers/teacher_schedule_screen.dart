@@ -117,11 +117,18 @@ class _TeacherScheduleScreenState extends ConsumerState<TeacherScheduleScreen> {
             selected: _dayIndex,
             onSelect: (index) {
               setState(() => _dayIndex = index);
-              _pageController.animateToPage(
-                index,
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeOut,
-              );
+              // Полоса дней живёт ВНЕ scheduleAsync.when, поэтому доступна и
+              // в состоянии loading, когда PageView ещё не построен. Без этой
+              // проверки тап по дню в первые кадры падает: у контроллера нет
+              // позиции. У преподавателя кэш всегда холодный при первом
+              // открытии, так что окно реально.
+              if (_pageController.hasClients) {
+                _pageController.animateToPage(
+                  index,
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeOut,
+                );
+              }
             },
           ),
           Expanded(

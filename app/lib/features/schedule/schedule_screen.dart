@@ -156,11 +156,17 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
             selected: _dayIndex,
             onSelect: (index) {
               setState(() => _dayIndex = index);
-              _pageController.animateToPage(
-                index,
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeOut,
-              );
+              // Полоса дней вне scheduleAsync.when — она доступна и в loading,
+              // когда PageView ещё не построен (см. тот же комментарий в
+              // экране преподавателя). Здесь тёплый кэш обычно маскирует
+              // проблему, но на первом запуске окно такое же.
+              if (_pageController.hasClients) {
+                _pageController.animateToPage(
+                  index,
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeOut,
+                );
+              }
             },
           ),
           Expanded(
