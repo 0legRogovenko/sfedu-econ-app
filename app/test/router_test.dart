@@ -6,6 +6,7 @@ import 'package:sfedu_econ/core/prefs.dart';
 import 'package:sfedu_econ/features/contacts/contacts_providers.dart';
 import 'package:sfedu_econ/features/contacts/contacts_repository.dart';
 import 'package:sfedu_econ/features/news/news_providers.dart';
+import 'package:sfedu_econ/features/people/people_providers.dart';
 import 'package:sfedu_econ/features/news/news_repository.dart';
 import 'package:sfedu_econ/features/onboarding/selected_group.dart';
 import 'package:sfedu_econ/features/schedule/schedule_data.dart';
@@ -51,6 +52,7 @@ Future<Widget> _appWithGroup() async {
       syncStatusProvider.overrideWith(_FakeSync.new),
       newsFeedProvider.overrideWith(_FakeFeed.new),
       contactsFeedProvider.overrideWith(_FakeContactsFeed.new),
+      peopleProvider.overrideWith((ref) async => const []),
     ],
     child: const SfeduEconApp(),
   );

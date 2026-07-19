@@ -12,9 +12,10 @@ import 'features/onboarding/onboarding_screen.dart';
 import 'features/onboarding/selected_group.dart';
 import 'features/schedule/schedule_screen.dart';
 import 'features/settings/settings_screen.dart';
-import 'features/teachers/teacher.dart';
-import 'features/teachers/teacher_schedule_screen.dart';
-import 'features/teachers/teacher_search_screen.dart';
+import 'features/people/people_search_screen.dart';
+import 'features/people/person.dart';
+import 'features/people/person_schedule_screen.dart';
+import 'features/people/person_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   // ref.read, не watch: роутер создаётся один раз на старте; после выбора
@@ -76,16 +77,23 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),
       ),
+      // Единый справочник людей. Поиск преподавателя со старого экрана
+      // /teachers слит сюда: /people — тот же список, что на вкладке
+      // «Контакты», но открытый пушем (например, из расписания).
       GoRoute(
-        path: '/teachers',
-        builder: (context, state) => const TeacherSearchScreen(),
+        path: '/people',
+        builder: (context, state) => const PeopleSearchScreen(),
       ),
-      // Преподаватель передаётся объектом (extra), а не id в пути: ФИО нужно
-      // в заголовке сразу, а отдельной ручки «преподаватель по id» нет.
       GoRoute(
-        path: '/teachers/schedule',
+        path: '/people/person',
         builder: (context, state) =>
-            TeacherScheduleScreen(teacher: state.extra! as Teacher),
+            PersonScreen(person: state.extra! as Person),
+      ),
+      // Объект, а не id в пути: ФИО нужно в заголовке сразу.
+      GoRoute(
+        path: '/people/schedule',
+        builder: (context, state) =>
+            PersonScheduleScreen(person: state.extra! as Person),
       ),
     ],
   );

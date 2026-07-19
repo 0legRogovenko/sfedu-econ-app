@@ -30,19 +30,6 @@ final scheduleDataProvider = StreamProvider<ScheduleData>((ref) {
       .watch(ScheduleScope.group(groupId));
 });
 
-/// Расписание преподавателя из кэша. Семейство по teacherId: экранов
-/// преподавателей может быть открыто несколько (переход из карточки в карточку).
-///
-/// autoDispose обязателен: по умолчанию семейство не освобождается, и каждый
-/// просмотренный преподаватель навсегда оставлял бы живой drift-запрос к
-/// cached_lessons. За сессию из 20 преподавателей — 20 потоков, и КАЖДАЯ
-/// последующая запись в таблицу (в том числе обычный синк группы) заново
-/// прогоняла бы их все.
-final teacherScheduleProvider =
-    StreamProvider.autoDispose.family<ScheduleData, int>((ref, teacherId) => ref
-        .watch(scheduleRepositoryProvider)
-        .watch(ScheduleScope.teacher(teacherId)));
-
 /// Статус последней синхронизации (для плашки «Данные от…»).
 class SyncStatus {
   const SyncStatus({required this.lastResult, required this.syncedAt});
@@ -69,33 +56,3 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
 
 final syncStatusProvider =
     NotifierProvider<SyncStatusNotifier, SyncStatus>(SyncStatusNotifier.new);
-
-/// Тот же статус синхронизации, но для расписания преподавателя. Аргумент
-/// семейства приходит конструктором: в riverpod 3 семейный нотифаер — обычный
-/// Notifier, а id подставляет фабрика провайдера.
-class TeacherSyncNotifier extends Notifier<SyncStatus> {
-  TeacherSyncNotifier(this.teacherId);
-
-  final int teacherId;
-
-  @override
-  SyncStatus build() => const SyncStatus(lastResult: null, syncedAt: null);
-
-  Future<void> sync() async {
-    final scope = ScheduleScope.teacher(teacherId);
-    final repo = ref.read(scheduleRepositoryProvider);
-    final result = await repo.sync(scope);
-    // Экран мог закрыться, пока шёл запрос: у autoDispose-семейства нотифаер
-    // к этому моменту уже утилизирован, и запись в state бросила бы.
-    if (!ref.mounted) return;
-    state = SyncStatus(
-      lastResult: result,
-      syncedAt: await repo.syncedAt(scope),
-    );
-  }
-}
-
-/// autoDispose по той же причине, что и у teacherScheduleProvider.
-final teacherSyncProvider =
-    NotifierProvider.autoDispose.family<TeacherSyncNotifier, SyncStatus, int>(
-        (teacherId) => TeacherSyncNotifier(teacherId));

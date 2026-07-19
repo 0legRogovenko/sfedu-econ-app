@@ -124,7 +124,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           IconButton(
             icon: const Icon(Icons.person_search_outlined),
             tooltip: 'Расписание преподавателя',
-            onPressed: () => context.push('/teachers'),
+            onPressed: () => context.push('/people'),
           ),
           IconButton(
             icon: const Icon(Icons.event_note_outlined),

@@ -2,20 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'teacher.dart';
-import 'teachers_providers.dart';
+import 'people_providers.dart';
+import 'person.dart';
 
-/// Поиск преподавателя. Фильтр локальный (список маленький), поэтому
-/// результаты обновляются на каждый символ без запросов к сети.
-class TeacherSearchScreen extends ConsumerStatefulWidget {
-  const TeacherSearchScreen({super.key});
+/// Поиск человека ради его расписания (открывается из экрана расписания).
+/// Тот же единый список людей, что на вкладке «Контакты», но показываем
+/// только тех, у кого расписание есть, и тап ведёт СРАЗУ к расписанию —
+/// пользователь пришёл именно за ним.
+class PeopleSearchScreen extends ConsumerStatefulWidget {
+  const PeopleSearchScreen({super.key});
 
   @override
-  ConsumerState<TeacherSearchScreen> createState() =>
-      _TeacherSearchScreenState();
+  ConsumerState<PeopleSearchScreen> createState() =>
+      _PeopleSearchScreenState();
 }
 
-class _TeacherSearchScreenState extends ConsumerState<TeacherSearchScreen> {
+class _PeopleSearchScreenState extends ConsumerState<PeopleSearchScreen> {
   final _controller = TextEditingController();
   String _query = '';
 
@@ -27,7 +29,7 @@ class _TeacherSearchScreenState extends ConsumerState<TeacherSearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final teachersAsync = ref.watch(teachersProvider);
+    final peopleAsync = ref.watch(peopleProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Преподаватели')),
@@ -47,31 +49,31 @@ class _TeacherSearchScreenState extends ConsumerState<TeacherSearchScreen> {
             ),
           ),
           Expanded(
-            child: teachersAsync.when(
+            child: peopleAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              // Кэша списка нет, поэтому офлайн честно говорим про сеть,
-              // а не показываем пустой список как «никого не нашлось».
               error: (error, _) => const Center(
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 24),
                   child: Text(
-                    'Не удалось загрузить список преподавателей. '
-                    'Нужна сеть',
+                    'Не удалось загрузить список. Нужна сеть',
                     textAlign: TextAlign.center,
                   ),
                 ),
               ),
-              data: (teachers) {
-                final found = filterTeachers(teachers, _query);
+              data: (people) {
+                final found = filterPeople(
+                  people.where((p) => p.hasSchedule).toList(),
+                  _query,
+                );
                 if (found.isEmpty) {
                   return const Center(child: Text('Никого не нашлось'));
                 }
                 return ListView.builder(
                   itemCount: found.length,
                   itemBuilder: (context, index) => ListTile(
-                    title: Text(found[index].fullName),
+                    title: Text(found[index].shortName),
                     onTap: () => context.push(
-                      '/teachers/schedule',
+                      '/people/schedule',
                       extra: found[index],
                     ),
                   ),
