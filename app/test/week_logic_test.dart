@@ -164,6 +164,53 @@ void main() {
     });
   });
 
+  group('lessonsForDay — фильтр подгруппы', () {
+    // Пара 1 — вся группа, пары 2 и 3 — разбиение на подгруппы в одном слоте.
+    final data = ScheduleData(
+      lessons: [
+        _lesson(id: 1, pairNumber: 1),
+        _lesson(id: 2, pairNumber: 2, subgroup: 1),
+        _lesson(id: 3, pairNumber: 2, subgroup: 2),
+      ],
+      modules: _modules,
+      weekCalendar: _calendar,
+    );
+    final monday = DateTime(2025, 9, 1);
+
+    test('без фильтра видны обе подгруппы', () {
+      expect(lessonsForDay(data, monday).map((l) => l.id), [1, 2, 3]);
+    });
+
+    test('фильтр 1 скрывает пару второй подгруппы', () {
+      expect(lessonsForDay(data, monday, subgroup: 1).map((l) => l.id), [1, 2]);
+    });
+
+    test('фильтр 2 скрывает пару первой подгруппы', () {
+      expect(lessonsForDay(data, monday, subgroup: 2).map((l) => l.id), [1, 3]);
+    });
+
+    test('пара всей группы (subgroup 0) видна при любом фильтре', () {
+      // Ради этого фильтр и проверяет subgroup != 0 отдельно: иначе студент
+      // с фильтром потерял бы все общие лекции.
+      for (final sg in [1, 2]) {
+        expect(lessonsForDay(data, monday, subgroup: sg).map((l) => l.id),
+            contains(1));
+      }
+    });
+
+    test('фильтр не отменяет правило недель', () {
+      // Пара нижней недели своей подгруппы всё равно не видна на верхней.
+      final alt = ScheduleData(
+        lessons: [_lesson(id: 5, subgroup: 1, weekType: WeekType.lower)],
+        modules: _modules,
+        weekCalendar: _calendar,
+      );
+      expect(lessonsForDay(alt, monday, subgroup: 1), isEmpty);
+      expect(lessonsForDay(alt, DateTime(2025, 9, 8), subgroup: 1).map((l) => l.id),
+          [5]);
+    });
+  });
+
   group('isLessonNow', () {
     final lesson = _lesson(); // пн, 09:00–10:35, каждую неделю
 

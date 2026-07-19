@@ -202,6 +202,77 @@ void main() {
     expect(find.text('Иностранный язык'), findsNothing); // вторник
   });
 
+  group('фильтр подгруппы', () {
+    // Понедельник: общая лекция + разбиение на подгруппы в одном слоте.
+    final data = ScheduleData(
+      lessons: const [
+        Lesson(
+          id: 10,
+          groupId: 3,
+          weekday: 0,
+          pairNumber: 1,
+          startsAt: '09:00:00',
+          endsAt: '10:35:00',
+          subject: 'Макроэкономика',
+          room: '220',
+          weekType: null,
+          subgroup: 0,
+          teacherName: 'Иванова Е. П.',
+        ),
+        Lesson(
+          id: 11,
+          groupId: 3,
+          weekday: 0,
+          pairNumber: 2,
+          startsAt: '10:50:00',
+          endsAt: '12:25:00',
+          subject: 'Английский первой',
+          room: '118',
+          weekType: null,
+          subgroup: 1,
+          teacherName: null,
+        ),
+        Lesson(
+          id: 12,
+          groupId: 3,
+          weekday: 0,
+          pairNumber: 2,
+          startsAt: '10:50:00',
+          endsAt: '12:25:00',
+          subject: 'Английский второй',
+          room: '119',
+          weekType: null,
+          subgroup: 2,
+          teacherName: null,
+        ),
+      ],
+      modules: const [],
+      weekCalendar: _calendar,
+    );
+
+    testWidgets('без настройки видны обе подгруппы', (tester) async {
+      await tester.pumpWidget(await _screen(data: data));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Английский первой'), findsOneWidget);
+      expect(find.text('Английский второй'), findsOneWidget);
+    });
+
+    testWidgets('настройка подгруппы прячет чужую пару на экране',
+        (tester) async {
+      // Провод «настройка → экран»: сама логика проверена в week_logic_test,
+      // здесь важно, что экран действительно передаёт фильтр в резолвер.
+      await tester.pumpWidget(
+          await _screen(data: data, prefsValues: {'subgroup_of_3': 1}));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Английский первой'), findsOneWidget);
+      expect(find.text('Английский второй'), findsNothing);
+      // Общая лекция остаётся — фильтр не прячет пары всей группы.
+      expect(find.text('Макроэкономика'), findsOneWidget);
+    });
+  });
+
   testWidgets('аудитория-номер: в карточке ровно одно «ауд.»', (tester) async {
     // Регрессия «ауд. ауд.118»: бэкенд теперь отдаёт голое «220», а префикс
     // дописывает карточка — и только один раз.

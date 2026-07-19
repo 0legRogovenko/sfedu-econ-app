@@ -10,6 +10,7 @@ import '../onboarding/selected_group.dart';
 import 'lesson.dart';
 import 'schedule_providers.dart';
 import 'schedule_repository.dart';
+import 'subgroup_filter.dart';
 import 'week_logic.dart';
 
 const _weekdayShort = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
@@ -86,6 +87,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           data: (data) => data.lessons.isEmpty,
           orElse: () => false,
         );
+    // Фильтр «моя подгруппа» активной группы; null — показывать все пары.
+    final subgroup = ref.watch(activeSubgroupProvider);
     final now = ref.read(clockProvider)();
     final nowWeekType = scheduleAsync.maybeWhen(
       data: (data) => weekTypeForDate(
@@ -170,7 +173,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                 onPageChanged: (index) =>
                     setState(() => _dayIndex = index),
                 itemBuilder: (context, index) => _DayPage(
-                  lessons: lessonsForDay(data, _dateForIndex(index)),
+                  lessons: lessonsForDay(data, _dateForIndex(index),
+                      subgroup: subgroup),
                   nowWeekType: nowWeekType,
                   noData: noData,
                   onRefresh: () =>

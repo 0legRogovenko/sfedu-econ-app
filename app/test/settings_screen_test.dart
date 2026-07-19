@@ -13,6 +13,7 @@ import 'package:sfedu_econ/features/onboarding/group_repository.dart';
 import 'package:sfedu_econ/features/onboarding/selected_group.dart';
 import 'package:sfedu_econ/features/schedule/schedule_data.dart';
 import 'package:sfedu_econ/features/schedule/schedule_providers.dart';
+import 'package:sfedu_econ/features/schedule/subgroup_filter.dart';
 import 'package:sfedu_econ/main.dart';
 import 'package:sfedu_econ/router.dart';
 
@@ -86,6 +87,20 @@ Future<ProviderContainer> _container({
   );
 }
 
+/// Прокрутка к элементу настроек. Экран растёт, и элемент оказывается в одном
+/// из двух состояний: построен, но за краем вьюпорта (помогает только
+/// ensureVisible — прокручивать нечего, виджет уже найден) либо ещё не построен
+/// ленивым ListView (нужен scrollUntilVisible). Хелпер закрывает оба случая,
+/// чтобы новая секция не роняла чужие тесты.
+Future<void> _scrollTo(WidgetTester tester, Finder finder) async {
+  if (finder.evaluate().isEmpty) {
+    await tester.scrollUntilVisible(finder, 200,
+        scrollable: find.byType(Scrollable).first);
+  }
+  await tester.ensureVisible(finder);
+  await tester.pumpAndSettle();
+}
+
 Future<void> _pumpSettings(WidgetTester tester, ProviderContainer container) async {
   await tester.pumpWidget(
     UncontrolledProviderScope(container: container, child: const SfeduEconApp()),
@@ -127,12 +142,8 @@ void main() {
     addTearDown(container.dispose);
     await _pumpSettings(tester, container);
 
-    // Секция избранных удлинила экран — радиокнопки тем уходят за нижний край.
-    // Именно ensureVisible, а не scrollUntilVisible: виджет уже построен и
-    // находится файндером, просто лежит вне вьюпорта — прокрутки бы не было.
     final dark = find.text('Тёмная');
-    await tester.ensureVisible(dark);
-    await tester.pumpAndSettle();
+    await _scrollTo(tester, dark);
     await tester.tap(dark);
     await tester.pumpAndSettle();
 
@@ -167,8 +178,7 @@ void main() {
       await tester.pumpAndSettle();
 
       final addButton = find.text('Добавить текущую в избранные');
-      await tester.scrollUntilVisible(addButton, 200,
-          scrollable: find.byType(Scrollable).first);
+      await _scrollTo(tester, addButton);
       await tester.tap(addButton);
       await tester.pumpAndSettle();
 
@@ -213,19 +223,64 @@ void main() {
     });
   });
 
+  group('моя подгруппа', () {
+    testWidgets('по умолчанию выбрано «Все»', (tester) async {
+      final container = await _container();
+      addTearDown(container.dispose);
+      await _pumpSettings(tester, container);
+      await _scrollTo(tester, find.text('Моя подгруппа'));
+
+      expect(container.read(activeSubgroupProvider), isNull);
+      expect(find.text('Все'), findsOneWidget);
+    });
+
+    testWidgets('выбор подгруппы сохраняется для активной группы',
+        (tester) async {
+      final container = await _container();
+      addTearDown(container.dispose);
+      await _pumpSettings(tester, container);
+
+      final second = find.text('2-я');
+      await _scrollTo(tester, second);
+      await tester.tap(second);
+      await tester.pumpAndSettle();
+
+      // Активная группа — 3 (см. prefs по умолчанию).
+      expect(container.read(activeSubgroupProvider), 2);
+      expect(container.read(sharedPreferencesProvider).getInt('subgroup_of_3'),
+          2);
+    });
+
+    testWidgets('«Все» снимает ранее выбранный фильтр', (tester) async {
+      final container = await _container(prefsValues: {
+        'selected_group_id': 3,
+        'subgroup_of_3': 1,
+      });
+      addTearDown(container.dispose);
+      await _pumpSettings(tester, container);
+
+      final all = find.text('Все');
+      await _scrollTo(tester, all);
+      await tester.tap(all);
+      await tester.pumpAndSettle();
+
+      expect(container.read(activeSubgroupProvider), isNull);
+      expect(
+          container.read(sharedPreferencesProvider).containsKey('subgroup_of_3'),
+          isFalse);
+    });
+  });
+
   testWidgets('«О приложении» указывает неофициальный статус', (tester) async {
     final container = await _container();
     addTearDown(container.dispose);
     await _pumpSettings(tester, container);
 
-    // Пикер стал выше — блок «О приложении» уходит за нижнюю границу ленивого
-    // ListView, поэтому прокручиваем до него.
     final about = find.text(
       'Неофициальное приложение, сделано студентом. '
       'Данные берутся с sfedu.ru.',
     );
-    await tester.scrollUntilVisible(about, 200,
-        scrollable: find.byType(Scrollable).first);
+    await _scrollTo(tester, about);
 
     expect(about, findsOneWidget);
   });

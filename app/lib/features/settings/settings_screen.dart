@@ -7,6 +7,7 @@ import '../onboarding/favorite_groups.dart';
 import '../onboarding/group_picker.dart';
 import '../onboarding/group_repository.dart';
 import '../onboarding/selected_group.dart';
+import '../schedule/subgroup_filter.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -66,6 +67,10 @@ class SettingsScreen extends ConsumerWidget {
             orElse: () => const SizedBox.shrink(),
           ),
           const SizedBox(height: 24),
+          Text('Моя подгруппа', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 8),
+          const _SubgroupSection(),
+          const SizedBox(height: 24),
           Text('Тема', style: theme.textTheme.titleMedium),
           RadioGroup<ThemeMode>(
             groupValue: themeMode,
@@ -113,6 +118,52 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Выбор подгруппы для АКТИВНОЙ группы: «Все» снимает фильтр. Хранится по
+/// группам, поэтому переключение активной показывает её собственный выбор.
+class _SubgroupSection extends ConsumerWidget {
+  const _SubgroupSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final groupId = ref.watch(selectedGroupIdProvider);
+    final current = ref.watch(activeSubgroupProvider);
+    if (groupId == null) return const Text('Сначала выберите группу');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Пары всей группы показываются всегда — фильтр прячет только '
+          'занятия чужой подгруппы.',
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          children: [
+            for (final (value, label) in const [
+              (null, 'Все'),
+              (1, '1-я'),
+              (2, '2-я'),
+            ])
+              ChoiceChip(
+                label: Text(label),
+                selected: current == value,
+                // Повторный тап по выбранному чипу шлёт selected: false —
+                // тогда ничего не меняем, иначе выбор нельзя было бы вернуть.
+                onSelected: (selected) {
+                  if (!selected) return;
+                  ref
+                      .read(subgroupFiltersProvider.notifier)
+                      .set(groupId, value);
+                },
+              ),
+          ],
+        ),
+      ],
     );
   }
 }
