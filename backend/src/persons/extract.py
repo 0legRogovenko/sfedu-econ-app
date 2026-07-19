@@ -118,14 +118,33 @@ def find_name_spans(text: str) -> list[tuple[int, int, tuple[str, str, str]]]:
     Повторы здесь НЕ убираются: для сегментации важно каждое вхождение.
     """
     collapsed = collapse_spaces(text)
-    return [
-        (
-            match.start(),
-            match.end(),
-            (_capitalize_surname(match.group(1)), match.group(2), match.group(3)),
+    spans = []
+    for match in _NAME_RE.finditer(collapsed):
+        if _is_glued_caps_run(match, collapsed):
+            continue
+        spans.append(
+            (
+                match.start(),
+                match.end(),
+                (_capitalize_surname(match.group(1)), match.group(2), match.group(3)),
+            )
         )
-        for match in _NAME_RE.finditer(collapsed)
-    ]
+    return spans
+
+
+def _is_glued_caps_run(match: "re.Match", collapsed: str) -> bool:
+    """Капс-фамилия, СЛИТАЯ с инициалами без разделителя, — не имя.
+
+    «АКТРУ» (код здания в хвосте «Беликова С.А. АКТРУ») движок разбирает как
+    «АКТ»+«Р»+«У». Настоящее капс-написание всегда отделяет фамилию от
+    инициалов пробелом или точкой («ВОЛЬЧИК В.В.»); у аббревиатуры разделителя
+    между ними нет. Обычные фамилии (со строчными буквами) не трогаем — там
+    капс-эвристика неприменима.
+    """
+    surname = match.group(1)
+    if not surname.isupper():
+        return False
+    return collapsed[match.end(1) : match.start(2)] == ""
 
 
 def _capitalize_surname(raw: str) -> str:
