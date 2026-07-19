@@ -70,6 +70,20 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   /// Дата, соответствующая выбранному дню отображаемой недели.
   DateTime _dateForIndex(int index) => _baseMonday.add(Duration(days: index));
 
+  /// Выбор семестра из меню кнопки. Хранит дату начала, а не объект: каждый
+  /// build пересоздаёт объекты Semester, и хранение объектом сбивало бы выбор
+  /// при переэмите расписания.
+  void _selectSemester(Semester semester, Semester current) {
+    if (semester.from == current.from) return; // тот же — ничего не делаем
+    setState(() {
+      _chosenSemesterFrom = semester.from;
+      // Возврат к понедельнику: у не текущего семестра осмысленна первая неделя
+      // целиком, а сегодняшний день недели там ни при чём.
+      _dayIndex = 0;
+    });
+    if (_pageController.hasClients) _pageController.jumpToPage(0);
+  }
+
   @override
   Widget build(BuildContext context) {
     // Смена группы в настройках должна подтягивать её расписание: initState
@@ -100,12 +114,6 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     selectedSemester ??= currentSemester(semesters, now);
     _baseMonday = _mondayFor(selectedSemester, now);
 
-    // Тип недели выбранного дня — из календаря сервера (не формула).
-    final weekType = scheduleAsync.maybeWhen(
-      data: (data) =>
-          weekTypeForDate(data.weekCalendar, _dateForIndex(_dayIndex)),
-      orElse: () => null,
-    );
     // Активный модуль выбранного дня (модуль, чей диапазон накрывает дату).
     // null — дата вне всех модулей ИЛИ у модуля нет имени → бейдж скрыт.
     final moduleName = scheduleAsync.maybeWhen(
@@ -146,17 +154,15 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                 ),
               ),
             ),
-          // Бейдж типа недели («верхняя»/«нижняя») — термины ЮФУ. Если дата вне
-          // календаря, тип неизвестен — бейдж не показываем.
-          if (weekType != null)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: Center(
-                child: Text(
-                  weekType.label,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ),
+          // Кнопка выбора семестра — на месте прежнего бейджа недели. Показана,
+          // только когда семестров больше одного (у группы обычно осенний и
+          // весенний).
+          if (semesters.length >= 2 && selectedSemester != null)
+            _SemesterButton(
+              semesters: semesters,
+              selected: selectedSemester,
+              onSelect: (semester) =>
+                  _selectSemester(semester, selectedSemester!),
             ),
           IconButton(
             icon: const Icon(Icons.person_search_outlined),
@@ -188,24 +194,6 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                   child: const Text('Обновить'),
                 ),
               ],
-            ),
-          if (semesters.length >= 2 && selectedSemester != null)
-            _SemesterSwitcher(
-              semesters: semesters,
-              selected: selectedSemester,
-              onSelect: (semester) {
-                if (semester.from == selectedSemester!.from) return; // тот же
-                setState(() {
-                  _chosenSemesterFrom = semester.from;
-                  // Возврат к понедельнику: у не текущего семестра осмысленна
-                  // первая неделя целиком, а сегодняшний день недели там ни при
-                  // чём. Страницу перематываем, чтобы день совпал с полосой.
-                  _dayIndex = 0;
-                });
-                if (_pageController.hasClients) {
-                  _pageController.jumpToPage(0);
-                }
-              },
             ),
           DayStrip(
             selected: _dayIndex,
@@ -304,10 +292,11 @@ class _GroupSwitcherTitle extends ConsumerWidget {
   }
 }
 
-/// Переключатель семестров в шапке расписания. Показывается, только когда
-/// семестров больше одного (у группы обычно осенний и весенний).
-class _SemesterSwitcher extends StatelessWidget {
-  const _SemesterSwitcher({
+/// Кнопка выбора семестра в шапке расписания: текущий семестр со стрелкой,
+/// тап открывает меню. Показывается, только когда семестров больше одного
+/// (у группы обычно осенний и весенний).
+class _SemesterButton extends StatelessWidget {
+  const _SemesterButton({
     required this.semesters,
     required this.selected,
     required this.onSelect,
@@ -319,16 +308,34 @@ class _SemesterSwitcher extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-      child: SegmentedButton<Semester>(
-        segments: [
-          for (final semester in semesters)
-            ButtonSegment(value: semester, label: Text(semester.label)),
-        ],
-        selected: {selected},
-        showSelectedIcon: false,
-        onSelectionChanged: (set) => onSelect(set.first),
+    return PopupMenuButton<Semester>(
+      tooltip: 'Выбор семестра',
+      onSelected: onSelect,
+      itemBuilder: (context) => [
+        for (final semester in semesters)
+          PopupMenuItem(
+            value: semester,
+            child: Row(
+              children: [
+                if (semester.from == selected.from)
+                  const Icon(Icons.check, size: 18)
+                else
+                  const SizedBox(width: 18),
+                const SizedBox(width: 8),
+                Text(semester.label),
+              ],
+            ),
+          ),
+      ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(selected.label, style: Theme.of(context).textTheme.bodyMedium),
+            const Icon(Icons.arrow_drop_down),
+          ],
+        ),
       ),
     );
   }

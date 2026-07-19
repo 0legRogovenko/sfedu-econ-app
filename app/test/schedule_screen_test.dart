@@ -12,7 +12,6 @@ import 'package:sfedu_econ/features/schedule/schedule_data.dart';
 import 'package:sfedu_econ/features/schedule/schedule_providers.dart';
 import 'package:sfedu_econ/features/schedule/schedule_repository.dart';
 import 'package:sfedu_econ/features/schedule/schedule_screen.dart';
-import 'package:sfedu_econ/features/schedule/semester.dart';
 
 // 13.07.2026 — понедельник, 09:30 — идёт 1-я пара. Неделя 13–19.07 — верхняя.
 final _now = DateTime(2026, 7, 13, 9, 30);
@@ -258,11 +257,16 @@ void main() {
     );
     final autumnNow = DateTime(2025, 9, 15, 9, 30); // понедельник осени
 
-    testWidgets('переключатель показан, когда семестров два', (tester) async {
+    testWidgets('кнопка семестра показана, когда семестров два',
+        (tester) async {
       await tester.pumpWidget(await _screen(data: data, now: autumnNow));
       await tester.pumpAndSettle();
 
+      // На кнопке — текущий семестр; оба варианта открываются в её меню.
+      expect(find.byTooltip('Выбор семестра'), findsOneWidget);
       expect(find.text('Осенний'), findsOneWidget);
+      await tester.tap(find.byTooltip('Выбор семестра'));
+      await tester.pumpAndSettle();
       expect(find.text('Весенний'), findsOneWidget);
     });
 
@@ -278,6 +282,8 @@ void main() {
       await tester.pumpWidget(await _screen(data: data, now: autumnNow));
       await tester.pumpAndSettle();
 
+      await tester.tap(find.byTooltip('Выбор семестра'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Весенний'));
       await tester.pumpAndSettle();
 
@@ -349,7 +355,9 @@ void main() {
       controller.add(freshData());
       await tester.pumpAndSettle();
 
-      // Пользователь выбрал весну.
+      // Пользователь выбрал весну через меню кнопки.
+      await tester.tap(find.byTooltip('Выбор семестра'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Весенний'));
       await tester.pumpAndSettle();
       expect(find.text('Весенний предмет'), findsOneWidget);
@@ -363,7 +371,7 @@ void main() {
       expect(find.text('Осенний предмет'), findsNothing);
     });
 
-    testWidgets('у одного семестра переключателя нет', (tester) async {
+    testWidgets('у одного семестра кнопки семестра нет', (tester) async {
       final single = ScheduleData(
         lessons: data.lessons,
         modules: [data.modules.first],
@@ -372,7 +380,7 @@ void main() {
       await tester.pumpWidget(await _screen(data: single, now: autumnNow));
       await tester.pumpAndSettle();
 
-      expect(find.byType(SegmentedButton<Semester>), findsNothing);
+      expect(find.byTooltip('Выбор семестра'), findsNothing);
     });
   });
 
@@ -522,13 +530,6 @@ void main() {
     expect(find.text('Пар нет — отдыхаем'), findsOneWidget);
   });
 
-  testWidgets('бейдж «верхняя» на верхней неделе', (tester) async {
-    await tester.pumpWidget(await _screen());
-    await tester.pumpAndSettle();
-
-    expect(find.text('верхняя'), findsOneWidget);
-  });
-
   testWidgets('в воскресенье показывается понедельник следующей недели',
       (tester) async {
     // 19.07.2026 — воскресенье; след. понедельник 20.07 — нижняя неделя.
@@ -537,7 +538,6 @@ void main() {
 
     expect(find.text('Макроэкономика'), findsOneWidget); // каждую неделю
     expect(find.text('Эконометрика'), findsNothing); // верхняя — исключена
-    expect(find.text('нижняя'), findsOneWidget);
   });
 
   testWidgets('после неудачного синка показывается плашка с датой данных',
