@@ -6,6 +6,7 @@ import '../onboarding/selected_group.dart';
 import 'schedule_api.dart';
 import 'schedule_data.dart';
 import 'schedule_repository.dart';
+import 'schedule_scope.dart';
 
 final databaseProvider = Provider<AppDatabase>((ref) {
   final db = AppDatabase();
@@ -24,8 +25,17 @@ final scheduleRepositoryProvider = Provider<ScheduleRepository>((ref) =>
 final scheduleDataProvider = StreamProvider<ScheduleData>((ref) {
   final groupId = ref.watch(selectedGroupIdProvider);
   if (groupId == null) return const Stream.empty();
-  return ref.watch(scheduleRepositoryProvider).watch(groupId);
+  return ref
+      .watch(scheduleRepositoryProvider)
+      .watch(ScheduleScope.group(groupId));
 });
+
+/// Расписание преподавателя из кэша. Семейство по teacherId: экранов
+/// преподавателей может быть открыто несколько (переход из карточки в карточку).
+final teacherScheduleProvider =
+    StreamProvider.family<ScheduleData, int>((ref, teacherId) => ref
+        .watch(scheduleRepositoryProvider)
+        .watch(ScheduleScope.teacher(teacherId)));
 
 /// Статус последней синхронизации (для плашки «Данные от…»).
 class SyncStatus {
@@ -41,14 +51,41 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
   Future<void> sync() async {
     final groupId = ref.read(selectedGroupIdProvider);
     if (groupId == null) return;
+    final scope = ScheduleScope.group(groupId);
     final repo = ref.read(scheduleRepositoryProvider);
-    final result = await repo.sync(groupId);
+    final result = await repo.sync(scope);
     state = SyncStatus(
       lastResult: result,
-      syncedAt: await repo.syncedAt(groupId),
+      syncedAt: await repo.syncedAt(scope),
     );
   }
 }
 
 final syncStatusProvider =
     NotifierProvider<SyncStatusNotifier, SyncStatus>(SyncStatusNotifier.new);
+
+/// Тот же статус синхронизации, но для расписания преподавателя. Аргумент
+/// семейства приходит конструктором: в riverpod 3 семейный нотифаер — обычный
+/// Notifier, а id подставляет фабрика провайдера.
+class TeacherSyncNotifier extends Notifier<SyncStatus> {
+  TeacherSyncNotifier(this.teacherId);
+
+  final int teacherId;
+
+  @override
+  SyncStatus build() => const SyncStatus(lastResult: null, syncedAt: null);
+
+  Future<void> sync() async {
+    final scope = ScheduleScope.teacher(teacherId);
+    final repo = ref.read(scheduleRepositoryProvider);
+    final result = await repo.sync(scope);
+    state = SyncStatus(
+      lastResult: result,
+      syncedAt: await repo.syncedAt(scope),
+    );
+  }
+}
+
+final teacherSyncProvider =
+    NotifierProvider.family<TeacherSyncNotifier, SyncStatus, int>(
+        (teacherId) => TeacherSyncNotifier(teacherId));

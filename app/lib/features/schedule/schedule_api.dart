@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 
+import 'schedule_scope.dart';
+
 enum ScheduleApiStatus { ok, notModified, failure }
 
 class ScheduleApiResponse {
@@ -25,7 +27,7 @@ class ScheduleApiResponse {
 }
 
 abstract interface class ScheduleApi {
-  Future<ScheduleApiResponse> fetchSchedule(int groupId, String? etag);
+  Future<ScheduleApiResponse> fetchSchedule(ScheduleScope scope, String? etag);
 }
 
 class DioScheduleApi implements ScheduleApi {
@@ -34,11 +36,14 @@ class DioScheduleApi implements ScheduleApi {
   final Dio _dio;
 
   @override
-  Future<ScheduleApiResponse> fetchSchedule(int groupId, String? etag) async {
+  Future<ScheduleApiResponse> fetchSchedule(
+      ScheduleScope scope, String? etag) async {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         '/api/schedule',
-        queryParameters: {'group_id': groupId},
+        // Ручка принимает РОВНО ОДИН из group_id/teacher_id — имя параметра
+        // выбирает сам скоуп.
+        queryParameters: {scope.queryParam: scope.id},
         options: Options(
           headers: {'If-None-Match': ?etag},
           validateStatus: (status) => status == 200 || status == 304,

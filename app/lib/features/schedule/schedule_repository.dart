@@ -4,6 +4,7 @@ import '../../core/db.dart';
 import 'lesson.dart';
 import 'schedule_api.dart';
 import 'schedule_data.dart';
+import 'schedule_scope.dart';
 
 enum SyncResult { updated, notModified, failed }
 
@@ -22,20 +23,24 @@ class ScheduleRepository {
   final ScheduleApi _api;
   final AppDatabase _db;
 
-  Future<SyncResult> sync(int groupId) async {
-    final meta = await _db.metaForGroup(groupId);
-    final response = await _api.fetchSchedule(groupId, meta?.etag);
+  Future<SyncResult> sync(ScheduleScope scope) async {
+    final key = scope.key;
+    final meta = await _db.metaForScope(key);
+    final response = await _api.fetchSchedule(scope, meta?.etag);
     switch (response.status) {
       case ScheduleApiStatus.failure:
         return SyncResult.failed;
       case ScheduleApiStatus.notModified:
-        await _db.touchSyncedAt(groupId, DateTime.now());
+        await _db.touchSyncedAt(key, DateTime.now());
         return SyncResult.notModified;
       case ScheduleApiStatus.ok:
         final data = ScheduleData.fromJson(response.scheduleJson!);
         final lessons = data.lessons
             .map((l) => CachedLessonsCompanion.insert(
-                  id: Value(l.id),
+                  id: l.id,
+                  scope: key,
+                  // Группа ПАРЫ, не скоупа: в расписании преподавателя
+                  // именно она подписывает карточку.
                   groupId: l.groupId,
                   weekday: l.weekday,
                   pairNumber: l.pairNumber,
@@ -53,7 +58,7 @@ class ScheduleRepository {
             .toList();
         final modules = data.modules
             .map((m) => CachedModulesCompanion.insert(
-                  groupId: groupId,
+                  scope: key,
                   moduleId: m.id,
                   name: Value(m.name),
                   dateFrom: _dateStr(m.dateFrom)!,
@@ -62,14 +67,14 @@ class ScheduleRepository {
             .toList();
         final calendar = data.weekCalendar
             .map((w) => CachedWeekCalendarCompanion.insert(
-                  groupId: groupId,
+                  scope: key,
                   dateFrom: _dateStr(w.dateFrom)!,
                   dateTo: _dateStr(w.dateTo)!,
                   weekType: w.weekType.value,
                 ))
             .toList();
-        await _db.replaceGroupSchedule(
-            groupId, lessons, modules, calendar, response.etag);
+        await _db.replaceScheduleCache(
+            key, lessons, modules, calendar, response.etag);
         return SyncResult.updated;
     }
   }
@@ -91,12 +96,12 @@ class ScheduleRepository {
         validTo: _dateOf(r.validTo),
       );
 
-  /// Расписание группы из кэша (реактивно). Модули и календарь читаются вместе
+  /// Расписание скоупа из кэша (реактивно). Модули и календарь читаются вместе
   /// с парами: они пишутся одной транзакцией, поэтому эмиссия потока пар уже
   /// видит свежие модули/календарь.
-  Stream<ScheduleData> watch(int groupId) =>
-      _db.watchLessons(groupId).asyncMap((lessonRows) async {
-        final modules = (await _db.modulesForGroup(groupId))
+  Stream<ScheduleData> watch(ScheduleScope scope) =>
+      _db.watchLessons(scope.key).asyncMap((lessonRows) async {
+        final modules = (await _db.modulesForScope(scope.key))
             .map((m) => Module(
                   id: m.moduleId,
                   name: m.name,
@@ -104,7 +109,7 @@ class ScheduleRepository {
                   dateTo: DateTime.parse(m.dateTo),
                 ))
             .toList();
-        final calendar = (await _db.weekCalendarForGroup(groupId))
+        final calendar = (await _db.weekCalendarForScope(scope.key))
             .map((w) => WeekCalendarEntry(
                   dateFrom: DateTime.parse(w.dateFrom),
                   dateTo: DateTime.parse(w.dateTo),
@@ -118,6 +123,6 @@ class ScheduleRepository {
         );
       });
 
-  Future<DateTime?> syncedAt(int groupId) async =>
-      (await _db.metaForGroup(groupId))?.syncedAt;
+  Future<DateTime?> syncedAt(ScheduleScope scope) async =>
+      (await _db.metaForScope(scope.key))?.syncedAt;
 }

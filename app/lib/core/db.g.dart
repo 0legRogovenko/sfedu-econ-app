@@ -16,7 +16,16 @@ class $CachedLessonsTable extends CachedLessons
     aliasedName,
     false,
     type: DriftSqlType.int,
-    requiredDuringInsert: false,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _scopeMeta = const VerificationMeta('scope');
+  @override
+  late final GeneratedColumn<String> scope = GeneratedColumn<String>(
+    'scope',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
   );
   static const VerificationMeta _groupIdMeta = const VerificationMeta(
     'groupId',
@@ -160,6 +169,7 @@ class $CachedLessonsTable extends CachedLessons
   @override
   List<GeneratedColumn> get $columns => [
     id,
+    scope,
     groupId,
     weekday,
     pairNumber,
@@ -188,6 +198,16 @@ class $CachedLessonsTable extends CachedLessons
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('scope')) {
+      context.handle(
+        _scopeMeta,
+        scope.isAcceptableOrUnknown(data['scope']!, _scopeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_scopeMeta);
     }
     if (data.containsKey('group_id')) {
       context.handle(
@@ -288,7 +308,7 @@ class $CachedLessonsTable extends CachedLessons
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {id};
+  Set<GeneratedColumn> get $primaryKey => {scope, id};
   @override
   CachedLesson map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -296,6 +316,10 @@ class $CachedLessonsTable extends CachedLessons
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}id'],
+      )!,
+      scope: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}scope'],
       )!,
       groupId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
@@ -360,6 +384,11 @@ class $CachedLessonsTable extends CachedLessons
 
 class CachedLesson extends DataClass implements Insertable<CachedLesson> {
   final int id;
+
+  /// Чей это кэш: 'group:3' или 'teacher:7' (см. ScheduleScope). Отдельно от
+  /// [groupId], который остаётся СВОЙСТВОМ ПАРЫ: в расписании преподавателя
+  /// именно он подписывает карточку.
+  final String scope;
   final int groupId;
   final int weekday;
   final int pairNumber;
@@ -375,6 +404,7 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
   final String? validTo;
   const CachedLesson({
     required this.id,
+    required this.scope,
     required this.groupId,
     required this.weekday,
     required this.pairNumber,
@@ -393,6 +423,7 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
+    map['scope'] = Variable<String>(scope);
     map['group_id'] = Variable<int>(groupId);
     map['weekday'] = Variable<int>(weekday);
     map['pair_number'] = Variable<int>(pairNumber);
@@ -424,6 +455,7 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
   CachedLessonsCompanion toCompanion(bool nullToAbsent) {
     return CachedLessonsCompanion(
       id: Value(id),
+      scope: Value(scope),
       groupId: Value(groupId),
       weekday: Value(weekday),
       pairNumber: Value(pairNumber),
@@ -457,6 +489,7 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return CachedLesson(
       id: serializer.fromJson<int>(json['id']),
+      scope: serializer.fromJson<String>(json['scope']),
       groupId: serializer.fromJson<int>(json['groupId']),
       weekday: serializer.fromJson<int>(json['weekday']),
       pairNumber: serializer.fromJson<int>(json['pairNumber']),
@@ -477,6 +510,7 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
+      'scope': serializer.toJson<String>(scope),
       'groupId': serializer.toJson<int>(groupId),
       'weekday': serializer.toJson<int>(weekday),
       'pairNumber': serializer.toJson<int>(pairNumber),
@@ -495,6 +529,7 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
 
   CachedLesson copyWith({
     int? id,
+    String? scope,
     int? groupId,
     int? weekday,
     int? pairNumber,
@@ -510,6 +545,7 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
     Value<String?> validTo = const Value.absent(),
   }) => CachedLesson(
     id: id ?? this.id,
+    scope: scope ?? this.scope,
     groupId: groupId ?? this.groupId,
     weekday: weekday ?? this.weekday,
     pairNumber: pairNumber ?? this.pairNumber,
@@ -527,6 +563,7 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
   CachedLesson copyWithCompanion(CachedLessonsCompanion data) {
     return CachedLesson(
       id: data.id.present ? data.id.value : this.id,
+      scope: data.scope.present ? data.scope.value : this.scope,
       groupId: data.groupId.present ? data.groupId.value : this.groupId,
       weekday: data.weekday.present ? data.weekday.value : this.weekday,
       pairNumber: data.pairNumber.present
@@ -551,6 +588,7 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
   String toString() {
     return (StringBuffer('CachedLesson(')
           ..write('id: $id, ')
+          ..write('scope: $scope, ')
           ..write('groupId: $groupId, ')
           ..write('weekday: $weekday, ')
           ..write('pairNumber: $pairNumber, ')
@@ -571,6 +609,7 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
   @override
   int get hashCode => Object.hash(
     id,
+    scope,
     groupId,
     weekday,
     pairNumber,
@@ -590,6 +629,7 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
       identical(this, other) ||
       (other is CachedLesson &&
           other.id == this.id &&
+          other.scope == this.scope &&
           other.groupId == this.groupId &&
           other.weekday == this.weekday &&
           other.pairNumber == this.pairNumber &&
@@ -607,6 +647,7 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
 
 class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
   final Value<int> id;
+  final Value<String> scope;
   final Value<int> groupId;
   final Value<int> weekday;
   final Value<int> pairNumber;
@@ -620,8 +661,10 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
   final Value<int?> moduleId;
   final Value<String?> validFrom;
   final Value<String?> validTo;
+  final Value<int> rowid;
   const CachedLessonsCompanion({
     this.id = const Value.absent(),
+    this.scope = const Value.absent(),
     this.groupId = const Value.absent(),
     this.weekday = const Value.absent(),
     this.pairNumber = const Value.absent(),
@@ -635,9 +678,11 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
     this.moduleId = const Value.absent(),
     this.validFrom = const Value.absent(),
     this.validTo = const Value.absent(),
+    this.rowid = const Value.absent(),
   });
   CachedLessonsCompanion.insert({
-    this.id = const Value.absent(),
+    required int id,
+    required String scope,
     required int groupId,
     required int weekday,
     required int pairNumber,
@@ -651,7 +696,10 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
     this.moduleId = const Value.absent(),
     this.validFrom = const Value.absent(),
     this.validTo = const Value.absent(),
-  }) : groupId = Value(groupId),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       scope = Value(scope),
+       groupId = Value(groupId),
        weekday = Value(weekday),
        pairNumber = Value(pairNumber),
        startsAt = Value(startsAt),
@@ -660,6 +708,7 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
        subgroup = Value(subgroup);
   static Insertable<CachedLesson> custom({
     Expression<int>? id,
+    Expression<String>? scope,
     Expression<int>? groupId,
     Expression<int>? weekday,
     Expression<int>? pairNumber,
@@ -673,9 +722,11 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
     Expression<int>? moduleId,
     Expression<String>? validFrom,
     Expression<String>? validTo,
+    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (scope != null) 'scope': scope,
       if (groupId != null) 'group_id': groupId,
       if (weekday != null) 'weekday': weekday,
       if (pairNumber != null) 'pair_number': pairNumber,
@@ -689,11 +740,13 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
       if (moduleId != null) 'module_id': moduleId,
       if (validFrom != null) 'valid_from': validFrom,
       if (validTo != null) 'valid_to': validTo,
+      if (rowid != null) 'rowid': rowid,
     });
   }
 
   CachedLessonsCompanion copyWith({
     Value<int>? id,
+    Value<String>? scope,
     Value<int>? groupId,
     Value<int>? weekday,
     Value<int>? pairNumber,
@@ -707,9 +760,11 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
     Value<int?>? moduleId,
     Value<String?>? validFrom,
     Value<String?>? validTo,
+    Value<int>? rowid,
   }) {
     return CachedLessonsCompanion(
       id: id ?? this.id,
+      scope: scope ?? this.scope,
       groupId: groupId ?? this.groupId,
       weekday: weekday ?? this.weekday,
       pairNumber: pairNumber ?? this.pairNumber,
@@ -723,6 +778,7 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
       moduleId: moduleId ?? this.moduleId,
       validFrom: validFrom ?? this.validFrom,
       validTo: validTo ?? this.validTo,
+      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -731,6 +787,9 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<int>(id.value);
+    }
+    if (scope.present) {
+      map['scope'] = Variable<String>(scope.value);
     }
     if (groupId.present) {
       map['group_id'] = Variable<int>(groupId.value);
@@ -771,6 +830,9 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
     if (validTo.present) {
       map['valid_to'] = Variable<String>(validTo.value);
     }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
     return map;
   }
 
@@ -778,6 +840,7 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
   String toString() {
     return (StringBuffer('CachedLessonsCompanion(')
           ..write('id: $id, ')
+          ..write('scope: $scope, ')
           ..write('groupId: $groupId, ')
           ..write('weekday: $weekday, ')
           ..write('pairNumber: $pairNumber, ')
@@ -790,7 +853,8 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
           ..write('teacherName: $teacherName, ')
           ..write('moduleId: $moduleId, ')
           ..write('validFrom: $validFrom, ')
-          ..write('validTo: $validTo')
+          ..write('validTo: $validTo, ')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -802,15 +866,13 @@ class $CachedModulesTable extends CachedModules
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   $CachedModulesTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _groupIdMeta = const VerificationMeta(
-    'groupId',
-  );
+  static const VerificationMeta _scopeMeta = const VerificationMeta('scope');
   @override
-  late final GeneratedColumn<int> groupId = GeneratedColumn<int>(
-    'group_id',
+  late final GeneratedColumn<String> scope = GeneratedColumn<String>(
+    'scope',
     aliasedName,
     false,
-    type: DriftSqlType.int,
+    type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
   static const VerificationMeta _moduleIdMeta = const VerificationMeta(
@@ -855,7 +917,7 @@ class $CachedModulesTable extends CachedModules
   );
   @override
   List<GeneratedColumn> get $columns => [
-    groupId,
+    scope,
     moduleId,
     name,
     dateFrom,
@@ -873,13 +935,13 @@ class $CachedModulesTable extends CachedModules
   }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
-    if (data.containsKey('group_id')) {
+    if (data.containsKey('scope')) {
       context.handle(
-        _groupIdMeta,
-        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+        _scopeMeta,
+        scope.isAcceptableOrUnknown(data['scope']!, _scopeMeta),
       );
     } else if (isInserting) {
-      context.missing(_groupIdMeta);
+      context.missing(_scopeMeta);
     }
     if (data.containsKey('module_id')) {
       context.handle(
@@ -920,9 +982,9 @@ class $CachedModulesTable extends CachedModules
   CachedModule map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return CachedModule(
-      groupId: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}group_id'],
+      scope: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}scope'],
       )!,
       moduleId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
@@ -950,13 +1012,13 @@ class $CachedModulesTable extends CachedModules
 }
 
 class CachedModule extends DataClass implements Insertable<CachedModule> {
-  final int groupId;
+  final String scope;
   final int moduleId;
   final String? name;
   final String dateFrom;
   final String dateTo;
   const CachedModule({
-    required this.groupId,
+    required this.scope,
     required this.moduleId,
     this.name,
     required this.dateFrom,
@@ -965,7 +1027,7 @@ class CachedModule extends DataClass implements Insertable<CachedModule> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['group_id'] = Variable<int>(groupId);
+    map['scope'] = Variable<String>(scope);
     map['module_id'] = Variable<int>(moduleId);
     if (!nullToAbsent || name != null) {
       map['name'] = Variable<String>(name);
@@ -977,7 +1039,7 @@ class CachedModule extends DataClass implements Insertable<CachedModule> {
 
   CachedModulesCompanion toCompanion(bool nullToAbsent) {
     return CachedModulesCompanion(
-      groupId: Value(groupId),
+      scope: Value(scope),
       moduleId: Value(moduleId),
       name: name == null && nullToAbsent ? const Value.absent() : Value(name),
       dateFrom: Value(dateFrom),
@@ -991,7 +1053,7 @@ class CachedModule extends DataClass implements Insertable<CachedModule> {
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return CachedModule(
-      groupId: serializer.fromJson<int>(json['groupId']),
+      scope: serializer.fromJson<String>(json['scope']),
       moduleId: serializer.fromJson<int>(json['moduleId']),
       name: serializer.fromJson<String?>(json['name']),
       dateFrom: serializer.fromJson<String>(json['dateFrom']),
@@ -1002,7 +1064,7 @@ class CachedModule extends DataClass implements Insertable<CachedModule> {
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'groupId': serializer.toJson<int>(groupId),
+      'scope': serializer.toJson<String>(scope),
       'moduleId': serializer.toJson<int>(moduleId),
       'name': serializer.toJson<String?>(name),
       'dateFrom': serializer.toJson<String>(dateFrom),
@@ -1011,13 +1073,13 @@ class CachedModule extends DataClass implements Insertable<CachedModule> {
   }
 
   CachedModule copyWith({
-    int? groupId,
+    String? scope,
     int? moduleId,
     Value<String?> name = const Value.absent(),
     String? dateFrom,
     String? dateTo,
   }) => CachedModule(
-    groupId: groupId ?? this.groupId,
+    scope: scope ?? this.scope,
     moduleId: moduleId ?? this.moduleId,
     name: name.present ? name.value : this.name,
     dateFrom: dateFrom ?? this.dateFrom,
@@ -1025,7 +1087,7 @@ class CachedModule extends DataClass implements Insertable<CachedModule> {
   );
   CachedModule copyWithCompanion(CachedModulesCompanion data) {
     return CachedModule(
-      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      scope: data.scope.present ? data.scope.value : this.scope,
       moduleId: data.moduleId.present ? data.moduleId.value : this.moduleId,
       name: data.name.present ? data.name.value : this.name,
       dateFrom: data.dateFrom.present ? data.dateFrom.value : this.dateFrom,
@@ -1036,7 +1098,7 @@ class CachedModule extends DataClass implements Insertable<CachedModule> {
   @override
   String toString() {
     return (StringBuffer('CachedModule(')
-          ..write('groupId: $groupId, ')
+          ..write('scope: $scope, ')
           ..write('moduleId: $moduleId, ')
           ..write('name: $name, ')
           ..write('dateFrom: $dateFrom, ')
@@ -1046,12 +1108,12 @@ class CachedModule extends DataClass implements Insertable<CachedModule> {
   }
 
   @override
-  int get hashCode => Object.hash(groupId, moduleId, name, dateFrom, dateTo);
+  int get hashCode => Object.hash(scope, moduleId, name, dateFrom, dateTo);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is CachedModule &&
-          other.groupId == this.groupId &&
+          other.scope == this.scope &&
           other.moduleId == this.moduleId &&
           other.name == this.name &&
           other.dateFrom == this.dateFrom &&
@@ -1059,14 +1121,14 @@ class CachedModule extends DataClass implements Insertable<CachedModule> {
 }
 
 class CachedModulesCompanion extends UpdateCompanion<CachedModule> {
-  final Value<int> groupId;
+  final Value<String> scope;
   final Value<int> moduleId;
   final Value<String?> name;
   final Value<String> dateFrom;
   final Value<String> dateTo;
   final Value<int> rowid;
   const CachedModulesCompanion({
-    this.groupId = const Value.absent(),
+    this.scope = const Value.absent(),
     this.moduleId = const Value.absent(),
     this.name = const Value.absent(),
     this.dateFrom = const Value.absent(),
@@ -1074,18 +1136,18 @@ class CachedModulesCompanion extends UpdateCompanion<CachedModule> {
     this.rowid = const Value.absent(),
   });
   CachedModulesCompanion.insert({
-    required int groupId,
+    required String scope,
     required int moduleId,
     this.name = const Value.absent(),
     required String dateFrom,
     required String dateTo,
     this.rowid = const Value.absent(),
-  }) : groupId = Value(groupId),
+  }) : scope = Value(scope),
        moduleId = Value(moduleId),
        dateFrom = Value(dateFrom),
        dateTo = Value(dateTo);
   static Insertable<CachedModule> custom({
-    Expression<int>? groupId,
+    Expression<String>? scope,
     Expression<int>? moduleId,
     Expression<String>? name,
     Expression<String>? dateFrom,
@@ -1093,7 +1155,7 @@ class CachedModulesCompanion extends UpdateCompanion<CachedModule> {
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
-      if (groupId != null) 'group_id': groupId,
+      if (scope != null) 'scope': scope,
       if (moduleId != null) 'module_id': moduleId,
       if (name != null) 'name': name,
       if (dateFrom != null) 'date_from': dateFrom,
@@ -1103,7 +1165,7 @@ class CachedModulesCompanion extends UpdateCompanion<CachedModule> {
   }
 
   CachedModulesCompanion copyWith({
-    Value<int>? groupId,
+    Value<String>? scope,
     Value<int>? moduleId,
     Value<String?>? name,
     Value<String>? dateFrom,
@@ -1111,7 +1173,7 @@ class CachedModulesCompanion extends UpdateCompanion<CachedModule> {
     Value<int>? rowid,
   }) {
     return CachedModulesCompanion(
-      groupId: groupId ?? this.groupId,
+      scope: scope ?? this.scope,
       moduleId: moduleId ?? this.moduleId,
       name: name ?? this.name,
       dateFrom: dateFrom ?? this.dateFrom,
@@ -1123,8 +1185,8 @@ class CachedModulesCompanion extends UpdateCompanion<CachedModule> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    if (groupId.present) {
-      map['group_id'] = Variable<int>(groupId.value);
+    if (scope.present) {
+      map['scope'] = Variable<String>(scope.value);
     }
     if (moduleId.present) {
       map['module_id'] = Variable<int>(moduleId.value);
@@ -1147,7 +1209,7 @@ class CachedModulesCompanion extends UpdateCompanion<CachedModule> {
   @override
   String toString() {
     return (StringBuffer('CachedModulesCompanion(')
-          ..write('groupId: $groupId, ')
+          ..write('scope: $scope, ')
           ..write('moduleId: $moduleId, ')
           ..write('name: $name, ')
           ..write('dateFrom: $dateFrom, ')
@@ -1164,15 +1226,13 @@ class $CachedWeekCalendarTable extends CachedWeekCalendar
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   $CachedWeekCalendarTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _groupIdMeta = const VerificationMeta(
-    'groupId',
-  );
+  static const VerificationMeta _scopeMeta = const VerificationMeta('scope');
   @override
-  late final GeneratedColumn<int> groupId = GeneratedColumn<int>(
-    'group_id',
+  late final GeneratedColumn<String> scope = GeneratedColumn<String>(
+    'scope',
     aliasedName,
     false,
-    type: DriftSqlType.int,
+    type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
   static const VerificationMeta _dateFromMeta = const VerificationMeta(
@@ -1207,7 +1267,7 @@ class $CachedWeekCalendarTable extends CachedWeekCalendar
     requiredDuringInsert: true,
   );
   @override
-  List<GeneratedColumn> get $columns => [groupId, dateFrom, dateTo, weekType];
+  List<GeneratedColumn> get $columns => [scope, dateFrom, dateTo, weekType];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1220,13 +1280,13 @@ class $CachedWeekCalendarTable extends CachedWeekCalendar
   }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
-    if (data.containsKey('group_id')) {
+    if (data.containsKey('scope')) {
       context.handle(
-        _groupIdMeta,
-        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+        _scopeMeta,
+        scope.isAcceptableOrUnknown(data['scope']!, _scopeMeta),
       );
     } else if (isInserting) {
-      context.missing(_groupIdMeta);
+      context.missing(_scopeMeta);
     }
     if (data.containsKey('date_from')) {
       context.handle(
@@ -1261,9 +1321,9 @@ class $CachedWeekCalendarTable extends CachedWeekCalendar
   CachedWeekCalendarData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return CachedWeekCalendarData(
-      groupId: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}group_id'],
+      scope: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}scope'],
       )!,
       dateFrom: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -1288,12 +1348,12 @@ class $CachedWeekCalendarTable extends CachedWeekCalendar
 
 class CachedWeekCalendarData extends DataClass
     implements Insertable<CachedWeekCalendarData> {
-  final int groupId;
+  final String scope;
   final String dateFrom;
   final String dateTo;
   final String weekType;
   const CachedWeekCalendarData({
-    required this.groupId,
+    required this.scope,
     required this.dateFrom,
     required this.dateTo,
     required this.weekType,
@@ -1301,7 +1361,7 @@ class CachedWeekCalendarData extends DataClass
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['group_id'] = Variable<int>(groupId);
+    map['scope'] = Variable<String>(scope);
     map['date_from'] = Variable<String>(dateFrom);
     map['date_to'] = Variable<String>(dateTo);
     map['week_type'] = Variable<String>(weekType);
@@ -1310,7 +1370,7 @@ class CachedWeekCalendarData extends DataClass
 
   CachedWeekCalendarCompanion toCompanion(bool nullToAbsent) {
     return CachedWeekCalendarCompanion(
-      groupId: Value(groupId),
+      scope: Value(scope),
       dateFrom: Value(dateFrom),
       dateTo: Value(dateTo),
       weekType: Value(weekType),
@@ -1323,7 +1383,7 @@ class CachedWeekCalendarData extends DataClass
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return CachedWeekCalendarData(
-      groupId: serializer.fromJson<int>(json['groupId']),
+      scope: serializer.fromJson<String>(json['scope']),
       dateFrom: serializer.fromJson<String>(json['dateFrom']),
       dateTo: serializer.fromJson<String>(json['dateTo']),
       weekType: serializer.fromJson<String>(json['weekType']),
@@ -1333,7 +1393,7 @@ class CachedWeekCalendarData extends DataClass
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'groupId': serializer.toJson<int>(groupId),
+      'scope': serializer.toJson<String>(scope),
       'dateFrom': serializer.toJson<String>(dateFrom),
       'dateTo': serializer.toJson<String>(dateTo),
       'weekType': serializer.toJson<String>(weekType),
@@ -1341,19 +1401,19 @@ class CachedWeekCalendarData extends DataClass
   }
 
   CachedWeekCalendarData copyWith({
-    int? groupId,
+    String? scope,
     String? dateFrom,
     String? dateTo,
     String? weekType,
   }) => CachedWeekCalendarData(
-    groupId: groupId ?? this.groupId,
+    scope: scope ?? this.scope,
     dateFrom: dateFrom ?? this.dateFrom,
     dateTo: dateTo ?? this.dateTo,
     weekType: weekType ?? this.weekType,
   );
   CachedWeekCalendarData copyWithCompanion(CachedWeekCalendarCompanion data) {
     return CachedWeekCalendarData(
-      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      scope: data.scope.present ? data.scope.value : this.scope,
       dateFrom: data.dateFrom.present ? data.dateFrom.value : this.dateFrom,
       dateTo: data.dateTo.present ? data.dateTo.value : this.dateTo,
       weekType: data.weekType.present ? data.weekType.value : this.weekType,
@@ -1363,7 +1423,7 @@ class CachedWeekCalendarData extends DataClass
   @override
   String toString() {
     return (StringBuffer('CachedWeekCalendarData(')
-          ..write('groupId: $groupId, ')
+          ..write('scope: $scope, ')
           ..write('dateFrom: $dateFrom, ')
           ..write('dateTo: $dateTo, ')
           ..write('weekType: $weekType')
@@ -1372,12 +1432,12 @@ class CachedWeekCalendarData extends DataClass
   }
 
   @override
-  int get hashCode => Object.hash(groupId, dateFrom, dateTo, weekType);
+  int get hashCode => Object.hash(scope, dateFrom, dateTo, weekType);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is CachedWeekCalendarData &&
-          other.groupId == this.groupId &&
+          other.scope == this.scope &&
           other.dateFrom == this.dateFrom &&
           other.dateTo == this.dateTo &&
           other.weekType == this.weekType);
@@ -1385,37 +1445,37 @@ class CachedWeekCalendarData extends DataClass
 
 class CachedWeekCalendarCompanion
     extends UpdateCompanion<CachedWeekCalendarData> {
-  final Value<int> groupId;
+  final Value<String> scope;
   final Value<String> dateFrom;
   final Value<String> dateTo;
   final Value<String> weekType;
   final Value<int> rowid;
   const CachedWeekCalendarCompanion({
-    this.groupId = const Value.absent(),
+    this.scope = const Value.absent(),
     this.dateFrom = const Value.absent(),
     this.dateTo = const Value.absent(),
     this.weekType = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   CachedWeekCalendarCompanion.insert({
-    required int groupId,
+    required String scope,
     required String dateFrom,
     required String dateTo,
     required String weekType,
     this.rowid = const Value.absent(),
-  }) : groupId = Value(groupId),
+  }) : scope = Value(scope),
        dateFrom = Value(dateFrom),
        dateTo = Value(dateTo),
        weekType = Value(weekType);
   static Insertable<CachedWeekCalendarData> custom({
-    Expression<int>? groupId,
+    Expression<String>? scope,
     Expression<String>? dateFrom,
     Expression<String>? dateTo,
     Expression<String>? weekType,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
-      if (groupId != null) 'group_id': groupId,
+      if (scope != null) 'scope': scope,
       if (dateFrom != null) 'date_from': dateFrom,
       if (dateTo != null) 'date_to': dateTo,
       if (weekType != null) 'week_type': weekType,
@@ -1424,14 +1484,14 @@ class CachedWeekCalendarCompanion
   }
 
   CachedWeekCalendarCompanion copyWith({
-    Value<int>? groupId,
+    Value<String>? scope,
     Value<String>? dateFrom,
     Value<String>? dateTo,
     Value<String>? weekType,
     Value<int>? rowid,
   }) {
     return CachedWeekCalendarCompanion(
-      groupId: groupId ?? this.groupId,
+      scope: scope ?? this.scope,
       dateFrom: dateFrom ?? this.dateFrom,
       dateTo: dateTo ?? this.dateTo,
       weekType: weekType ?? this.weekType,
@@ -1442,8 +1502,8 @@ class CachedWeekCalendarCompanion
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    if (groupId.present) {
-      map['group_id'] = Variable<int>(groupId.value);
+    if (scope.present) {
+      map['scope'] = Variable<String>(scope.value);
     }
     if (dateFrom.present) {
       map['date_from'] = Variable<String>(dateFrom.value);
@@ -1463,7 +1523,7 @@ class CachedWeekCalendarCompanion
   @override
   String toString() {
     return (StringBuffer('CachedWeekCalendarCompanion(')
-          ..write('groupId: $groupId, ')
+          ..write('scope: $scope, ')
           ..write('dateFrom: $dateFrom, ')
           ..write('dateTo: $dateTo, ')
           ..write('weekType: $weekType, ')
@@ -1479,16 +1539,14 @@ class $ScheduleCacheMetaTable extends ScheduleCacheMeta
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   $ScheduleCacheMetaTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _groupIdMeta = const VerificationMeta(
-    'groupId',
-  );
+  static const VerificationMeta _scopeMeta = const VerificationMeta('scope');
   @override
-  late final GeneratedColumn<int> groupId = GeneratedColumn<int>(
-    'group_id',
+  late final GeneratedColumn<String> scope = GeneratedColumn<String>(
+    'scope',
     aliasedName,
     false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
   );
   static const VerificationMeta _etagMeta = const VerificationMeta('etag');
   @override
@@ -1511,7 +1569,7 @@ class $ScheduleCacheMetaTable extends ScheduleCacheMeta
     requiredDuringInsert: true,
   );
   @override
-  List<GeneratedColumn> get $columns => [groupId, etag, syncedAt];
+  List<GeneratedColumn> get $columns => [scope, etag, syncedAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1524,11 +1582,13 @@ class $ScheduleCacheMetaTable extends ScheduleCacheMeta
   }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
-    if (data.containsKey('group_id')) {
+    if (data.containsKey('scope')) {
       context.handle(
-        _groupIdMeta,
-        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+        _scopeMeta,
+        scope.isAcceptableOrUnknown(data['scope']!, _scopeMeta),
       );
+    } else if (isInserting) {
+      context.missing(_scopeMeta);
     }
     if (data.containsKey('etag')) {
       context.handle(
@@ -1548,14 +1608,14 @@ class $ScheduleCacheMetaTable extends ScheduleCacheMeta
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {groupId};
+  Set<GeneratedColumn> get $primaryKey => {scope};
   @override
   ScheduleCacheMetaData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return ScheduleCacheMetaData(
-      groupId: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}group_id'],
+      scope: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}scope'],
       )!,
       etag: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -1576,18 +1636,18 @@ class $ScheduleCacheMetaTable extends ScheduleCacheMeta
 
 class ScheduleCacheMetaData extends DataClass
     implements Insertable<ScheduleCacheMetaData> {
-  final int groupId;
+  final String scope;
   final String? etag;
   final DateTime syncedAt;
   const ScheduleCacheMetaData({
-    required this.groupId,
+    required this.scope,
     this.etag,
     required this.syncedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['group_id'] = Variable<int>(groupId);
+    map['scope'] = Variable<String>(scope);
     if (!nullToAbsent || etag != null) {
       map['etag'] = Variable<String>(etag);
     }
@@ -1597,7 +1657,7 @@ class ScheduleCacheMetaData extends DataClass
 
   ScheduleCacheMetaCompanion toCompanion(bool nullToAbsent) {
     return ScheduleCacheMetaCompanion(
-      groupId: Value(groupId),
+      scope: Value(scope),
       etag: etag == null && nullToAbsent ? const Value.absent() : Value(etag),
       syncedAt: Value(syncedAt),
     );
@@ -1609,7 +1669,7 @@ class ScheduleCacheMetaData extends DataClass
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return ScheduleCacheMetaData(
-      groupId: serializer.fromJson<int>(json['groupId']),
+      scope: serializer.fromJson<String>(json['scope']),
       etag: serializer.fromJson<String?>(json['etag']),
       syncedAt: serializer.fromJson<DateTime>(json['syncedAt']),
     );
@@ -1618,24 +1678,24 @@ class ScheduleCacheMetaData extends DataClass
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'groupId': serializer.toJson<int>(groupId),
+      'scope': serializer.toJson<String>(scope),
       'etag': serializer.toJson<String?>(etag),
       'syncedAt': serializer.toJson<DateTime>(syncedAt),
     };
   }
 
   ScheduleCacheMetaData copyWith({
-    int? groupId,
+    String? scope,
     Value<String?> etag = const Value.absent(),
     DateTime? syncedAt,
   }) => ScheduleCacheMetaData(
-    groupId: groupId ?? this.groupId,
+    scope: scope ?? this.scope,
     etag: etag.present ? etag.value : this.etag,
     syncedAt: syncedAt ?? this.syncedAt,
   );
   ScheduleCacheMetaData copyWithCompanion(ScheduleCacheMetaCompanion data) {
     return ScheduleCacheMetaData(
-      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      scope: data.scope.present ? data.scope.value : this.scope,
       etag: data.etag.present ? data.etag.value : this.etag,
       syncedAt: data.syncedAt.present ? data.syncedAt.value : this.syncedAt,
     );
@@ -1644,7 +1704,7 @@ class ScheduleCacheMetaData extends DataClass
   @override
   String toString() {
     return (StringBuffer('ScheduleCacheMetaData(')
-          ..write('groupId: $groupId, ')
+          ..write('scope: $scope, ')
           ..write('etag: $etag, ')
           ..write('syncedAt: $syncedAt')
           ..write(')'))
@@ -1652,60 +1712,68 @@ class ScheduleCacheMetaData extends DataClass
   }
 
   @override
-  int get hashCode => Object.hash(groupId, etag, syncedAt);
+  int get hashCode => Object.hash(scope, etag, syncedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is ScheduleCacheMetaData &&
-          other.groupId == this.groupId &&
+          other.scope == this.scope &&
           other.etag == this.etag &&
           other.syncedAt == this.syncedAt);
 }
 
 class ScheduleCacheMetaCompanion
     extends UpdateCompanion<ScheduleCacheMetaData> {
-  final Value<int> groupId;
+  final Value<String> scope;
   final Value<String?> etag;
   final Value<DateTime> syncedAt;
+  final Value<int> rowid;
   const ScheduleCacheMetaCompanion({
-    this.groupId = const Value.absent(),
+    this.scope = const Value.absent(),
     this.etag = const Value.absent(),
     this.syncedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
   });
   ScheduleCacheMetaCompanion.insert({
-    this.groupId = const Value.absent(),
+    required String scope,
     this.etag = const Value.absent(),
     required DateTime syncedAt,
-  }) : syncedAt = Value(syncedAt);
+    this.rowid = const Value.absent(),
+  }) : scope = Value(scope),
+       syncedAt = Value(syncedAt);
   static Insertable<ScheduleCacheMetaData> custom({
-    Expression<int>? groupId,
+    Expression<String>? scope,
     Expression<String>? etag,
     Expression<DateTime>? syncedAt,
+    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
-      if (groupId != null) 'group_id': groupId,
+      if (scope != null) 'scope': scope,
       if (etag != null) 'etag': etag,
       if (syncedAt != null) 'synced_at': syncedAt,
+      if (rowid != null) 'rowid': rowid,
     });
   }
 
   ScheduleCacheMetaCompanion copyWith({
-    Value<int>? groupId,
+    Value<String>? scope,
     Value<String?>? etag,
     Value<DateTime>? syncedAt,
+    Value<int>? rowid,
   }) {
     return ScheduleCacheMetaCompanion(
-      groupId: groupId ?? this.groupId,
+      scope: scope ?? this.scope,
       etag: etag ?? this.etag,
       syncedAt: syncedAt ?? this.syncedAt,
+      rowid: rowid ?? this.rowid,
     );
   }
 
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    if (groupId.present) {
-      map['group_id'] = Variable<int>(groupId.value);
+    if (scope.present) {
+      map['scope'] = Variable<String>(scope.value);
     }
     if (etag.present) {
       map['etag'] = Variable<String>(etag.value);
@@ -1713,15 +1781,19 @@ class ScheduleCacheMetaCompanion
     if (syncedAt.present) {
       map['synced_at'] = Variable<DateTime>(syncedAt.value);
     }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
     return map;
   }
 
   @override
   String toString() {
     return (StringBuffer('ScheduleCacheMetaCompanion(')
-          ..write('groupId: $groupId, ')
+          ..write('scope: $scope, ')
           ..write('etag: $etag, ')
-          ..write('syncedAt: $syncedAt')
+          ..write('syncedAt: $syncedAt, ')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -3503,7 +3575,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
 
 typedef $$CachedLessonsTableCreateCompanionBuilder =
     CachedLessonsCompanion Function({
-      Value<int> id,
+      required int id,
+      required String scope,
       required int groupId,
       required int weekday,
       required int pairNumber,
@@ -3517,10 +3590,12 @@ typedef $$CachedLessonsTableCreateCompanionBuilder =
       Value<int?> moduleId,
       Value<String?> validFrom,
       Value<String?> validTo,
+      Value<int> rowid,
     });
 typedef $$CachedLessonsTableUpdateCompanionBuilder =
     CachedLessonsCompanion Function({
       Value<int> id,
+      Value<String> scope,
       Value<int> groupId,
       Value<int> weekday,
       Value<int> pairNumber,
@@ -3534,6 +3609,7 @@ typedef $$CachedLessonsTableUpdateCompanionBuilder =
       Value<int?> moduleId,
       Value<String?> validFrom,
       Value<String?> validTo,
+      Value<int> rowid,
     });
 
 class $$CachedLessonsTableFilterComposer
@@ -3547,6 +3623,11 @@ class $$CachedLessonsTableFilterComposer
   });
   ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get scope => $composableBuilder(
+    column: $table.scope,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3630,6 +3711,11 @@ class $$CachedLessonsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get scope => $composableBuilder(
+    column: $table.scope,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get groupId => $composableBuilder(
     column: $table.groupId,
     builder: (column) => ColumnOrderings(column),
@@ -3708,6 +3794,9 @@ class $$CachedLessonsTableAnnotationComposer
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
+  GeneratedColumn<String> get scope =>
+      $composableBuilder(column: $table.scope, builder: (column) => column);
+
   GeneratedColumn<int> get groupId =>
       $composableBuilder(column: $table.groupId, builder: (column) => column);
 
@@ -3784,6 +3873,7 @@ class $$CachedLessonsTableTableManager
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<String> scope = const Value.absent(),
                 Value<int> groupId = const Value.absent(),
                 Value<int> weekday = const Value.absent(),
                 Value<int> pairNumber = const Value.absent(),
@@ -3797,8 +3887,10 @@ class $$CachedLessonsTableTableManager
                 Value<int?> moduleId = const Value.absent(),
                 Value<String?> validFrom = const Value.absent(),
                 Value<String?> validTo = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
               }) => CachedLessonsCompanion(
                 id: id,
+                scope: scope,
                 groupId: groupId,
                 weekday: weekday,
                 pairNumber: pairNumber,
@@ -3812,10 +3904,12 @@ class $$CachedLessonsTableTableManager
                 moduleId: moduleId,
                 validFrom: validFrom,
                 validTo: validTo,
+                rowid: rowid,
               ),
           createCompanionCallback:
               ({
-                Value<int> id = const Value.absent(),
+                required int id,
+                required String scope,
                 required int groupId,
                 required int weekday,
                 required int pairNumber,
@@ -3829,8 +3923,10 @@ class $$CachedLessonsTableTableManager
                 Value<int?> moduleId = const Value.absent(),
                 Value<String?> validFrom = const Value.absent(),
                 Value<String?> validTo = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
               }) => CachedLessonsCompanion.insert(
                 id: id,
+                scope: scope,
                 groupId: groupId,
                 weekday: weekday,
                 pairNumber: pairNumber,
@@ -3844,6 +3940,7 @@ class $$CachedLessonsTableTableManager
                 moduleId: moduleId,
                 validFrom: validFrom,
                 validTo: validTo,
+                rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -3872,7 +3969,7 @@ typedef $$CachedLessonsTableProcessedTableManager =
     >;
 typedef $$CachedModulesTableCreateCompanionBuilder =
     CachedModulesCompanion Function({
-      required int groupId,
+      required String scope,
       required int moduleId,
       Value<String?> name,
       required String dateFrom,
@@ -3881,7 +3978,7 @@ typedef $$CachedModulesTableCreateCompanionBuilder =
     });
 typedef $$CachedModulesTableUpdateCompanionBuilder =
     CachedModulesCompanion Function({
-      Value<int> groupId,
+      Value<String> scope,
       Value<int> moduleId,
       Value<String?> name,
       Value<String> dateFrom,
@@ -3898,8 +3995,8 @@ class $$CachedModulesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<int> get groupId => $composableBuilder(
-    column: $table.groupId,
+  ColumnFilters<String> get scope => $composableBuilder(
+    column: $table.scope,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3933,8 +4030,8 @@ class $$CachedModulesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<int> get groupId => $composableBuilder(
-    column: $table.groupId,
+  ColumnOrderings<String> get scope => $composableBuilder(
+    column: $table.scope,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -3968,8 +4065,8 @@ class $$CachedModulesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<int> get groupId =>
-      $composableBuilder(column: $table.groupId, builder: (column) => column);
+  GeneratedColumn<String> get scope =>
+      $composableBuilder(column: $table.scope, builder: (column) => column);
 
   GeneratedColumn<int> get moduleId =>
       $composableBuilder(column: $table.moduleId, builder: (column) => column);
@@ -4015,14 +4112,14 @@ class $$CachedModulesTableTableManager
               $$CachedModulesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
-                Value<int> groupId = const Value.absent(),
+                Value<String> scope = const Value.absent(),
                 Value<int> moduleId = const Value.absent(),
                 Value<String?> name = const Value.absent(),
                 Value<String> dateFrom = const Value.absent(),
                 Value<String> dateTo = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CachedModulesCompanion(
-                groupId: groupId,
+                scope: scope,
                 moduleId: moduleId,
                 name: name,
                 dateFrom: dateFrom,
@@ -4031,14 +4128,14 @@ class $$CachedModulesTableTableManager
               ),
           createCompanionCallback:
               ({
-                required int groupId,
+                required String scope,
                 required int moduleId,
                 Value<String?> name = const Value.absent(),
                 required String dateFrom,
                 required String dateTo,
                 Value<int> rowid = const Value.absent(),
               }) => CachedModulesCompanion.insert(
-                groupId: groupId,
+                scope: scope,
                 moduleId: moduleId,
                 name: name,
                 dateFrom: dateFrom,
@@ -4072,7 +4169,7 @@ typedef $$CachedModulesTableProcessedTableManager =
     >;
 typedef $$CachedWeekCalendarTableCreateCompanionBuilder =
     CachedWeekCalendarCompanion Function({
-      required int groupId,
+      required String scope,
       required String dateFrom,
       required String dateTo,
       required String weekType,
@@ -4080,7 +4177,7 @@ typedef $$CachedWeekCalendarTableCreateCompanionBuilder =
     });
 typedef $$CachedWeekCalendarTableUpdateCompanionBuilder =
     CachedWeekCalendarCompanion Function({
-      Value<int> groupId,
+      Value<String> scope,
       Value<String> dateFrom,
       Value<String> dateTo,
       Value<String> weekType,
@@ -4096,8 +4193,8 @@ class $$CachedWeekCalendarTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<int> get groupId => $composableBuilder(
-    column: $table.groupId,
+  ColumnFilters<String> get scope => $composableBuilder(
+    column: $table.scope,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4126,8 +4223,8 @@ class $$CachedWeekCalendarTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<int> get groupId => $composableBuilder(
-    column: $table.groupId,
+  ColumnOrderings<String> get scope => $composableBuilder(
+    column: $table.scope,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -4156,8 +4253,8 @@ class $$CachedWeekCalendarTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<int> get groupId =>
-      $composableBuilder(column: $table.groupId, builder: (column) => column);
+  GeneratedColumn<String> get scope =>
+      $composableBuilder(column: $table.scope, builder: (column) => column);
 
   GeneratedColumn<String> get dateFrom =>
       $composableBuilder(column: $table.dateFrom, builder: (column) => column);
@@ -4209,13 +4306,13 @@ class $$CachedWeekCalendarTableTableManager
               ),
           updateCompanionCallback:
               ({
-                Value<int> groupId = const Value.absent(),
+                Value<String> scope = const Value.absent(),
                 Value<String> dateFrom = const Value.absent(),
                 Value<String> dateTo = const Value.absent(),
                 Value<String> weekType = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CachedWeekCalendarCompanion(
-                groupId: groupId,
+                scope: scope,
                 dateFrom: dateFrom,
                 dateTo: dateTo,
                 weekType: weekType,
@@ -4223,13 +4320,13 @@ class $$CachedWeekCalendarTableTableManager
               ),
           createCompanionCallback:
               ({
-                required int groupId,
+                required String scope,
                 required String dateFrom,
                 required String dateTo,
                 required String weekType,
                 Value<int> rowid = const Value.absent(),
               }) => CachedWeekCalendarCompanion.insert(
-                groupId: groupId,
+                scope: scope,
                 dateFrom: dateFrom,
                 dateTo: dateTo,
                 weekType: weekType,
@@ -4266,15 +4363,17 @@ typedef $$CachedWeekCalendarTableProcessedTableManager =
     >;
 typedef $$ScheduleCacheMetaTableCreateCompanionBuilder =
     ScheduleCacheMetaCompanion Function({
-      Value<int> groupId,
+      required String scope,
       Value<String?> etag,
       required DateTime syncedAt,
+      Value<int> rowid,
     });
 typedef $$ScheduleCacheMetaTableUpdateCompanionBuilder =
     ScheduleCacheMetaCompanion Function({
-      Value<int> groupId,
+      Value<String> scope,
       Value<String?> etag,
       Value<DateTime> syncedAt,
+      Value<int> rowid,
     });
 
 class $$ScheduleCacheMetaTableFilterComposer
@@ -4286,8 +4385,8 @@ class $$ScheduleCacheMetaTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<int> get groupId => $composableBuilder(
-    column: $table.groupId,
+  ColumnFilters<String> get scope => $composableBuilder(
+    column: $table.scope,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4311,8 +4410,8 @@ class $$ScheduleCacheMetaTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<int> get groupId => $composableBuilder(
-    column: $table.groupId,
+  ColumnOrderings<String> get scope => $composableBuilder(
+    column: $table.scope,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -4336,8 +4435,8 @@ class $$ScheduleCacheMetaTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<int> get groupId =>
-      $composableBuilder(column: $table.groupId, builder: (column) => column);
+  GeneratedColumn<String> get scope =>
+      $composableBuilder(column: $table.scope, builder: (column) => column);
 
   GeneratedColumn<String> get etag =>
       $composableBuilder(column: $table.etag, builder: (column) => column);
@@ -4386,23 +4485,27 @@ class $$ScheduleCacheMetaTableTableManager
               ),
           updateCompanionCallback:
               ({
-                Value<int> groupId = const Value.absent(),
+                Value<String> scope = const Value.absent(),
                 Value<String?> etag = const Value.absent(),
                 Value<DateTime> syncedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
               }) => ScheduleCacheMetaCompanion(
-                groupId: groupId,
+                scope: scope,
                 etag: etag,
                 syncedAt: syncedAt,
+                rowid: rowid,
               ),
           createCompanionCallback:
               ({
-                Value<int> groupId = const Value.absent(),
+                required String scope,
                 Value<String?> etag = const Value.absent(),
                 required DateTime syncedAt,
+                Value<int> rowid = const Value.absent(),
               }) => ScheduleCacheMetaCompanion.insert(
-                groupId: groupId,
+                scope: scope,
                 etag: etag,
                 syncedAt: syncedAt,
+                rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
