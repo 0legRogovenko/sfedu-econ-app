@@ -16,6 +16,8 @@ from collections.abc import Callable
 
 from sqlalchemy import delete, select
 
+import time
+
 from src.alerts import notify_admin
 from src.database import SessionLocal
 from src.models import Contact, ContactSource
@@ -26,15 +28,29 @@ logger = logging.getLogger(__name__)
 
 DEANERY_SECTION = "Деканат"
 
+# robots.txt sfedu.ru: Crawl-delay: 30. Личные страницы там же, поэтому
+# соблюдаем ту же паузу, что и импорт расписания.
+SFEDU_CRAWL_DELAY_SECONDS = 30
+
 
 def _default_fetch(url: str) -> str:
     # Импорт внутри функции: тесты подменяют fetch и не должны тянуть сеть.
+    import ssl
+
     import httpx
+    import truststore
+
+    # Системное хранилище, а не certifi: цепочку GlobalSign у sfedu.ru certifi
+    # не достраивает, и без этого КАЖДЫЙ запрос к личным страницам падал на
+    # проверке сертификата — молча, потому что ошибку глотал общий except.
+    # Тот же приём уже используют парсер новостей и импорт расписания.
+    context = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
 
     response = httpx.get(
         url,
         timeout=30,
         follow_redirects=True,
+        verify=context,
         # Только ASCII: httpx кодирует заголовки в ascii и на кириллице падает.
         headers={
             "User-Agent": (
@@ -61,7 +77,79 @@ def _rows(section: str, people: list[Person], start_order: int) -> list[Contact]
     ]
 
 
-def collect(fetch: Callable[[str], str]) -> list[Contact]:
+# Проверять подстроку "sfedu.ru" нельзя: она входит и в "econ-sfedu.ru", и мы
+# бы ходили за почтой на страницы кафедр — по 30 секунд паузы впустую.
+#
+# Старый формат ссылки `/www/stat_pages22.show?...p_per_id=N` НЕ включён
+# намеренно: на 2026-07-19 он отдаёт 404 для всех без исключения id (проверено
+# на 10 разных), сайт переехал на /s7/person/. Часть карточек на econ-sfedu.ru
+# всё ещё ссылается по-старому — ходить туда значит десять раз за прогон
+# стучаться в заведомо мёртвую ручку с паузой в полминуты. Логин для нового
+# формата из p_per_id не выводится, а угадывать его по фамилии нельзя: цена
+# ошибки — письмо постороннему человеку.
+_PERSON_PAGE_MARKERS = ("sfedu.ru/s7/person/",)
+
+
+def _person_page_urls(people: list[Person]) -> dict[str, str]:
+    """ФИО → ссылка на личную страницу sfedu.ru (у кого она есть)."""
+    return {
+        p.name: p.profile_url
+        for p in people
+        if p.profile_url
+        and any(marker in p.profile_url for marker in _PERSON_PAGE_MARKERS)
+    }
+
+
+def fill_emails(
+    rows: list[Contact],
+    people: list[Person],
+    fetch: Callable[[str], str],
+    known: dict[str, str] | None = None,
+    sleep: Callable[[float], None] = time.sleep,
+) -> int:
+    """Проставляет почты с личных страниц. Возвращает число заполненных.
+
+    Инкрементально: у кого почта уже известна с прошлого запуска, страницу
+    заново не дёргаем — иначе каждый суточный прогон стучался бы в sfedu.ru
+    восемь десятков раз подряд.
+    """
+    known = known or {}
+    urls = _person_page_urls(people)
+    filled = 0
+    fetched_any = False
+
+    for row in rows:
+        cached = known.get(row.name)
+        if cached:
+            row.email = cached
+            filled += 1
+            continue
+
+        url = urls.get(row.name)
+        if not url:
+            continue
+
+        if fetched_any:
+            sleep(SFEDU_CRAWL_DELAY_SECONDS)
+        try:
+            page = fetch(url)
+        except Exception as error:  # noqa: BLE001 — один не роняет остальных
+            # С причиной: без неё сбой TLS выглядел так же, как 404, и
+            # «0 почт из 85» было нечем объяснить.
+            logger.warning("Личная страница недоступна: %s (%s)", url, error)
+            fetched_any = True
+            continue
+        fetched_any = True
+
+        email = econ_staff.parse_person_email(page)
+        if email:
+            row.email = email
+            filled += 1
+
+    return filled
+
+
+def collect(fetch: Callable[[str], str]) -> tuple[list[Contact], list[Person]]:
     """Скачивает и разбирает все страницы. Возвращает строки для вставки.
 
     Сбой ОДНОЙ кафедры не отменяет остальные: её страница пропускается с
@@ -69,6 +157,7 @@ def collect(fetch: Callable[[str], str]) -> list[Contact]:
     исключение, его обрабатывает вызывающий.
     """
     rows: list[Contact] = []
+    everyone: list[Person] = []
 
     deanery = econ_staff.parse_deanery(fetch(econ_staff.DEANERY_URL))
     if not deanery:
@@ -79,6 +168,7 @@ def collect(fetch: Callable[[str], str]) -> list[Contact]:
             "человек распарсилось — вероятно, сменилась вёрстка сайта."
         )
     rows += _rows(DEANERY_SECTION, deanery, start_order=0)
+    everyone += deanery
 
     links = econ_staff.parse_department_links(fetch(econ_staff.DEPARTMENTS_URL))
     if not links:
@@ -108,13 +198,40 @@ def collect(fetch: Callable[[str], str]) -> list[Contact]:
             continue
 
         rows += _rows(department.name, people, start_order=order * 100)
+        everyone += people
 
-    return rows
+    return rows, everyone
 
 
-def sync(session, fetch: Callable[[str], str] = _default_fetch) -> int:
+def sync(
+    session,
+    fetch: Callable[[str], str] = _default_fetch,
+    with_emails: bool = True,
+    sleep: Callable[[float], None] = time.sleep,
+) -> int:
     """Обновляет автозабранную часть справочника. Возвращает число строк."""
-    rows = collect(fetch)
+    rows, people = collect(fetch)
+
+    if with_emails and rows:
+        # Почты, добытые в прошлый раз: их не перезапрашиваем.
+        known = {
+            name: email
+            for name, email in session.execute(
+                select(Contact.name, Contact.email).where(
+                    Contact.source == ContactSource.ECON_SITE,
+                    Contact.email.is_not(None),
+                )
+            ).all()
+        }
+        filled = fill_emails(rows, people, fetch, known=known, sleep=sleep)
+        logger.info("Почт проставлено: %s из %s", filled, len(rows))
+        if filled == 0 and people:
+            notify_admin(
+                "Справочник econ-sfedu.ru: ни одной почты не удалось "
+                "получить. Причина в логе: либо личные страницы sfedu.ru "
+                "недоступны (сеть, сертификат), либо на них сменилась "
+                "вёрстка. Справочник при этом обновлён, но без почт."
+            )
 
     if not rows:
         # Ничего не разобралось — оставляем прежний справочник как есть.

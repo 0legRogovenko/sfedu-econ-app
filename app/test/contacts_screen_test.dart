@@ -151,6 +151,48 @@ void main() {
     expect(find.text('Никого не нашли'), findsOneWidget);
   });
 
+  group('кнопка почты', () {
+    testWidgets('у преподавателя кафедры кнопка письма есть', (tester) async {
+      // Почты сотрудников приходят с личных страниц ЮФУ; кнопка обязана
+      // появляться у любой секции, не только у деканата.
+      await tester.pumpWidget(await _app([
+        _c(
+          id: 1,
+          section: 'Экономическая теория',
+          name: 'Белокрылова Ольга Спиридоновна',
+          role: 'д.э.н., профессор',
+          office: null,
+          officeHours: null,
+          email: 'obelokrylova@sfedu.ru',
+        ),
+      ]));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Контакты'));
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithIcon(IconButton, Icons.email_outlined),
+          findsOneWidget);
+    });
+
+    testWidgets('без почты кнопки письма нет', (tester) async {
+      await tester.pumpWidget(await _app([
+        _c(
+          id: 1,
+          section: 'Экономическая теория',
+          name: 'Без почты Иван Иванович',
+          email: null,
+          office: null,
+          officeHours: null,
+        ),
+      ]));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Контакты'));
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithIcon(IconButton, Icons.email_outlined), findsNothing);
+    });
+  });
+
   group('преподаватели в поиске', () {
     testWidgets('поиск фамилии находит преподавателя, а не «никого не нашли»',
         (tester) async {

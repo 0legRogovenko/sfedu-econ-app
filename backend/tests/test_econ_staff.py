@@ -89,6 +89,18 @@ class TestDepartment:
             == "специалист по учебно-методической работе"
         )
 
+    def test_head_keeps_profile_link(self, kafedra_teoria):
+        """Ссылка на личную страницу заведующего терялась.
+
+        Из-за этого почты семи заведующих — самых нужных контактов кафедры —
+        было неоткуда взять: страницу просто не запрашивали.
+        """
+        dept = econ_staff.parse_department(kafedra_teoria)
+        assert dept.head.profile_url is not None
+        assert "sfedu.ru" in dept.head.profile_url
+        # И не покалечена html.unescape (см. TestProfileLinks)
+        assert "¶" not in dept.head.profile_url
+
     def test_head_not_duplicated_in_staff(self, kafedra_teoria):
         """Заведующий отдельной карточкой — его не должно быть дважды."""
         dept = econ_staff.parse_department(kafedra_teoria)
@@ -127,6 +139,61 @@ class TestDepartmentLinks:
         # страницу-каталог, если она есть; иначе проверяем на статье кафедры.
         links = econ_staff.parse_department_links(listing)
         assert isinstance(links, list)
+
+
+class TestProfileLinks:
+    def test_href_amp_not_mangled(self):
+        """`&params=` в ссылке нельзя гнать через html.unescape целиком.
+
+        Регрессия: `&para` — это HTML-сущность (¶), и полный unescape ломал
+        ссылку на личную страницу, превращая её в 404.
+        """
+        page = (
+            '<div class="sppb-carousel-extended-team-wrap">'
+            '<div class="sppb-carousel-extended-team-name">'
+            '<a href="https://sfedu.ru/www/stat_pages22.show?p=UNI/s1/D'
+            '&params=(p_per_id=%3E2995)">Иванов Иван Иванович</a></div>'
+            '<div class="sppb-carousel-extended-team-designation">доцент</div>'
+            "<ul></ul></div></div></div>"
+        )
+        person = econ_staff._parse_cards(page)[0]
+        assert "&params=" in person.profile_url
+        assert "¶" not in person.profile_url
+
+    def test_amp_entity_is_decoded(self):
+        page = (
+            '<div class="sppb-carousel-extended-team-wrap">'
+            '<div class="sppb-carousel-extended-team-name">'
+            '<a href="https://sfedu.ru/x?a=1&amp;b=2">Иванов Иван Иванович</a>'
+            "</div><ul></ul></div></div></div>"
+        )
+        person = econ_staff._parse_cards(page)[0]
+        assert person.profile_url == "https://sfedu.ru/x?a=1&b=2"
+
+
+class TestPersonEmail:
+    def test_decodes_obfuscated_mailto(self):
+        """Почта на sfedu.ru спрятана в base64 внутри адреса-приманки."""
+        page = _fixture("person-sfedu.html")
+        assert econ_staff.parse_person_email(page) == "obelokrylova@sfedu.ru"
+
+    def test_no_email_returns_none(self):
+        assert econ_staff.parse_person_email("<html></html>") is None
+
+    def test_decoy_address_never_returned(self):
+        """Адрес-приманка нерабочий: вернуть его хуже, чем не вернуть ничего."""
+        page = _fixture("person-sfedu.html")
+        email = econ_staff.parse_person_email(page)
+        assert "sfedu-university.com" not in email
+        assert not email.startswith("hello+")
+
+    def test_broken_base64_is_ignored(self):
+        page = '<a href="mailto:hello+не-base64@sfedu-university.com">почта</a>'
+        assert econ_staff.parse_person_email(page) is None
+
+    def test_plain_mailto_is_taken_as_is(self):
+        page = '<a href="mailto:dekanat.econ@sfedu.ru">почта</a>'
+        assert econ_staff.parse_person_email(page) == "dekanat.econ@sfedu.ru"
 
 
 class TestGuards:

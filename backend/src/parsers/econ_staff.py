@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+import base64
 import html
 import re
 from dataclasses import dataclass, field
@@ -42,6 +43,15 @@ def _text(fragment: str) -> str:
     plain = html.unescape(plain)
     # \xa0 (&nbsp;) в этой вёрстке встречается постоянно
     return re.sub(r"\s+", " ", plain.replace("\xa0", " ")).strip()
+
+
+def _unescape_href(href: str) -> str:
+    """Раскодирует ТОЛЬКО `&amp;`.
+
+    Полный html.unescape ломает ссылки: в `?p=...&params=(...)` кусок `&para`
+    разбирается как сущность ¶, и ссылка на личную страницу превращается в 404.
+    """
+    return href.replace("&amp;", "&")
 
 
 def _looks_like_person(name: str) -> bool:
@@ -85,7 +95,7 @@ def _parse_cards(page_html: str) -> list[Person]:
         profile = None
         for href in _HREF_RE.findall(card):
             if not href.startswith("tel:"):
-                profile = html.unescape(href)
+                profile = _unescape_href(href)
                 break
 
         people.append(
@@ -150,8 +160,13 @@ _TITLE_RE = re.compile(r'<h1[^>]*itemprop="headline"[^>]*>(.*?)</h1>', re.S)
 _HEAD_MARKER_RE = re.compile(
     r'<h4 class="sppb-addon-title">\s*Заведующ\w*\s+кафедрой\s*</h4>', re.S
 )
+# Тег <a> берём целиком, href достаём отдельно: необязательная группа внутри
+# лениво-жадного [^>]*? проскакивает мимо. У части кафедр заведующий подписан
+# без ссылки, но если она есть — её нужно сохранить, иначе почту заведующего
+# неоткуда взять.
 _HEAD_PERSON_RE = re.compile(
-    r"<a[^>]*>(?P<name>[^<]+)</a>\s*<br\s*/?>(?P<degree>.*?)(?:</span>|</strong>|<br)",
+    r"(?P<anchor><a[^>]*>)(?P<name>[^<]+)</a>"
+    r"\s*<br\s*/?>(?P<degree>.*?)(?:</span>|</strong>|<br)",
     re.S,
 )
 
@@ -172,7 +187,12 @@ def _parse_head(page_html: str) -> Person | None:
     role = "Заведующий кафедрой"
     if degree:
         role = f"{role}, {degree}"
-    return Person(name=name, role=role)
+    href_match = _HREF_RE.search(person.group("anchor"))
+    return Person(
+        name=name,
+        role=role,
+        profile_url=_unescape_href(href_match.group(1)) if href_match else None,
+    )
 
 
 def parse_department(page_html: str) -> Department:
@@ -197,6 +217,27 @@ def parse_department(page_html: str) -> Department:
     return Department(name=name, head=head, staff=staff)
 
 
+# Почта на sfedu.ru отдана приманкой `hello+<base64>@sfedu-university.com`;
+# настоящий адрес страница показывает, декодируя base64 в браузере. Приманка
+# нерабочая, поэтому сохранять её нельзя — кнопка письма вела бы в никуда.
+_DECOY_MAILTO_RE = re.compile(r"mailto:hello\+([A-Za-z0-9+/=]+)@")
+_PLAIN_MAILTO_RE = re.compile(r"mailto:([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})")
+
+
+def parse_person_email(page_html: str) -> str | None:
+    """Почта с личной страницы сотрудника sfedu.ru."""
+    decoy = _DECOY_MAILTO_RE.search(page_html)
+    if decoy:
+        try:
+            decoded = base64.b64decode(decoy.group(1), validate=True).decode()
+        except (ValueError, UnicodeDecodeError):
+            return None
+        return decoded if _PLAIN_MAILTO_RE.fullmatch("mailto:" + decoded) else None
+
+    plain = _PLAIN_MAILTO_RE.search(page_html)
+    return plain.group(1) if plain else None
+
+
 _DEPT_LINK_RE = re.compile(
     r'href="(/(?:index\.php\?option=com_content[^"]*catid=16[^"]*'
     r'|component/content/article/[^"]*catid=16[^"]*))"'
@@ -212,7 +253,7 @@ def parse_department_links(page_html: str) -> list[str]:
     seen_ids: set[str] = set()
     links: list[str] = []
     for href in _DEPT_LINK_RE.findall(page_html):
-        href = html.unescape(href)
+        href = _unescape_href(href)
         id_match = re.search(r"(?:id=|/)(\d+)[:\-]", href)
         article_id = id_match.group(1) if id_match else href
         if article_id in seen_ids:

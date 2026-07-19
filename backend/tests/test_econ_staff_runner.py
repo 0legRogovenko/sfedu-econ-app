@@ -25,7 +25,7 @@ def _fetch_ok(url: str) -> str:
 
 
 def test_fills_deanery_and_departments(db_session):
-    count = econ_staff_runner.sync(db_session, fetch=_fetch_ok)
+    count = econ_staff_runner.sync(db_session, fetch=_fetch_ok, with_emails=False)
 
     assert count > 20
     sections = set(db_session.scalars(select(Contact.section)).all())
@@ -34,7 +34,7 @@ def test_fills_deanery_and_departments(db_session):
 
 
 def test_head_goes_first_in_department(db_session):
-    econ_staff_runner.sync(db_session, fetch=_fetch_ok)
+    econ_staff_runner.sync(db_session, fetch=_fetch_ok, with_emails=False)
 
     rows = db_session.scalars(
         select(Contact)
@@ -58,7 +58,7 @@ def test_manual_contacts_survive(db_session):
     )
     db_session.flush()
 
-    econ_staff_runner.sync(db_session, fetch=_fetch_ok)
+    econ_staff_runner.sync(db_session, fetch=_fetch_ok, with_emails=False)
 
     manual = db_session.scalars(
         select(Contact).where(Contact.source == ContactSource.MANUAL)
@@ -69,8 +69,8 @@ def test_manual_contacts_survive(db_session):
 
 def test_rerun_replaces_only_own_rows(db_session):
     """Повторный запуск не плодит дубли и не копит устаревшие записи."""
-    first = econ_staff_runner.sync(db_session, fetch=_fetch_ok)
-    second = econ_staff_runner.sync(db_session, fetch=_fetch_ok)
+    first = econ_staff_runner.sync(db_session, fetch=_fetch_ok, with_emails=False)
+    second = econ_staff_runner.sync(db_session, fetch=_fetch_ok, with_emails=False)
 
     assert first == second
     rows = db_session.scalars(
@@ -98,7 +98,7 @@ def test_broken_department_does_not_lose_the_rest(db_session, monkeypatch):
         econ_staff_runner, "notify_admin", lambda text: alerts.append(text)
     )
 
-    count = econ_staff_runner.sync(db_session, fetch=flaky)
+    count = econ_staff_runner.sync(db_session, fetch=flaky, with_emails=False)
 
     assert count > 20  # остальные кафедры на месте
     assert any("не удалось скачать" in a for a in alerts)
@@ -120,7 +120,7 @@ def test_empty_parse_does_not_wipe_directory(db_session, monkeypatch):
         econ_staff_runner, "notify_admin", lambda text: alerts.append(text)
     )
 
-    count = econ_staff_runner.sync(db_session, fetch=lambda url: "<html></html>")
+    count = econ_staff_runner.sync(db_session, fetch=lambda url: "<html></html>", with_emails=False)
 
     assert count == 0
     survived = db_session.scalars(select(Contact.name)).all()
@@ -142,7 +142,7 @@ def test_layout_change_alerts_admin(db_session, monkeypatch):
             return _fx("kafedry.html")
         return _fx("kafedra-teoria.html")
 
-    econ_staff_runner.sync(db_session, fetch=fetch)
+    econ_staff_runner.sync(db_session, fetch=fetch, with_emails=False)
 
     assert any("деканата" in a for a in alerts)
 
@@ -157,4 +157,127 @@ def test_key_page_failure_propagates(db_session, url):
         return _fx("about-us.html")
 
     with pytest.raises(RuntimeError):
-        econ_staff_runner.sync(db_session, fetch=fetch)
+        econ_staff_runner.sync(db_session, fetch=fetch, with_emails=False)
+
+
+class TestEmails:
+    """Почты берутся с личных страниц sfedu.ru, где они спрятаны в base64."""
+
+    _PERSON_PAGE = (FIXTURES / "person-sfedu.html").read_text(encoding="utf-8")
+
+    def _fetch(self, url: str) -> str:
+        if url == econ_staff.DEANERY_URL:
+            return _fx("about-us.html")
+        if url == econ_staff.DEPARTMENTS_URL:
+            return _fx("kafedry.html")
+        if "sfedu.ru/s7/person" in url or "stat_pages22" in url:
+            return self._PERSON_PAGE
+        return _fx("kafedra-teoria.html")
+
+    def test_email_lands_in_contact(self, db_session):
+        econ_staff_runner.sync(
+            db_session, fetch=self._fetch, sleep=lambda _: None
+        )
+
+        emails = db_session.scalars(
+            select(Contact.email).where(Contact.email.is_not(None))
+        ).all()
+        assert emails
+        assert all("sfedu-university.com" not in e for e in emails)
+        assert "obelokrylova@sfedu.ru" in emails
+
+    def test_crawl_delay_is_respected(self, db_session):
+        """robots.txt sfedu.ru просит 30 секунд между запросами."""
+        pauses: list[float] = []
+        econ_staff_runner.sync(
+            db_session, fetch=self._fetch, sleep=pauses.append
+        )
+
+        assert pauses, "паузы между личными страницами не делались"
+        assert all(p == econ_staff_runner.SFEDU_CRAWL_DELAY_SECONDS for p in pauses)
+
+    def test_known_emails_are_not_refetched(self, db_session):
+        """Суточный прогон не должен заново дёргать восемь десятков страниц."""
+        econ_staff_runner.sync(
+            db_session, fetch=self._fetch, sleep=lambda _: None
+        )
+        db_session.flush()
+
+        hits: list[str] = []
+
+        def counting_fetch(url: str) -> str:
+            if "person" in url or "stat_pages22" in url:
+                hits.append(url)
+            return self._fetch(url)
+
+        econ_staff_runner.sync(
+            db_session, fetch=counting_fetch, sleep=lambda _: None
+        )
+        assert hits == []
+
+    def test_person_page_failure_keeps_the_rest(self, db_session):
+        def flaky(url: str) -> str:
+            if "sfedu.ru/s7/person" in url:
+                raise RuntimeError("страница недоступна")
+            return self._fetch(url)
+
+        count = econ_staff_runner.sync(
+            db_session, fetch=flaky, sleep=lambda _: None
+        )
+        assert count > 20  # справочник на месте, просто без почт
+
+
+def test_zero_emails_alerts_admin(db_session, monkeypatch):
+    """«0 почт из 85» обязано быть слышно.
+
+    Именно этот сигнал поймал реальный сбой: личные страницы sfedu.ru не
+    открывались из-за проверки сертификата, и без алерта справочник тихо
+    обновился бы без единой почты.
+    """
+    alerts: list[str] = []
+    monkeypatch.setattr(
+        econ_staff_runner, "notify_admin", lambda text: alerts.append(text)
+    )
+
+    def no_person_pages(url: str) -> str:
+        if url == econ_staff.DEANERY_URL:
+            return _fx("about-us.html")
+        if url == econ_staff.DEPARTMENTS_URL:
+            return _fx("kafedry.html")
+        # Осторожно с подстрокой: "sfedu.ru" входит и в "econ-sfedu.ru".
+        if "sfedu.ru/s7/person" in url or "stat_pages22" in url:
+            raise RuntimeError("сертификат не проверился")
+        return _fx("kafedra-teoria.html")
+
+    count = econ_staff_runner.sync(
+        db_session, fetch=no_person_pages, sleep=lambda _: None
+    )
+
+    assert count > 20  # справочник обновлён
+    assert any("ни одной почты" in a for a in alerts)
+
+
+def test_only_personal_pages_are_fetched():
+    """Страницы кафедр — не личные страницы, ходить за почтой туда незачем."""
+    from src.parsers.econ_staff import Person
+
+    urls = econ_staff_runner._person_page_urls(
+        [
+            Person(name="А Б В", role="", profile_url="https://sfedu.ru/s7/person/ru/x"),
+            # Старый формат мёртв (404 у всех id) — за ним не ходим.
+            Person(
+                name="Г Д Е",
+                role="",
+                profile_url="https://sfedu.ru/www/stat_pages22.show?p=UNI/s1/D",
+            ),
+            # Подстрока "sfedu.ru" тут есть, но это страница кафедры.
+            Person(
+                name="Ж З И",
+                role="",
+                profile_url="https://econ-sfedu.ru/pages/kafedry.html",
+            ),
+            Person(name="К Л М", role="", profile_url=None),
+        ]
+    )
+
+    assert set(urls) == {"А Б В"}
