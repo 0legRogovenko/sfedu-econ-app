@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/clock.dart';
 import '../../core/room_format.dart';
+import '../onboarding/favorite_groups.dart';
+import '../onboarding/group_repository.dart';
 import '../onboarding/selected_group.dart';
 import 'lesson.dart';
 import 'schedule_providers.dart';
@@ -93,7 +95,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Расписание'),
+        title: const _GroupSwitcherTitle(),
         actions: [
           // Бейдж активного модуля выбранного дня. Скрыт, если дата вне всех
           // модулей (или у модуля нет имени), — как и бейдж недели.
@@ -179,6 +181,58 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Заголовок-переключатель: имя активной группы, тап открывает меню избранных.
+/// Смена активной — ТОЛЬКО через selectedGroupIdProvider.select(): ref.listen
+/// в build экрана сам запустит синхронизацию новой группы.
+class _GroupSwitcherTitle extends ConsumerWidget {
+  const _GroupSwitcherTitle();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final groupId = ref.watch(selectedGroupIdProvider);
+    final favorites = ref.watch(favoriteGroupIdsProvider);
+    // Справочник имён; офлайн-фолбэк «Группа N» даёт groupNameOf.
+    final groups = ref.watch(groupsProvider).maybeWhen(
+          data: (list) => list,
+          orElse: () => const <Group>[],
+        );
+    if (groupId == null) return const Text('Расписание');
+    final title = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(
+          child: Text(groupNameOf(groups, groupId),
+              overflow: TextOverflow.ellipsis),
+        ),
+        if (favorites.isNotEmpty) const Icon(Icons.arrow_drop_down),
+      ],
+    );
+    if (favorites.isEmpty) return title;
+    return PopupMenuButton<int>(
+      tooltip: 'Избранные группы',
+      onSelected: (id) =>
+          ref.read(selectedGroupIdProvider.notifier).select(id),
+      itemBuilder: (context) => [
+        for (final id in favorites)
+          PopupMenuItem(
+            value: id,
+            child: Row(
+              children: [
+                if (id == groupId)
+                  const Icon(Icons.check, size: 18)
+                else
+                  const SizedBox(width: 18),
+                const SizedBox(width: 8),
+                Text(groupNameOf(groups, id)),
+              ],
+            ),
+          ),
+      ],
+      child: title,
     );
   }
 }

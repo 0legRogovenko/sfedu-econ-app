@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme_mode.dart';
+import '../onboarding/favorite_groups.dart';
 import '../onboarding/group_picker.dart';
 import '../onboarding/group_repository.dart';
 import '../onboarding/selected_group.dart';
@@ -58,6 +59,13 @@ class SettingsScreen extends ConsumerWidget {
             },
           ),
           const SizedBox(height: 24),
+          Text('Избранные группы', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 8),
+          groupsAsync.maybeWhen(
+            data: (groups) => _FavoriteGroupsSection(groups: groups),
+            orElse: () => const SizedBox.shrink(),
+          ),
+          const SizedBox(height: 24),
           Text('Тема', style: theme.textTheme.titleMedium),
           RadioGroup<ThemeMode>(
             groupValue: themeMode,
@@ -105,6 +113,54 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Список избранных групп: тап делает активной, корзина удаляет (семантика
+/// удаления — в FavoriteGroupIds: активная переключается на первую оставшуюся).
+class _FavoriteGroupsSection extends ConsumerWidget {
+  const _FavoriteGroupsSection({required this.groups});
+
+  final List<Group> groups;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final favorites = ref.watch(favoriteGroupIdsProvider);
+    final selectedId = ref.watch(selectedGroupIdProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (favorites.isEmpty) const Text('Избранных групп пока нет'),
+        for (final id in favorites)
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: id == selectedId
+                ? const Icon(Icons.check)
+                : const SizedBox(width: 24),
+            title: Text(groupNameOf(groups, id)),
+            trailing: IconButton(
+              icon: const Icon(Icons.delete_outline),
+              tooltip: 'Удалить из избранных',
+              onPressed: () =>
+                  ref.read(favoriteGroupIdsProvider.notifier).remove(id),
+            ),
+            onTap: () =>
+                ref.read(selectedGroupIdProvider.notifier).select(id),
+          ),
+        // Активная группа не обязана быть избранной (пикер выше выбирает
+        // любую) — кнопка появляется, когда текущей нет в списке.
+        if (selectedId != null && !favorites.contains(selectedId)) ...[
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: () =>
+                ref.read(favoriteGroupIdsProvider.notifier).add(selectedId),
+            icon: const Icon(Icons.star_border),
+            label: const Text('Добавить текущую в избранные'),
+          ),
+        ],
+      ],
     );
   }
 }

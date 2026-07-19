@@ -8,6 +8,7 @@ import 'package:sfedu_econ/features/contacts/contacts_providers.dart';
 import 'package:sfedu_econ/features/contacts/contacts_repository.dart';
 import 'package:sfedu_econ/features/news/news_providers.dart';
 import 'package:sfedu_econ/features/news/news_repository.dart';
+import 'package:sfedu_econ/features/onboarding/favorite_groups.dart';
 import 'package:sfedu_econ/features/onboarding/group_repository.dart';
 import 'package:sfedu_econ/features/onboarding/selected_group.dart';
 import 'package:sfedu_econ/features/schedule/schedule_data.dart';
@@ -67,8 +68,10 @@ class _FakeContactsFeed extends ContactsFeedNotifier {
   Future<void> refresh() async {}
 }
 
-Future<ProviderContainer> _container() async {
-  SharedPreferences.setMockInitialValues({'selected_group_id': 3});
+Future<ProviderContainer> _container({
+  Map<String, Object> prefsValues = const {'selected_group_id': 3},
+}) async {
+  SharedPreferences.setMockInitialValues(prefsValues);
   final prefs = await SharedPreferences.getInstance();
   return ProviderContainer(
     overrides: [
@@ -124,11 +127,90 @@ void main() {
     addTearDown(container.dispose);
     await _pumpSettings(tester, container);
 
-    await tester.tap(find.text('Тёмная'));
+    // Секция избранных удлинила экран — радиокнопки тем уходят за нижний край.
+    // Именно ensureVisible, а не scrollUntilVisible: виджет уже построен и
+    // находится файндером, просто лежит вне вьюпорта — прокрутки бы не было.
+    final dark = find.text('Тёмная');
+    await tester.ensureVisible(dark);
+    await tester.pumpAndSettle();
+    await tester.tap(dark);
     await tester.pumpAndSettle();
 
     expect(container.read(themeModeProvider), ThemeMode.dark);
     expect(container.read(sharedPreferencesProvider).getString('theme_mode'), 'dark');
+  });
+
+  group('избранные группы', () {
+    testWidgets('секция показывает избранные с именами групп', (tester) async {
+      final container = await _container(prefsValues: {
+        'selected_group_id': 3,
+        'favorite_group_ids': ['3', '4'],
+      });
+      addTearDown(container.dispose);
+      await _pumpSettings(tester, container);
+
+      expect(find.text('Избранные группы'), findsOneWidget);
+      expect(find.widgetWithText(ListTile, '2.1'), findsOneWidget);
+      expect(find.widgetWithText(ListTile, '2.2'), findsOneWidget);
+    });
+
+    testWidgets('кнопка добавляет текущую группу в избранные', (tester) async {
+      // Текущая группа 3 избранная (миграция), меняем на 1 через пикер —
+      // появляется кнопка добавления.
+      final container = await _container();
+      addTearDown(container.dispose);
+      await _pumpSettings(tester, container);
+
+      await tester.tap(find.text('1 курс'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('1.1'));
+      await tester.pumpAndSettle();
+
+      final addButton = find.text('Добавить текущую в избранные');
+      await tester.scrollUntilVisible(addButton, 200,
+          scrollable: find.byType(Scrollable).first);
+      await tester.tap(addButton);
+      await tester.pumpAndSettle();
+
+      expect(container.read(favoriteGroupIdsProvider), [3, 1]);
+      // кнопка исчезает: текущая уже в избранных
+      expect(find.text('Добавить текущую в избранные'), findsNothing);
+    });
+
+    testWidgets('тап по избранной делает её активной', (tester) async {
+      final container = await _container(prefsValues: {
+        'selected_group_id': 3,
+        'favorite_group_ids': ['3', '4'],
+      });
+      addTearDown(container.dispose);
+      await _pumpSettings(tester, container);
+
+      await tester.tap(find.widgetWithText(ListTile, '2.2'));
+      await tester.pumpAndSettle();
+
+      expect(container.read(selectedGroupIdProvider), 4);
+    });
+
+    testWidgets('удаление активной переключает активную на первую оставшуюся',
+        (tester) async {
+      // Семантика зафиксирована в favorite_groups_test: активную удалить
+      // МОЖНО, активной становится первая из оставшихся.
+      final container = await _container(prefsValues: {
+        'selected_group_id': 3,
+        'favorite_group_ids': ['3', '4'],
+      });
+      addTearDown(container.dispose);
+      await _pumpSettings(tester, container);
+
+      await tester.tap(find.descendant(
+        of: find.widgetWithText(ListTile, '2.1'),
+        matching: find.byIcon(Icons.delete_outline),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(container.read(favoriteGroupIdsProvider), [4]);
+      expect(container.read(selectedGroupIdProvider), 4);
+    });
   });
 
   testWidgets('«О приложении» указывает неофициальный статус', (tester) async {
