@@ -28,6 +28,7 @@ from src.persons.linker import Registry, build_registry, link_exams, link_lesson
 from src.persons.names import parse_person, person_key, short_name
 
 _ID_SEP = "\x1f"  # разделитель внутри ключа, в ФИО не встречается
+_DEANERY = "Деканат"  # у человека с несколькими секциями показываем как главную
 
 
 def encode_id(key: tuple[str, str, str]) -> str:
@@ -152,6 +153,13 @@ def build_directory(db: Session) -> list[PersonRow]:
             lesson_count=lesson_counts.get(key, 0),
             exam_count=exam_counts.get(key, 0),
         )
+
+    for row in people.values():
+        # Деканат — «головная» принадлежность: замдекана, читающий на кафедре,
+        # в справочнике должен стоять в деканате. Клиент группирует по первой
+        # секции, поэтому порядок задаём здесь.
+        if _DEANERY in row.sections:
+            row.sections = [_DEANERY] + [s for s in row.sections if s != _DEANERY]
 
     _apply_overrides(db, people)
     return sorted(people.values(), key=lambda p: p.short_name.lower())

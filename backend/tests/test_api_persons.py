@@ -265,3 +265,20 @@ class TestDirectoryOverrides:
         # Кривая правка не роняет справочник и никого не скрывает.
         names = {p["short_name"] for p in client.get("/api/persons").json()}
         assert "Вольчик В.В." in names
+
+
+class TestDeanerySectionPriority:
+    def test_deanery_is_primary_section(self, client, db_session):
+        # Декан читает на кафедре, но в справочнике должна стоять в деканате.
+        db_session.add_all([
+            Contact(section="Экономическая кибернетика",
+                    name="Косолапова Наталья Алексеевна", role="профессор"),
+            Contact(section="Деканат",
+                    name="Косолапова Наталья Алексеевна", role="Декан факультета"),
+        ])
+        db_session.flush()
+
+        person = next(p for p in client.get("/api/persons").json()
+                      if p["short_name"] == "Косолапова Н.А.")
+        assert person["sections"][0] == "Деканат"
+        assert "Экономическая кибернетика" in person["sections"]
