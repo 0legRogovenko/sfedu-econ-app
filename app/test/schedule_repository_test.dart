@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sfedu_econ/core/db.dart';
 import 'package:sfedu_econ/features/schedule/schedule_api.dart';
 import 'package:sfedu_econ/features/schedule/schedule_repository.dart';
+import 'package:sfedu_econ/features/schedule/schedule_scope.dart';
 
 Map<String, dynamic> _lessonJson(int id) => {
       'id': id,
@@ -47,8 +48,12 @@ class FakeApi implements ScheduleApi {
   final List<String?> sentEtags = [];
   int calls = 0;
 
+  final List<ScheduleScope> sentScopes = [];
+
   @override
-  Future<ScheduleApiResponse> fetchSchedule(int groupId, String? etag) async {
+  Future<ScheduleApiResponse> fetchSchedule(
+      ScheduleScope scope, String? etag) async {
+    sentScopes.add(scope);
     sentEtags.add(etag);
     return responses[calls++];
   }
@@ -67,15 +72,15 @@ void main() {
     ]);
     final repo = ScheduleRepository(api, db);
 
-    final result = await repo.sync(3);
+    final result = await repo.sync(const ScheduleScope.group(3));
 
     expect(result, SyncResult.updated);
     expect(api.sentEtags, [null]);
-    expect((await db.lessonsForGroup(3)).length, 2);
+    expect((await db.lessonsForScope('group:3')).length, 2);
     // модули и календарь тоже осели в кэше
-    expect((await db.modulesForGroup(3)).single.moduleId, 2);
-    expect((await db.weekCalendarForGroup(3)).single.weekType, 'upper');
-    expect((await db.metaForGroup(3))!.etag, '"e1"');
+    expect((await db.modulesForScope('group:3')).single.moduleId, 2);
+    expect((await db.weekCalendarForScope('group:3')).single.weekType, 'upper');
+    expect((await db.metaForScope('group:3'))!.etag, '"e1"');
   });
 
   test('повторный синк: отправляет etag, 304 → кэш не тронут', () async {
@@ -85,12 +90,12 @@ void main() {
     ]);
     final repo = ScheduleRepository(api, db);
 
-    await repo.sync(3);
-    final result = await repo.sync(3);
+    await repo.sync(const ScheduleScope.group(3));
+    final result = await repo.sync(const ScheduleScope.group(3));
 
     expect(result, SyncResult.notModified);
     expect(api.sentEtags, [null, '"e1"']);
-    expect((await db.lessonsForGroup(3)).length, 1);
+    expect((await db.lessonsForScope('group:3')).length, 1);
   });
 
   test('ошибка сети: кэш не тронут, результат failed', () async {
@@ -100,11 +105,46 @@ void main() {
     ]);
     final repo = ScheduleRepository(api, db);
 
-    await repo.sync(3);
-    final result = await repo.sync(3);
+    await repo.sync(const ScheduleScope.group(3));
+    final result = await repo.sync(const ScheduleScope.group(3));
 
     expect(result, SyncResult.failed);
-    expect((await db.lessonsForGroup(3)).length, 1);
+    expect((await db.lessonsForScope('group:3')).length, 1);
+  });
+
+  test('скоуп преподавателя кэшируется отдельно от скоупа группы', () async {
+    // Пара с одним id приходит в обоих расписаниях; без скоупа вторая
+    // синхронизация затирала бы первую.
+    final api = FakeApi([
+      ScheduleApiResponse.ok(_schedule([_lessonJson(1)]), '"g"'),
+      ScheduleApiResponse.ok(_schedule([_lessonJson(1)]), '"t"'),
+    ]);
+    final repo = ScheduleRepository(api, db);
+
+    await repo.sync(const ScheduleScope.group(3));
+    await repo.sync(const ScheduleScope.teacher(7));
+
+    expect(api.sentScopes,
+        [const ScheduleScope.group(3), const ScheduleScope.teacher(7)]);
+    expect((await db.lessonsForScope('group:3')).length, 1);
+    expect((await db.lessonsForScope('teacher:7')).length, 1);
+    expect((await db.metaForScope('group:3'))!.etag, '"g"');
+    expect((await db.metaForScope('teacher:7'))!.etag, '"t"');
+  });
+
+  test('etag берётся из меты своего скоупа', () async {
+    // Регрессия: с общей метой синк преподавателя отправил бы etag группы,
+    // получил 304 — и расписание преподавателя осталось бы пустым навсегда.
+    final api = FakeApi([
+      ScheduleApiResponse.ok(_schedule([_lessonJson(1)]), '"g"'),
+      ScheduleApiResponse.ok(_schedule([_lessonJson(1)]), '"t"'),
+    ]);
+    final repo = ScheduleRepository(api, db);
+
+    await repo.sync(const ScheduleScope.group(3));
+    await repo.sync(const ScheduleScope.teacher(7));
+
+    expect(api.sentEtags, [null, null]);
   });
 
   test('watch отдаёт ScheduleData с парами, модулями и календарём', () async {
@@ -112,9 +152,9 @@ void main() {
       ScheduleApiResponse.ok(_schedule([_lessonJson(1)]), '"e1"'),
     ]);
     final repo = ScheduleRepository(api, db);
-    await repo.sync(3);
+    await repo.sync(const ScheduleScope.group(3));
 
-    final data = await repo.watch(3).first;
+    final data = await repo.watch(const ScheduleScope.group(3)).first;
     expect(data.lessons.single.subject, 'Предмет 1');
     expect(data.lessons.single.moduleId, 2);
     expect(data.lessons.single.validFrom, DateTime(2025, 9, 1));

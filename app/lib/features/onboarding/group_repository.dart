@@ -54,6 +54,16 @@ class Group {
       );
 }
 
+/// Имя группы по id для подписей (заголовок расписания, избранные, карточка
+/// пары в режиме преподавателя). Фолбэк — если справочник групп ещё не
+/// загрузился или id из кэша в нём не нашёлся.
+String groupNameOf(List<Group> groups, int id) {
+  for (final g in groups) {
+    if (g.id == id) return g.displayName;
+  }
+  return 'Группа $id';
+}
+
 /// Список групп с бэкенда. В тестах переопределяется оверрайдом.
 final groupsProvider = FutureProvider<List<Group>>((ref) async {
   final dio = ref.watch(dioProvider);

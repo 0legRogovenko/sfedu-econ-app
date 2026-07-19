@@ -5,6 +5,11 @@ part 'db.g.dart';
 
 class CachedLessons extends Table {
   IntColumn get id => integer()();
+
+  /// Чей это кэш: 'group:3' или 'teacher:7' (см. ScheduleScope). Отдельно от
+  /// [groupId], который остаётся СВОЙСТВОМ ПАРЫ: в расписании преподавателя
+  /// именно он подписывает карточку.
+  TextColumn get scope => text()();
   IntColumn get groupId => integer()();
   IntColumn get weekday => integer()();
   IntColumn get pairNumber => integer()();
@@ -21,35 +26,37 @@ class CachedLessons extends Table {
   TextColumn get validFrom => text().nullable()();
   TextColumn get validTo => text().nullable()();
 
+  // Пара с одним id лежит и в кэше группы, и в кэше её преподавателя —
+  // одного id мало, ключ составной.
   @override
-  Set<Column> get primaryKey => {id};
+  Set<Column> get primaryKey => {scope, id};
 }
 
-/// Учебные модули группы. Суррогатный rowid: один module_id может прийти в
-/// расписании нескольких групп, а кэш живёт по группам.
+/// Учебные модули расписания. Суррогатный rowid: один module_id приходит в
+/// расписании нескольких групп, а кэш живёт по скоупам.
 class CachedModules extends Table {
-  IntColumn get groupId => integer()();
+  TextColumn get scope => text()();
   IntColumn get moduleId => integer()();
   TextColumn get name => text().nullable()();
   TextColumn get dateFrom => text()(); // 'yyyy-MM-dd'
   TextColumn get dateTo => text()();
 }
 
-/// Календарь недель группы (диапазон дат → тип недели).
+/// Календарь недель расписания (диапазон дат → тип недели).
 class CachedWeekCalendar extends Table {
-  IntColumn get groupId => integer()();
+  TextColumn get scope => text()();
   TextColumn get dateFrom => text()();
   TextColumn get dateTo => text()();
   TextColumn get weekType => text()(); // всегда 'upper'|'lower'
 }
 
 class ScheduleCacheMeta extends Table {
-  IntColumn get groupId => integer()();
+  TextColumn get scope => text()();
   TextColumn get etag => text().nullable()();
   DateTimeColumn get syncedAt => dateTime()();
 
   @override
-  Set<Column> get primaryKey => {groupId};
+  Set<Column> get primaryKey => {scope};
 }
 
 /// Экзамены группы (ближайшая сессия).
@@ -120,7 +127,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -136,44 +143,43 @@ class AppDatabase extends _$AppDatabase {
       );
 
   // --- Расписание ---
+  // Скоуп ('group:3' / 'teacher:7') строит ScheduleScope.key; БД принимает его
+  // строкой, чтобы core/db не зависел от features.
 
-  Future<List<CachedLesson>> lessonsForGroup(int groupId) =>
-      (select(cachedLessons)..where((t) => t.groupId.equals(groupId))).get();
+  Future<List<CachedLesson>> lessonsForScope(String scope) =>
+      (select(cachedLessons)..where((t) => t.scope.equals(scope))).get();
 
-  Stream<List<CachedLesson>> watchLessons(int groupId) =>
-      (select(cachedLessons)..where((t) => t.groupId.equals(groupId))).watch();
+  Stream<List<CachedLesson>> watchLessons(String scope) =>
+      (select(cachedLessons)..where((t) => t.scope.equals(scope))).watch();
 
-  Future<List<CachedModule>> modulesForGroup(int groupId) =>
+  Future<List<CachedModule>> modulesForScope(String scope) =>
       (select(cachedModules)
-            ..where((t) => t.groupId.equals(groupId))
+            ..where((t) => t.scope.equals(scope))
             ..orderBy([(t) => OrderingTerm(expression: t.dateFrom)]))
           .get();
 
-  Future<List<CachedWeekCalendarData>> weekCalendarForGroup(int groupId) =>
+  Future<List<CachedWeekCalendarData>> weekCalendarForScope(String scope) =>
       (select(cachedWeekCalendar)
-            ..where((t) => t.groupId.equals(groupId))
+            ..where((t) => t.scope.equals(scope))
             ..orderBy([(t) => OrderingTerm(expression: t.dateFrom)]))
           .get();
 
-  Future<ScheduleCacheMetaData?> metaForGroup(int groupId) =>
-      (select(scheduleCacheMeta)..where((t) => t.groupId.equals(groupId)))
+  Future<ScheduleCacheMetaData?> metaForScope(String scope) =>
+      (select(scheduleCacheMeta)..where((t) => t.scope.equals(scope)))
           .getSingleOrNull();
 
-  /// Атомарная замена кэша расписания группы (пары + модули + календарь) и меты.
-  Future<void> replaceGroupSchedule(
-    int groupId,
+  /// Атомарная замена кэша расписания скоупа (пары + модули + календарь) и меты.
+  Future<void> replaceScheduleCache(
+    String scope,
     List<CachedLessonsCompanion> lessons,
     List<CachedModulesCompanion> modules,
     List<CachedWeekCalendarCompanion> calendar,
     String? etag,
   ) =>
       transaction(() async {
-        await (delete(cachedLessons)..where((t) => t.groupId.equals(groupId)))
-            .go();
-        await (delete(cachedModules)..where((t) => t.groupId.equals(groupId)))
-            .go();
-        await (delete(cachedWeekCalendar)
-              ..where((t) => t.groupId.equals(groupId)))
+        await (delete(cachedLessons)..where((t) => t.scope.equals(scope))).go();
+        await (delete(cachedModules)..where((t) => t.scope.equals(scope))).go();
+        await (delete(cachedWeekCalendar)..where((t) => t.scope.equals(scope)))
             .go();
         await batch((b) {
           b.insertAll(cachedLessons, lessons);
@@ -182,15 +188,15 @@ class AppDatabase extends _$AppDatabase {
         });
         await into(scheduleCacheMeta).insertOnConflictUpdate(
           ScheduleCacheMetaCompanion.insert(
-            groupId: Value(groupId),
+            scope: scope,
             etag: Value(etag),
             syncedAt: DateTime.now(),
           ),
         );
       });
 
-  Future<void> touchSyncedAt(int groupId, DateTime at) =>
-      (update(scheduleCacheMeta)..where((t) => t.groupId.equals(groupId)))
+  Future<void> touchSyncedAt(String scope, DateTime at) =>
+      (update(scheduleCacheMeta)..where((t) => t.scope.equals(scope)))
           .write(ScheduleCacheMetaCompanion(syncedAt: Value(at)));
 
   // --- Экзамены ---

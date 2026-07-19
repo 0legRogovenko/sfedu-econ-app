@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sfedu_econ/core/clock.dart';
+import 'package:sfedu_econ/core/prefs.dart';
+import 'package:sfedu_econ/features/onboarding/group_repository.dart';
 import 'package:sfedu_econ/features/onboarding/selected_group.dart';
 import 'package:sfedu_econ/features/schedule/lesson.dart';
 import 'package:sfedu_econ/features/schedule/schedule_data.dart';
@@ -110,18 +113,60 @@ class _FirstLaunchFailedSync extends SyncStatusNotifier {
   Future<void> sync() async {}
 }
 
-Widget _screen({
+const _groups = [
+  Group(
+    id: 3,
+    course: 2,
+    number: '2.1',
+    program: null,
+    level: EducationLevel.bachelor,
+    subgroupCount: 2,
+  ),
+  Group(
+    id: 4,
+    course: 2,
+    number: '2.2',
+    program: null,
+    level: EducationLevel.bachelor,
+    subgroupCount: 2,
+  ),
+];
+
+/// Контейнер со всеми оверрайдами экрана: prefs нужны избранным и фильтру
+/// подгруппы, groupsProvider — имени группы в заголовке.
+///
+/// Возвращаем контейнер, а не список оверрайдов: тип элемента (riverpod
+/// `Override`) не реэкспортируется через flutter_riverpod, а линтер
+/// `strict_top_level_inference` требует явную аннотацию.
+Future<ProviderContainer> _container({
   DateTime? now,
   SyncStatusNotifier Function()? sync,
   ScheduleData? data,
-}) =>
-    ProviderScope(
-      overrides: [
-        selectedGroupIdProvider.overrideWith(() => FakeSelectedGroupId(3)),
-        scheduleDataProvider.overrideWith((ref) => Stream.value(data ?? _data)),
-        clockProvider.overrideWithValue(() => now ?? _now),
-        syncStatusProvider.overrideWith(sync ?? _FakeSync.new),
-      ],
+  Map<String, Object> prefsValues = const {},
+}) async {
+  SharedPreferences.setMockInitialValues(prefsValues);
+  final prefs = await SharedPreferences.getInstance();
+  return ProviderContainer(
+    overrides: [
+      sharedPreferencesProvider.overrideWithValue(prefs),
+      groupsProvider.overrideWith((ref) async => _groups),
+      selectedGroupIdProvider.overrideWith(() => FakeSelectedGroupId(3)),
+      scheduleDataProvider.overrideWith((ref) => Stream.value(data ?? _data)),
+      clockProvider.overrideWithValue(() => now ?? _now),
+      syncStatusProvider.overrideWith(sync ?? _FakeSync.new),
+    ],
+  );
+}
+
+Future<Widget> _screen({
+  DateTime? now,
+  SyncStatusNotifier Function()? sync,
+  ScheduleData? data,
+  Map<String, Object> prefsValues = const {},
+}) async =>
+    UncontrolledProviderScope(
+      container: await _container(
+          now: now, sync: sync, data: data, prefsValues: prefsValues),
       child: const MaterialApp(home: ScheduleScreen()),
     );
 
@@ -131,14 +176,7 @@ void main() {
     // на push/pop-навигацию смена группы в настройках не подтягивала бы
     // расписание новой группы (итог ревью).
     _RecordingSync.calls = 0;
-    final container = ProviderContainer(
-      overrides: [
-        selectedGroupIdProvider.overrideWith(() => FakeSelectedGroupId(3)),
-        scheduleDataProvider.overrideWith((ref) => Stream.value(_data)),
-        clockProvider.overrideWithValue(() => _now),
-        syncStatusProvider.overrideWith(_RecordingSync.new),
-      ],
-    );
+    final container = await _container(sync: _RecordingSync.new);
     addTearDown(container.dispose);
 
     await tester.pumpWidget(UncontrolledProviderScope(
@@ -156,7 +194,7 @@ void main() {
   });
 
   testWidgets('показывает пары сегодняшнего дня', (tester) async {
-    await tester.pumpWidget(_screen());
+    await tester.pumpWidget(await _screen());
     await tester.pumpAndSettle();
 
     expect(find.text('Макроэкономика'), findsOneWidget);
@@ -164,10 +202,81 @@ void main() {
     expect(find.text('Иностранный язык'), findsNothing); // вторник
   });
 
+  group('фильтр подгруппы', () {
+    // Понедельник: общая лекция + разбиение на подгруппы в одном слоте.
+    final data = ScheduleData(
+      lessons: const [
+        Lesson(
+          id: 10,
+          groupId: 3,
+          weekday: 0,
+          pairNumber: 1,
+          startsAt: '09:00:00',
+          endsAt: '10:35:00',
+          subject: 'Макроэкономика',
+          room: '220',
+          weekType: null,
+          subgroup: 0,
+          teacherName: 'Иванова Е. П.',
+        ),
+        Lesson(
+          id: 11,
+          groupId: 3,
+          weekday: 0,
+          pairNumber: 2,
+          startsAt: '10:50:00',
+          endsAt: '12:25:00',
+          subject: 'Английский первой',
+          room: '118',
+          weekType: null,
+          subgroup: 1,
+          teacherName: null,
+        ),
+        Lesson(
+          id: 12,
+          groupId: 3,
+          weekday: 0,
+          pairNumber: 2,
+          startsAt: '10:50:00',
+          endsAt: '12:25:00',
+          subject: 'Английский второй',
+          room: '119',
+          weekType: null,
+          subgroup: 2,
+          teacherName: null,
+        ),
+      ],
+      modules: const [],
+      weekCalendar: _calendar,
+    );
+
+    testWidgets('без настройки видны обе подгруппы', (tester) async {
+      await tester.pumpWidget(await _screen(data: data));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Английский первой'), findsOneWidget);
+      expect(find.text('Английский второй'), findsOneWidget);
+    });
+
+    testWidgets('настройка подгруппы прячет чужую пару на экране',
+        (tester) async {
+      // Провод «настройка → экран»: сама логика проверена в week_logic_test,
+      // здесь важно, что экран действительно передаёт фильтр в резолвер.
+      await tester.pumpWidget(
+          await _screen(data: data, prefsValues: {'subgroup_of_3': 1}));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Английский первой'), findsOneWidget);
+      expect(find.text('Английский второй'), findsNothing);
+      // Общая лекция остаётся — фильтр не прячет пары всей группы.
+      expect(find.text('Макроэкономика'), findsOneWidget);
+    });
+  });
+
   testWidgets('аудитория-номер: в карточке ровно одно «ауд.»', (tester) async {
     // Регрессия «ауд. ауд.118»: бэкенд теперь отдаёт голое «220», а префикс
     // дописывает карточка — и только один раз.
-    await tester.pumpWidget(_screen());
+    await tester.pumpWidget(await _screen());
     await tester.pumpAndSettle();
 
     expect(find.text('ауд. 220 · Иванова Е. П.'), findsOneWidget);
@@ -194,7 +303,7 @@ void main() {
       modules: const [],
       weekCalendar: _calendar,
     );
-    await tester.pumpWidget(_screen(data: data));
+    await tester.pumpWidget(await _screen(data: data));
     await tester.pumpAndSettle();
 
     expect(find.text('Онлайн · Бондин В.И.'), findsOneWidget);
@@ -202,14 +311,14 @@ void main() {
   });
 
   testWidgets('текущая пара помечена «Сейчас»', (tester) async {
-    await tester.pumpWidget(_screen());
+    await tester.pumpWidget(await _screen());
     await tester.pumpAndSettle();
 
     expect(find.text('Сейчас'), findsOneWidget);
   });
 
   testWidgets('свайп влево — следующий день', (tester) async {
-    await tester.pumpWidget(_screen());
+    await tester.pumpWidget(await _screen());
     await tester.pumpAndSettle();
 
     await tester.fling(find.byType(PageView), const Offset(-400, 0), 1000);
@@ -220,7 +329,7 @@ void main() {
   });
 
   testWidgets('тап по дню в ленте переключает страницу', (tester) async {
-    await tester.pumpWidget(_screen());
+    await tester.pumpWidget(await _screen());
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Вт'));
@@ -230,7 +339,7 @@ void main() {
   });
 
   testWidgets('пустой день — дружелюбная заглушка', (tester) async {
-    await tester.pumpWidget(_screen());
+    await tester.pumpWidget(await _screen());
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Сб'));
@@ -240,7 +349,7 @@ void main() {
   });
 
   testWidgets('бейдж «верхняя» на верхней неделе', (tester) async {
-    await tester.pumpWidget(_screen());
+    await tester.pumpWidget(await _screen());
     await tester.pumpAndSettle();
 
     expect(find.text('верхняя'), findsOneWidget);
@@ -249,7 +358,7 @@ void main() {
   testWidgets('в воскресенье показывается понедельник следующей недели',
       (tester) async {
     // 19.07.2026 — воскресенье; след. понедельник 20.07 — нижняя неделя.
-    await tester.pumpWidget(_screen(now: DateTime(2026, 7, 19, 12, 0)));
+    await tester.pumpWidget(await _screen(now: DateTime(2026, 7, 19, 12, 0)));
     await tester.pumpAndSettle();
 
     expect(find.text('Макроэкономика'), findsOneWidget); // каждую неделю
@@ -259,7 +368,7 @@ void main() {
 
   testWidgets('после неудачного синка показывается плашка с датой данных',
       (tester) async {
-    await tester.pumpWidget(_screen(sync: _FailedSync.new));
+    await tester.pumpWidget(await _screen(sync: _FailedSync.new));
     await tester.pumpAndSettle();
 
     expect(find.textContaining('Данные от 12.07.2026'), findsOneWidget);
@@ -280,7 +389,7 @@ void main() {
       ],
       weekCalendar: _calendar,
     );
-    await tester.pumpWidget(_screen(data: data));
+    await tester.pumpWidget(await _screen(data: data));
     await tester.pumpAndSettle();
 
     expect(find.text('2 модуль'), findsOneWidget);
@@ -301,7 +410,7 @@ void main() {
       ],
       weekCalendar: _calendar,
     );
-    await tester.pumpWidget(_screen(data: data));
+    await tester.pumpWidget(await _screen(data: data));
     await tester.pumpAndSettle();
 
     expect(find.text('1 модуль'), findsNothing);
@@ -311,7 +420,7 @@ void main() {
       (tester) async {
     // Свежая установка: кэш пуст, первый синк упал (syncedAt == null).
     // Студент не должен видеть «Пар нет — отдыхаем» — данные просто не загружены.
-    await tester.pumpWidget(_screen(
+    await tester.pumpWidget(await _screen(
       sync: _FirstLaunchFailedSync.new,
       data: const ScheduleData.empty(),
     ));
@@ -319,5 +428,37 @@ void main() {
 
     expect(find.text('Пар нет — отдыхаем'), findsNothing);
     expect(find.textContaining('Нет данных'), findsOneWidget);
+  });
+
+  testWidgets('заголовок показывает имя активной группы', (tester) async {
+    await tester.pumpWidget(await _screen());
+    await tester.pumpAndSettle();
+
+    expect(find.text('2.1'), findsOneWidget);
+  });
+
+  testWidgets('тап по заголовку — меню избранных, выбор переключает активную',
+      (tester) async {
+    final container = await _container(prefsValues: {
+      'favorite_group_ids': ['3', '4'],
+    });
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(UncontrolledProviderScope(
+      container: container,
+      child: const MaterialApp(home: ScheduleScreen()),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('2.1'));
+    await tester.pumpAndSettle();
+    expect(find.text('2.2'), findsOneWidget); // меню избранных открылось
+
+    await tester.tap(find.text('2.2'));
+    await tester.pumpAndSettle();
+
+    // Смена активной идёт через selectedGroupIdProvider.select() —
+    // существующий ref.listen-синк подхватит сам.
+    expect(container.read(selectedGroupIdProvider), 4);
   });
 }

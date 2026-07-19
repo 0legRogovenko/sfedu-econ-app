@@ -29,22 +29,31 @@ Module? activeModule(List<Module> modules, DateTime date) {
 /// Видна ли пара в дату по ПРАВИЛУ РЕЗОЛВИНГА:
 /// weekday совпадает И (окно valid_from..valid_to охватывает дату)
 /// И (тип недели пары null ИЛИ равен типу недели календаря на эту дату).
-bool lessonVisibleOn(Lesson lesson, DateTime date, WeekType? weekType) {
+///
+/// [subgroup] — пользовательский фильтр «моя подгруппа» (null = показывать
+/// все). Он НЕ часть правила резолвинга, а настройка поверх него.
+bool lessonVisibleOn(Lesson lesson, DateTime date, WeekType? weekType,
+    {int? subgroup}) {
   if (lesson.weekday != date.weekday - 1) return false;
   if (lesson.validFrom != null && date.isBefore(lesson.validFrom!)) return false;
   if (lesson.validTo != null && date.isAfter(lesson.validTo!)) return false;
   // Пара с чередованием видна только на своей неделе. Если тип недели на дату
   // неизвестен (null), такая пара не показывается — только пары без чередования.
   if (lesson.weekType != null && lesson.weekType != weekType) return false;
+  // subgroup == 0 — пара всей группы: видна при любом фильтре, иначе студент
+  // с фильтром потерял бы все общие лекции.
+  if (subgroup != null && lesson.subgroup != 0 && lesson.subgroup != subgroup) {
+    return false;
+  }
   return true;
 }
 
 /// Пары на конкретную дату: фильтр по правилу резолвинга,
 /// сортировка по номеру пары и подгруппе.
-List<Lesson> lessonsForDay(ScheduleData data, DateTime date) {
+List<Lesson> lessonsForDay(ScheduleData data, DateTime date, {int? subgroup}) {
   final weekType = weekTypeForDate(data.weekCalendar, date);
   final result = data.lessons
-      .where((l) => lessonVisibleOn(l, date, weekType))
+      .where((l) => lessonVisibleOn(l, date, weekType, subgroup: subgroup))
       .toList()
     ..sort((a, b) {
       final byPair = a.pairNumber.compareTo(b.pairNumber);
