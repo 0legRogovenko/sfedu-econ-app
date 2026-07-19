@@ -11,6 +11,8 @@ import 'package:sfedu_econ/features/news/news_repository.dart';
 import 'package:sfedu_econ/features/onboarding/selected_group.dart';
 import 'package:sfedu_econ/features/schedule/schedule_data.dart';
 import 'package:sfedu_econ/features/schedule/schedule_providers.dart';
+import 'package:sfedu_econ/features/teachers/teacher.dart';
+import 'package:sfedu_econ/features/teachers/teachers_providers.dart';
 import 'package:sfedu_econ/main.dart';
 
 /// Экраны расписания и новостей в фоне ходят в реальную drift-БД/dio — здесь
@@ -66,7 +68,20 @@ class _FakeContactsFeed extends ContactsFeedNotifier {
 
 /// main.dart читает themeModeProvider, которому нужен sharedPreferencesProvider
 /// — подменяем на мок, чтобы не падать с UnimplementedError.
-Future<Widget> _app(List<Contact> items, {bool offline = false}) async {
+/// Экран преподавателя открывается по тапу из поиска: подменяем его источники,
+/// иначе он уходит в реальную drift-БД и вечно крутит спиннер.
+class _FakeTeacherSync extends TeacherSyncNotifier {
+  _FakeTeacherSync(super.teacherId);
+
+  @override
+  Future<void> sync() async {}
+}
+
+Future<Widget> _app(
+  List<Contact> items, {
+  bool offline = false,
+  List<Teacher> teachers = const [],
+}) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
   return ProviderScope(
@@ -82,6 +97,11 @@ Future<Widget> _app(List<Contact> items, {bool offline = false}) async {
           ContactsFeed(items: items, offline: offline),
         ),
       ),
+      teachersProvider.overrideWith((ref) async => teachers),
+      teacherScheduleProvider.overrideWith(
+          (ref, teacherId) => Stream.value(const ScheduleData.empty())),
+      for (final t in teachers)
+        teacherSyncProvider(t.id).overrideWith(() => _FakeTeacherSync(t.id)),
     ],
     child: const SfeduEconApp(),
   );
@@ -129,6 +149,64 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Никого не нашли'), findsOneWidget);
+  });
+
+  group('преподаватели в поиске', () {
+    testWidgets('поиск фамилии находит преподавателя, а не «никого не нашли»',
+        (tester) async {
+      // В справочнике контактов преподавателей нет (их заводит импорт
+      // расписания, а не админ), поэтому поиск фамилии упирался в тупик —
+      // при том что приложение знает этого человека и его расписание.
+      await tester.pumpWidget(await _app(
+        [_c(id: 1, name: 'Иванова Елена Петровна')],
+        teachers: const [Teacher(id: 7, fullName: 'Ласкова Т.С.')],
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Контакты'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'Ласк');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Преподаватели'), findsOneWidget);
+      expect(find.text('Ласкова Т.С.'), findsOneWidget);
+      expect(find.text('Никого не нашли'), findsNothing);
+    });
+
+    testWidgets('без запроса преподаватели не засоряют справочник',
+        (tester) async {
+      // 129 голых фамилий поверх справочника сделали бы его хуже: у них нет
+      // ни кабинета, ни почты — только переход к расписанию.
+      await tester.pumpWidget(await _app(
+        [_c(id: 1, name: 'Иванова Елена Петровна')],
+        teachers: const [Teacher(id: 7, fullName: 'Ласкова Т.С.')],
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Контакты'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Преподаватели'), findsNothing);
+      expect(find.text('Ласкова Т.С.'), findsNothing);
+    });
+
+    testWidgets('тап по преподавателю открывает его расписание',
+        (tester) async {
+      await tester.pumpWidget(await _app(
+        const [],
+        teachers: const [Teacher(id: 7, fullName: 'Ласкова Т.С.')],
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Контакты'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'Ласк');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ласкова Т.С.'));
+      await tester.pumpAndSettle();
+
+      // Заголовок экрана расписания преподавателя.
+      expect(find.widgetWithText(AppBar, 'Ласкова Т.С.'), findsOneWidget);
+    });
   });
 
   testWidgets('офлайн без кэша — «нужна сеть», а не «справочник пуст»',
