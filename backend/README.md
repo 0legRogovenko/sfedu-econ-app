@@ -18,9 +18,11 @@ PostgreSQL). Внутри compose-сети api ходит в db:5432.
 
 Read-only ручки для приложения (все отдают ETag, поддерживают If-None-Match):
 
-    GET /api/groups                      — группы по курсам
+    GET /api/groups                      — группы по курсам и уровням
+    GET /api/teachers                    — преподаватели ({id, full_name})
     GET /api/schedule?group_id=<id>      — расписание группы (вся неделя)
     GET /api/schedule?teacher_id=<id>    — расписание преподавателя
+    GET /api/exams?group_id=<id>         — ближайшая сессия группы
     GET /api/news?before=<iso>&before_id=<id>&limit=20 — новости, keyset-пагинация
     GET /api/contacts                    — справочник контактов
 
@@ -57,6 +59,22 @@ Read-only ручки для приложения (все отдают ETag, по
 дорастёт. Отсюда же требование к промпту: он должен быть байт-в-байт
 стабильным, поэтому в нём нет дат и id, а статьи и контакты сортируются.
 
+## Фоновые задачи
+
+Планировщик (парсер новостей и импорт расписания) по умолчанию ВЫКЛЮЧЕН —
+иначе он стартовал бы в тестах и при alembic. В контейнере `api` он включён
+через `ENABLE_SCHEDULER=1` в docker-compose.yml.
+
+    ENABLE_SCHEDULER=1          # без неё бэкенд не забирает ни новостей, ни расписания
+    NEWS_POLL_MINUTES=30
+    SCHEDULE_IMPORT_HOURS=24    # один цикл — 29 файлов при Crawl-delay: 30
+
+О падении парсеров можно получать уведомления в Telegram; если переменные не
+заданы, сообщения идут только в лог:
+
+    TELEGRAM_ALERT_BOT_TOKEN=
+    TELEGRAM_ALERT_CHAT_ID=
+
 ## Разработка локально
 
     python3 -m venv venv && source venv/bin/activate
@@ -65,6 +83,10 @@ Read-only ручки для приложения (все отдают ETag, по
     docker compose up -d db
     alembic upgrade head
     uvicorn src.main:app --reload
+
+Так поднятый бэкенд слушает только 127.0.0.1 и НЕ выполняет фоновых задач.
+Чтобы забирал новости и расписание — `ENABLE_SCHEDULER=1 uvicorn ...`; чтобы
+был виден с телефона в той же сети — `--host 0.0.0.0` (см. app/README).
 
 ## Тесты
 

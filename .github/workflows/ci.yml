@@ -1,0 +1,87 @@
+# CI из §8 спеки: «pytest на каждый коммит».
+#
+# ВНИМАНИЕ: этот файл не проверен запуском — у репозитория нет удалённой
+# ветки, и GitHub Actions не на чем было выполнить. Команды внутри — ровно
+# те, что гоняются локально и зелены; непроверенной остаётся сама обвязка
+# (версии actions, установка Flutter). Первый push покажет.
+
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    name: pytest
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'   # как в backend/Dockerfile
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r requirements.txt
+      # Тесты держат схему в памяти на SQLite (tests/conftest.py), поэтому
+      # postgres здесь не нужен — он нужен соседней задаче.
+      - run: pytest -q
+
+  migrations:
+    name: миграции против моделей
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    # Схему в тестах строит Base.metadata.create_all, а в проде — alembic.
+    # Без этой задачи изменение модели без миграции проходило бы зелёным и
+    # ломалось только на боевом стенде.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: sfedu
+          POSTGRES_PASSWORD: sfedu
+          POSTGRES_DB: sfedu_econ
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U sfedu -d sfedu_econ"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+psycopg2://sfedu:sfedu@localhost:5433/sfedu_econ
+      ADMIN_PASSWORD: ci-password
+      SECRET_KEY: ci-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r requirements.txt
+      - run: alembic upgrade head
+      # Падает, если модели ушли вперёд миграций.
+      - run: alembic check
+
+  flutter:
+    name: flutter test + analyze
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.6
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
