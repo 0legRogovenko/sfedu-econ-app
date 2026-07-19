@@ -31,3 +31,44 @@ def test_contacts_etag_304(client, db_session):
         "/api/contacts", headers={"If-None-Match": first.headers["etag"]}
     )
     assert second.status_code == 304
+
+
+def test_deanery_first_then_alphabetical(client, db_session):
+    """Деканат закреплён первым, остальные секции — по алфавиту.
+
+    Иначе справочник открывался на «Бухгалтерском учете и аудите»: студенту
+    в первую очередь нужен деканат, а не первая по алфавиту кафедра.
+    """
+    db_session.add_all(
+        [
+            Contact(section="Экономическая теория", name="Я", sort_order=1),
+            Contact(section="Бухгалтерский учет и аудит", name="Б", sort_order=1),
+            Contact(section="Деканат", name="Д", sort_order=1),
+            Contact(section="Мировая экономика", name="М", sort_order=1),
+        ]
+    )
+    db_session.flush()
+
+    sections = [c["section"] for c in client.get("/api/contacts").json()]
+
+    assert sections == [
+        "Деканат",
+        "Бухгалтерский учет и аудит",
+        "Мировая экономика",
+        "Экономическая теория",
+    ]
+
+
+def test_order_inside_section_keeps_sort_order(client, db_session):
+    """Внутри кафедры первым идёт заведующий — это задаёт sort_order."""
+    db_session.add_all(
+        [
+            Contact(section="Кафедра", name="Доцент", sort_order=2),
+            Contact(section="Кафедра", name="Заведующий", sort_order=1),
+        ]
+    )
+    db_session.flush()
+
+    names = [c["name"] for c in client.get("/api/contacts").json()]
+
+    assert names == ["Заведующий", "Доцент"]

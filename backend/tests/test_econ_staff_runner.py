@@ -281,3 +281,19 @@ def test_only_personal_pages_are_fetched():
     )
 
     assert set(urls) == {"А Б В"}
+
+
+def test_phones_are_not_stored(db_session):
+    """Телефоны с сайта не сохраняем.
+
+    На econ-sfedu.ru у деканата указан общий коммутатор с добавочным
+    (+78632184000-13009): набирается только основной номер, добавочный всё
+    равно приходится донабирать вручную — пользы от такой кнопки нет.
+    Поле phone у контакта остаётся: админ может вписать нормальный номер.
+    """
+    econ_staff_runner.sync(db_session, fetch=_fetch_ok, with_emails=False)
+
+    phones = db_session.scalars(
+        select(Contact.phone).where(Contact.source == ContactSource.ECON_SITE)
+    ).all()
+    assert all(p is None for p in phones)

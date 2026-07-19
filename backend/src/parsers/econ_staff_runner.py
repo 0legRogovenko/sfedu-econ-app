@@ -68,7 +68,10 @@ def _rows(section: str, people: list[Person], start_order: int) -> list[Contact]
             section=section,
             name=person.name,
             role=person.role or None,
-            phone=person.phone,
+            # Телефон с сайта НЕ сохраняем: у деканата это общий коммутатор с
+            # добавочным (+78632184000-13009), набирается только основной
+            # номер — кнопка звонка ведёт не туда, куда обещает. Поле phone у
+            # контакта остаётся для записей, заведённых админом вручную.
             source=ContactSource.ECON_SITE,
             # Порядок с сайта осмысленный: заведующий первым, дальше состав.
             sort_order=start_order + index,
