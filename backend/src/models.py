@@ -344,6 +344,27 @@ class Contact(Base):
     source: Mapped[str] = mapped_column(String(20), default=ContactSource.MANUAL)
 
 
+class DirectoryOverride(Base):
+    """Ручная правка единого справочника поверх автозабора.
+
+    Живёт на СЛОЕ ЧТЕНИЯ: build_directory применяет её после сборки списка.
+    Поэтому автозабор её не видит и не может затереть — он сколько угодно раз
+    переливает contacts, а правка остаётся. Сюда попадает то, чего на сайте
+    факультета нет или что там неверно: почты заведующих (их личные страницы
+    отдают 404) и скрытие людей, которых в справочнике быть не должно.
+
+    Матчинг по `match_name` — короткому «Фамилия И.О.»: из него считается тот
+    же ключ (фамилия + оба инициала), что и у человека в справочнике.
+    """
+
+    __tablename__ = "directory_overrides"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    match_name: Mapped[str] = mapped_column(String(200))  # «Погорелова Т.Г.»
+    email: Mapped[str | None] = mapped_column(String(200))
+    hidden: Mapped[bool] = mapped_column(default=False)
+
+
 class KbArticle(Base):
     __tablename__ = "kb_articles"
 

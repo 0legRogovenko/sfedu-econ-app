@@ -177,15 +177,24 @@ class TestGoldenLiveDirectory:
             engine.dispose()
 
     def test_directory_shape(self, live):
+        # Точные числа НЕ фиксируем: они зависят от ручных правок (скрытия),
+        # а те — данные, не алгоритм. Инварианты линковки пинует
+        # test_person_linker. Здесь — что справочник осмысленного размера,
+        # без мусора, и что курация применена.
         from src.persons.directory import build_directory
 
         people = build_directory(live)
+        shorts = {p.short_name for p in people}
 
-        assert len(people) == 128
-        assert sum(1 for p in people if p.has_schedule) == 111
-        assert sum(1 for p in people if p.email and not p.has_schedule) == 15
-        # ни одной мусорной карточки
+        assert 100 <= len(people) <= 200
         assert not [p for p in people if p.short_name.startswith(("Акт ", "Дисциплины"))]
+        # скрытые правкой отсутствуют
+        assert "Погорелова Т.Г." not in shorts
+        assert "Патракеева О.Ю." not in shorts
+        # почты заведующих, вписанные правкой (их страницы отдают 404)
+        by_short = {p.short_name: p for p in people}
+        assert by_short["Фролова И.В."].email == "ifrolova@sfedu.ru"
+        assert by_short["Маслюкова Е.В."].email == "maslyukova@sfedu.ru"
 
     def test_namesakes_are_two_cards(self, live):
         from src.persons.directory import build_directory
@@ -193,3 +202,66 @@ class TestGoldenLiveDirectory:
         shorts = [p.short_name for p in build_directory(live)]
         assert shorts.count("Ласкова Т.С.") == 1
         assert shorts.count("Ласкова Д.С.") == 1
+
+
+class TestDirectoryOverrides:
+    """Ручные правки поверх автозабора: пин почты и скрытие людей."""
+
+    def test_hidden_person_disappears(self, client, db_session):
+        from src.models import DirectoryOverride
+
+        db_session.add(Contact(section="Кафедра", name="Погорелова Татьяна Геннадьевна"))
+        db_session.add(DirectoryOverride(match_name="Погорелова Т.Г.", hidden=True))
+        db_session.flush()
+
+        names = {p["short_name"] for p in client.get("/api/persons").json()}
+        assert "Погорелова Т.Г." not in names
+
+    def test_pinned_email_appears(self, client, db_session):
+        # Почта заведующего: его личная страница отдаёт 404, автозабор её не
+        # добудет — вписываем правкой.
+        from src.models import DirectoryOverride
+
+        db_session.add(Contact(section="Кафедра", name="Фролова Ирина Вениаминовна"))
+        db_session.add(
+            DirectoryOverride(match_name="Фролова И.В.", email="ifrolova@sfedu.ru")
+        )
+        db_session.flush()
+
+        person = next(
+            p for p in client.get("/api/persons").json()
+            if p["short_name"] == "Фролова И.В."
+        )
+        assert person["email"] == "ifrolova@sfedu.ru"
+
+    def test_pinned_email_wins_over_site(self, client, db_session):
+        from src.models import DirectoryOverride
+
+        db_session.add(
+            Contact(
+                section="Кафедра",
+                name="Вольчик Вячеслав Витальевич",
+                email="site@sfedu.ru",
+            )
+        )
+        db_session.add(
+            DirectoryOverride(match_name="Вольчик В.В.", email="volchik@sfedu.ru")
+        )
+        db_session.flush()
+
+        person = next(
+            p for p in client.get("/api/persons").json()
+            if p["short_name"] == "Вольчик В.В."
+        )
+        assert person["email"] == "volchik@sfedu.ru"
+
+    def test_unparseable_override_is_ignored(self, client, db_session):
+        from src.models import DirectoryOverride
+
+        db_session.add(Contact(section="Кафедра", name="Вольчик Вячеслав Витальевич"))
+        db_session.add(DirectoryOverride(match_name="мусор", hidden=True))
+        db_session.flush()
+
+        # Кривая правка не роняет справочник и никого не скрывает.
+        names = {p["short_name"] for p in client.get("/api/persons").json()}
+        assert "Вольчик В.В." in names

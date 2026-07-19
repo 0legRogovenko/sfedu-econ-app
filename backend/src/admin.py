@@ -146,6 +146,16 @@ class ContactAdmin(ModelView, model=models.Contact):
     ]
 
 
+class DirectoryOverrideAdmin(ModelView, model=models.DirectoryOverride):
+    name_plural = "Правки справочника"
+    column_list = [
+        models.DirectoryOverride.id,
+        models.DirectoryOverride.match_name,
+        models.DirectoryOverride.email,
+        models.DirectoryOverride.hidden,
+    ]
+
+
 class KbArticleAdmin(ModelView, model=models.KbArticle):
     name_plural = "База знаний"
     column_list = [models.KbArticle.id, models.KbArticle.slug, models.KbArticle.title]
@@ -180,6 +190,7 @@ def setup_admin(app: FastAPI) -> None:
         ModuleAdmin,
         NewsAdmin,
         ContactAdmin,
+        DirectoryOverrideAdmin,
         KbArticleAdmin,
         AssistantLogAdmin,
     ):

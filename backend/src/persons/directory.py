@@ -22,7 +22,7 @@ from dataclasses import dataclass, field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from src.models import Contact, ExamEvent, Lesson, Teacher
+from src.models import Contact, DirectoryOverride, ExamEvent, Lesson, Teacher
 from src.persons.extract import find_names
 from src.persons.linker import Registry, build_registry, link_exams, link_lessons
 from src.persons.names import parse_person, person_key, short_name
@@ -153,7 +153,28 @@ def build_directory(db: Session) -> list[PersonRow]:
             exam_count=exam_counts.get(key, 0),
         )
 
+    _apply_overrides(db, people)
     return sorted(people.values(), key=lambda p: p.short_name.lower())
+
+
+def _override_key(match_name: str) -> tuple | None:
+    """Короткое «Фамилия И.О.» из правки → тот же ключ, что у человека."""
+    names = find_names(match_name)
+    return person_key(*names[0]) if names else None
+
+
+def _apply_overrides(db: Session, people: dict[tuple, PersonRow]) -> None:
+    """Ручные правки поверх автозабора: пин почты и скрытие людей."""
+    for override in db.scalars(select(DirectoryOverride)):
+        key = _override_key(override.match_name)
+        if key is None:
+            continue
+        if override.hidden:
+            people.pop(key, None)
+            continue
+        row = people.get(key)
+        if row is not None and override.email:
+            row.email = override.email
 
 
 def lessons_for_person(db: Session, key: tuple[str, str, str]) -> list[Lesson]:

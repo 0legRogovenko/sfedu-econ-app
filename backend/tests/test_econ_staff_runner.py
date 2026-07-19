@@ -297,3 +297,23 @@ def test_phones_are_not_stored(db_session):
         select(Contact.phone).where(Contact.source == ContactSource.ECON_SITE)
     ).all()
     assert all(p is None for p in phones)
+
+
+def test_overrides_survive_resync(db_session):
+    """Скрытие человека переживает повторный автозабор.
+
+    Автозабор льёт contacts заново, но правки справочника живут в отдельной
+    таблице и применяются на чтении — поэтому скрытый человек не возвращается,
+    сколько бы раз ни синкали.
+    """
+    from src.models import DirectoryOverride
+    from src.persons.directory import build_directory
+
+    econ_staff_runner.sync(db_session, fetch=_fetch_ok, with_emails=False)
+    db_session.add(DirectoryOverride(match_name="Вольчик В.В.", hidden=True))
+    db_session.flush()
+    assert "Вольчик В.В." not in {p.short_name for p in build_directory(db_session)}
+
+    # повторный синк — правка на месте
+    econ_staff_runner.sync(db_session, fetch=_fetch_ok, with_emails=False)
+    assert "Вольчик В.В." not in {p.short_name for p in build_directory(db_session)}
