@@ -26,17 +26,11 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   late DateTime _baseMonday;
   late int _dayIndex; // 0 = понедельник … 5 = суббота
 
-  /// Дата начала выбранного вручную семестра; null — следовать текущему
-  /// (по дате). Храним ДАТУ, а не объект Semester: detectSemesters создаёт
-  /// новые объекты на каждый build, и сравнение по идентичности сбивало бы
-  /// выбор при каждом переэмите расписания.
-  DateTime? _chosenSemesterFrom;
-
   @override
   void initState() {
     super.initState();
     final now = ref.read(clockProvider)();
-    _baseMonday = _currentWeekMonday(now);
+    _baseMonday = currentWeekMonday(now);
     _dayIndex = now.weekday == DateTime.sunday ? 0 : now.weekday - 1;
     _pageController = PageController(initialPage: _dayIndex);
     // фоновая синхронизация при открытии экрана
@@ -49,38 +43,18 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     super.dispose();
   }
 
-  /// Понедельник текущей недели. Воскресенье: показываем следующую неделю —
-  /// студент планирует предстоящие пары.
-  DateTime _currentWeekMonday(DateTime now) {
-    final isSunday = now.weekday == DateTime.sunday;
-    final monday = now.subtract(Duration(days: now.weekday - 1));
-    return DateTime(monday.year, monday.month, monday.day)
-        .add(Duration(days: isSunday ? 7 : 0));
-  }
-
-  /// Неделя, с которой открывается выбранный семестр: если он текущий —
-  /// сегодняшняя неделя, иначе первая неделя семестра.
-  DateTime _mondayFor(Semester? semester, DateTime now) {
-    if (semester == null) return _currentWeekMonday(now);
-    return semester.contains(now)
-        ? _currentWeekMonday(now)
-        : semester.firstMonday;
-  }
-
   /// Дата, соответствующая выбранному дню отображаемой недели.
   DateTime _dateForIndex(int index) => _baseMonday.add(Duration(days: index));
 
-  /// Выбор семестра из меню кнопки. Хранит дату начала, а не объект: каждый
-  /// build пересоздаёт объекты Semester, и хранение объектом сбивало бы выбор
-  /// при переэмите расписания.
+  /// Выбор семестра из меню кнопки. Пишет ключ в общий провайдер — то же
+  /// значение читает расписание преподавателя, поэтому оно открывается на том
+  /// же семестре.
   void _selectSemester(Semester semester, Semester current) {
-    if (semester.from == current.from) return; // тот же — ничего не делаем
-    setState(() {
-      _chosenSemesterFrom = semester.from;
-      // Возврат к понедельнику: у не текущего семестра осмысленна первая неделя
-      // целиком, а сегодняшний день недели там ни при чём.
-      _dayIndex = 0;
-    });
+    if (semester.seasonKey == current.seasonKey) return; // тот же — ничего
+    ref.read(viewedSemesterProvider.notifier).select(semester.seasonKey);
+    // Возврат к понедельнику: у не текущего семестра осмысленна первая неделя
+    // целиком, а сегодняшний день недели там ни при чём.
+    setState(() => _dayIndex = 0);
     if (_pageController.hasClients) _pageController.jumpToPage(0);
   }
 
@@ -100,19 +74,15 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     final now = ref.read(clockProvider)();
 
     // Семестры из данных расписания; переключатель — только если их больше
-    // одного. Выбранный семестр задаёт, какую неделю показываем.
+    // одного. Выбранный семестр (общий с расписанием преподавателя) задаёт,
+    // какую неделю показываем.
     final semesters = scheduleAsync.maybeWhen(
       data: detectSemesters,
       orElse: () => const <Semester>[],
     );
-    Semester? selectedSemester;
-    if (_chosenSemesterFrom != null) {
-      for (final s in semesters) {
-        if (s.from == _chosenSemesterFrom) selectedSemester = s;
-      }
-    }
-    selectedSemester ??= currentSemester(semesters, now);
-    _baseMonday = _mondayFor(selectedSemester, now);
+    final chosenKey = ref.watch(viewedSemesterProvider);
+    final selectedSemester = resolveSemester(semesters, chosenKey, now);
+    _baseMonday = mondayForSemester(selectedSemester, now);
 
     // Активный модуль выбранного дня (модуль, чей диапазон накрывает дату).
     // null — дата вне всех модулей ИЛИ у модуля нет имени → бейдж скрыт.
@@ -158,11 +128,11 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           // только когда семестров больше одного (у группы обычно осенний и
           // весенний).
           if (semesters.length >= 2 && selectedSemester != null)
-            _SemesterButton(
+            SemesterButton(
               semesters: semesters,
               selected: selectedSemester,
               onSelect: (semester) =>
-                  _selectSemester(semester, selectedSemester!),
+                  _selectSemester(semester, selectedSemester),
             ),
           IconButton(
             icon: const Icon(Icons.person_search_outlined),
@@ -288,55 +258,6 @@ class _GroupSwitcherTitle extends ConsumerWidget {
           ),
       ],
       child: title,
-    );
-  }
-}
-
-/// Кнопка выбора семестра в шапке расписания: текущий семестр со стрелкой,
-/// тап открывает меню. Показывается, только когда семестров больше одного
-/// (у группы обычно осенний и весенний).
-class _SemesterButton extends StatelessWidget {
-  const _SemesterButton({
-    required this.semesters,
-    required this.selected,
-    required this.onSelect,
-  });
-
-  final List<Semester> semesters;
-  final Semester selected;
-  final ValueChanged<Semester> onSelect;
-
-  @override
-  Widget build(BuildContext context) {
-    return PopupMenuButton<Semester>(
-      tooltip: 'Выбор семестра',
-      onSelected: onSelect,
-      itemBuilder: (context) => [
-        for (final semester in semesters)
-          PopupMenuItem(
-            value: semester,
-            child: Row(
-              children: [
-                if (semester.from == selected.from)
-                  const Icon(Icons.check, size: 18)
-                else
-                  const SizedBox(width: 18),
-                const SizedBox(width: 8),
-                Text(semester.label),
-              ],
-            ),
-          ),
-      ],
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(selected.label, style: Theme.of(context).textTheme.bodyMedium),
-            const Icon(Icons.arrow_drop_down),
-          ],
-        ),
-      ),
     );
   }
 }

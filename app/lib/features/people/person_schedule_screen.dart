@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/clock.dart';
 import '../onboarding/group_repository.dart';
+import '../schedule/schedule_providers.dart';
 import '../schedule/schedule_widgets.dart';
+import '../schedule/semester.dart';
 import '../schedule/week_logic.dart';
 import 'people_providers.dart';
 import 'person.dart';
@@ -22,29 +24,46 @@ class PersonScheduleScreen extends ConsumerStatefulWidget {
 }
 
 class _PersonScheduleScreenState extends ConsumerState<PersonScheduleScreen> {
-  late final PageController _pageController;
-  late final DateTime _baseMonday;
-  late int _dayIndex;
+  // Создаётся лениво — на первом кадре с данными, когда уже известен семестр и
+  // корректная стартовая страница (день недели). До этого расписание грузится.
+  PageController? _pageController;
+  // Пересчитывается на каждый build от выбранного семестра, поэтому НЕ final.
+  late DateTime _baseMonday;
+  int _dayIndex = 0;
+
+  /// Локальный выбор семестра (seasonKey). Стартово — тот, что выбрал студент на
+  /// своём расписании; дальше переключение здесь НЕ трогает домашний экран
+  /// студента (одностороннее следование студент→преподаватель).
+  String? _chosen;
+
+  /// Одноразовое выравнивание стартового дня по семестру (текущий — на
+  /// сегодняшнем дне, не текущий — на понедельнике первой недели).
+  bool _dayAligned = false;
 
   @override
   void initState() {
     super.initState();
-    final now = ref.read(clockProvider)();
-    final isSunday = now.weekday == DateTime.sunday;
-    final monday = now.subtract(Duration(days: now.weekday - 1));
-    _baseMonday = DateTime(monday.year, monday.month, monday.day)
-        .add(Duration(days: isSunday ? 7 : 0));
-    _dayIndex = isSunday ? 0 : now.weekday - 1;
-    _pageController = PageController(initialPage: _dayIndex);
+    _chosen = ref.read(viewedSemesterProvider); // семестр, выбранный студентом
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _pageController?.dispose();
     super.dispose();
   }
 
   DateTime _dateForIndex(int index) => _baseMonday.add(Duration(days: index));
+
+  /// Выбор семестра из меню кнопки — ЛОКАЛЬНО, без записи в общий провайдер:
+  /// студент листает расписание преподавателя, не меняя своё домашнее.
+  void _selectSemester(Semester semester, Semester current) {
+    if (semester.seasonKey == current.seasonKey) return;
+    setState(() {
+      _chosen = semester.seasonKey;
+      _dayIndex = 0; // у не текущего семестра осмысленна первая неделя целиком
+    });
+    _pageController?.jumpToPage(0);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,17 +72,34 @@ class _PersonScheduleScreenState extends ConsumerState<PersonScheduleScreen> {
           data: (list) => list,
           orElse: () => const <Group>[],
         );
+    final now = ref.read(clockProvider)();
+
+    // Семестры из расписания преподавателя; стартовый выбор — тот же, что у
+    // студента (seeded в initState), поэтому расписание открывается на нужном
+    // семестре, а не всегда на текущей неделе.
+    final semesters = scheduleAsync.maybeWhen(
+      data: detectSemesters,
+      orElse: () => const <Semester>[],
+    );
+    final selectedSemester = resolveSemester(semesters, _chosen, now);
+    _baseMonday = mondayForSemester(selectedSemester, now);
+
+    // Как только данные пришли (семестр известен), один раз выставляем стартовый
+    // день: текущий семестр открываем на сегодняшнем дне (чтобы работала метка
+    // «Сейчас»), не текущий — на понедельнике его первой недели.
+    if (!_dayAligned && scheduleAsync.hasValue) {
+      _dayAligned = true;
+      _dayIndex = (selectedSemester != null && !selectedSemester.contains(now))
+          ? 0
+          : (now.weekday == DateTime.sunday ? 0 : now.weekday - 1);
+      _pageController = PageController(initialPage: _dayIndex);
+    }
+
     final moduleName = scheduleAsync.maybeWhen(
       data: (data) =>
           activeModule(data.modules, _dateForIndex(_dayIndex))?.name,
       orElse: () => null,
     );
-    final weekType = scheduleAsync.maybeWhen(
-      data: (data) =>
-          weekTypeForDate(data.weekCalendar, _dateForIndex(_dayIndex)),
-      orElse: () => null,
-    );
-    final now = ref.read(clockProvider)();
     final nowWeekType = scheduleAsync.maybeWhen(
       data: (data) => weekTypeForDate(
           data.weekCalendar, DateTime(now.year, now.month, now.day)),
@@ -82,13 +118,15 @@ class _PersonScheduleScreenState extends ConsumerState<PersonScheduleScreen> {
                     style: Theme.of(context).textTheme.bodySmall),
               ),
             ),
-          if (weekType != null)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: Text(weekType.label,
-                    style: Theme.of(context).textTheme.bodySmall),
-              ),
+          // Тот же переключатель семестра, что и у студента; тип недели
+          // («верхняя/нижняя») в шапке больше не показываем — он был справочным,
+          // а пары и так отфильтрованы по нему.
+          if (semesters.length >= 2 && selectedSemester != null)
+            SemesterButton(
+              semesters: semesters,
+              selected: selectedSemester,
+              onSelect: (semester) =>
+                  _selectSemester(semester, selectedSemester),
             ),
         ],
       ),
@@ -99,9 +137,9 @@ class _PersonScheduleScreenState extends ConsumerState<PersonScheduleScreen> {
             onSelect: (index) {
               setState(() => _dayIndex = index);
               // hasClients: полоса дней доступна и в loading, когда PageView
-              // ещё не построен (та же защита, что на экране преподавателя).
-              if (_pageController.hasClients) {
-                _pageController.animateToPage(
+              // ещё не построен (та же защита, что на экране студента).
+              if (_pageController?.hasClients ?? false) {
+                _pageController!.animateToPage(
                   index,
                   duration: const Duration(milliseconds: 250),
                   curve: Curves.easeOut,

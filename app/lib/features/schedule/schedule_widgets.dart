@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/clock.dart';
 import '../../core/room_format.dart';
 import 'lesson.dart';
+import 'semester.dart';
 import 'week_logic.dart';
 
 /// Общие виджеты недели: их делят экран расписания группы и экран расписания
@@ -41,6 +42,69 @@ class DayStrip extends StatelessWidget {
               onSelected: (_) => onSelect(i),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// Кнопка выбора семестра в шапке расписания: текущий семестр со стрелкой,
+/// тап открывает меню. Делят экран группы и экран преподавателя, поэтому она
+/// общая. Показывать её вызывающий должен, только когда семестров больше одного
+/// (у группы обычно осенний и весенний). Отметка текущего — по seasonKey (год +
+/// сезон), не по объекту и не по голой метке: у преподавателя те же осенний/
+/// весенний, но иные объекты дат, а два одноимённых семестра (осень двух лет)
+/// метка не различила бы.
+class SemesterButton extends StatelessWidget {
+  const SemesterButton({
+    super.key,
+    required this.semesters,
+    required this.selected,
+    required this.onSelect,
+  });
+
+  final List<Semester> semesters;
+  final Semester selected;
+  final ValueChanged<Semester> onSelect;
+
+  /// Подпись пункта меню. Обычно просто «Осенний»/«Весенний», но если в данных
+  /// оказалось два одноимённых семестра (осень двух учебных лет), добавляем год
+  /// начала — иначе пункты неразличимы.
+  String _itemLabel(Semester semester) {
+    final sameLabel =
+        semesters.where((s) => s.label == semester.label).length > 1;
+    return sameLabel ? '${semester.label} ${semester.from.year}' : semester.label;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<Semester>(
+      tooltip: 'Выбор семестра',
+      onSelected: onSelect,
+      itemBuilder: (context) => [
+        for (final semester in semesters)
+          PopupMenuItem(
+            value: semester,
+            child: Row(
+              children: [
+                if (semester.seasonKey == selected.seasonKey)
+                  const Icon(Icons.check, size: 18)
+                else
+                  const SizedBox(width: 18),
+                const SizedBox(width: 8),
+                Text(_itemLabel(semester)),
+              ],
+            ),
+          ),
+      ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(selected.label, style: Theme.of(context).textTheme.bodyMedium),
+            const Icon(Icons.arrow_drop_down),
+          ],
+        ),
       ),
     );
   }

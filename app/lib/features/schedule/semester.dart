@@ -16,6 +16,14 @@ class Semester {
   String get label =>
       (from.month >= 8 || from.month == 1) ? 'Осенний' : 'Весенний';
 
+  /// Устойчивый ключ семестра, общий для расписаний студента и преподавателя:
+  /// год начала + сезон. Год отличает соседние одноимённые семестры (два осенних
+  /// разных учебных лет, если в данных накопилось больше года), а сезон —
+  /// осенний от весеннего. По одной лишь метке нельзя: два «Осенний» дали бы
+  /// коллизию. Год начала общий у группы и преподавателя (оба стартуют в тот же
+  /// сентябрь/февраль), поэтому ключ совпадает на обоих экранах.
+  String get seasonKey => '${from.year}-$label';
+
   /// Понедельник первой недели семестра — куда прыгает расписание при выборе
   /// не текущего семестра.
   DateTime get firstMonday {
@@ -81,4 +89,36 @@ Semester? currentSemester(List<Semester> semesters, DateTime now) {
   }
   // …а если весь год позади — последний.
   return semesters.last;
+}
+
+/// Выбранный семестр: по [seasonKey] (год + сезон), общему для расписаний
+/// студента и преподавателя, — иначе текущий по дате. Ключ, а не голая метка:
+/// два одноимённых семестра (осень двух лет) по метке дали бы коллизию —
+/// выбрался бы первый, а второй стал бы недоступен.
+Semester? resolveSemester(
+    List<Semester> semesters, String? chosenKey, DateTime now) {
+  if (chosenKey != null) {
+    for (final s in semesters) {
+      if (s.seasonKey == chosenKey) return s;
+    }
+  }
+  return currentSemester(semesters, now);
+}
+
+/// Понедельник текущей недели. Воскресенье: показываем следующую неделю —
+/// студент планирует предстоящие пары.
+DateTime currentWeekMonday(DateTime now) {
+  final isSunday = now.weekday == DateTime.sunday;
+  final monday = now.subtract(Duration(days: now.weekday - 1));
+  return DateTime(monday.year, monday.month, monday.day)
+      .add(Duration(days: isSunday ? 7 : 0));
+}
+
+/// Неделя, с которой открывается семестр: текущий — на сегодняшней неделе,
+/// не текущий — на своей первой.
+DateTime mondayForSemester(Semester? semester, DateTime now) {
+  if (semester == null) return currentWeekMonday(now);
+  return semester.contains(now)
+      ? currentWeekMonday(now)
+      : semester.firstMonday;
 }

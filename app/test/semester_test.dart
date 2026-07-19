@@ -111,4 +111,46 @@ void main() {
       expect(currentSemester(const [], DateTime(2025, 9, 1)), isNull);
     });
   });
+
+  group('resolveSemester', () {
+    final semesters = detectSemesters(_yearData());
+
+    test('по seasonKey возвращает выбранный, не текущий по дате', () {
+      // Дата летом (по дате — весенний), но выбран осенний ключ.
+      expect(resolveSemester(semesters, '2025-Осенний', DateTime(2026, 7, 1)),
+          semesters[0]);
+    });
+
+    test('ключ не найден → текущий по дате', () {
+      expect(resolveSemester(semesters, 'нет-такого', DateTime(2026, 3, 10)),
+          semesters[1]);
+    });
+
+    test('ключ null → текущий по дате', () {
+      expect(resolveSemester(semesters, null, DateTime(2025, 9, 16)),
+          semesters[0]);
+    });
+
+    test('два одноимённых семестра различаются по seasonKey', () {
+      // Осень двух учебных лет + весна между ними: три семестра, два «Осенний».
+      final twoYears = ScheduleData(
+        lessons: const [],
+        modules: [
+          Module(id: 1, name: null, dateFrom: DateTime(2025, 9, 1), dateTo: DateTime(2026, 1, 11)),
+          Module(id: 2, name: null, dateFrom: DateTime(2026, 2, 9), dateTo: DateTime(2026, 6, 22)),
+          Module(id: 3, name: null, dateFrom: DateTime(2026, 9, 1), dateTo: DateTime(2027, 1, 11)),
+        ],
+        weekCalendar: const [],
+      );
+      final s = detectSemesters(twoYears);
+      expect(s.length, 3);
+      expect(s[0].label, 'Осенний');
+      expect(s[2].label, 'Осенний'); // тот же ярлык…
+      expect(s[0].seasonKey, '2025-Осенний'); // …но разные ключи
+      expect(s[2].seasonKey, '2026-Осенний');
+      // По ключу выбирается ИМЕННО второй осенний, а не первый (коллизии нет).
+      expect(resolveSemester(s, '2026-Осенний', DateTime(2026, 10, 1)), s[2]);
+      expect(resolveSemester(s, '2025-Осенний', DateTime(2026, 10, 1)), s[0]);
+    });
+  });
 }
