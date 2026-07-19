@@ -11,6 +11,7 @@ import 'package:sfedu_econ/features/news/news_repository.dart';
 import 'package:sfedu_econ/features/onboarding/favorite_groups.dart';
 import 'package:sfedu_econ/features/onboarding/group_repository.dart';
 import 'package:sfedu_econ/features/onboarding/selected_group.dart';
+import 'package:sfedu_econ/features/schedule/lesson.dart';
 import 'package:sfedu_econ/features/schedule/schedule_data.dart';
 import 'package:sfedu_econ/features/schedule/schedule_providers.dart';
 import 'package:sfedu_econ/features/schedule/subgroup_filter.dart';
@@ -78,8 +79,25 @@ class _FakeContactsFeed extends ContactsFeedNotifier {
   Future<void> refresh() async {}
 }
 
+/// Пара нужной подгруппы: число чипов фильтра считается по самим парам,
+/// потому что Group.subgroupCount импорт не заполняет.
+Lesson _lesson(int subgroup) => Lesson(
+      id: subgroup,
+      groupId: 3,
+      weekday: 0,
+      pairNumber: 1,
+      startsAt: '09:00:00',
+      endsAt: '10:35:00',
+      subject: 'Английский',
+      room: '118',
+      weekType: null,
+      subgroup: subgroup,
+      teacherName: null,
+    );
+
 Future<ProviderContainer> _container({
   Map<String, Object> prefsValues = const {'selected_group_id': 3},
+  List<Lesson> lessons = const [],
 }) async {
   SharedPreferences.setMockInitialValues(prefsValues);
   final prefs = await SharedPreferences.getInstance();
@@ -87,8 +105,11 @@ Future<ProviderContainer> _container({
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       groupsProvider.overrideWith((ref) async => _groups),
-      scheduleDataProvider
-          .overrideWith((ref) => Stream.value(const ScheduleData.empty())),
+      scheduleDataProvider.overrideWith((ref) => Stream.value(ScheduleData(
+            lessons: lessons,
+            modules: const [],
+            weekCalendar: const [],
+          ))),
       syncStatusProvider.overrideWith(_FakeSync.new),
       newsFeedProvider.overrideWith(_FakeNewsFeed.new),
       contactsFeedProvider.overrideWith(_FakeContactsFeed.new),
@@ -233,8 +254,48 @@ void main() {
   });
 
   group('моя подгруппа', () {
-    testWidgets('по умолчанию выбрано «Все»', (tester) async {
+    testWidgets('без пар по подгруппам фильтра нет, а не пустые чипы',
+        (tester) async {
+      // В живом корпусе у большинства групп подгрупп нет вовсе. Показывать
+      // им фильтр, который ничего не изменит, — обещать несуществующую
+      // настройку.
       final container = await _container();
+      addTearDown(container.dispose);
+      await _pumpSettings(tester, container);
+      await _scrollTo(tester, find.text('Моя подгруппа'));
+
+      expect(find.textContaining('нет занятий по подгруппам'), findsOneWidget);
+      expect(find.widgetWithText(ChoiceChip, 'Все'), findsNothing);
+    });
+
+    testWidgets('чипов столько, сколько подгрупп в парах группы',
+        (tester) async {
+      // Регрессия: считать по Group.subgroupCount нельзя — импорт его не
+      // заполняет (в живой базе он равен 1 у всех групп, включая те, где
+      // реально есть пары второй подгруппы).
+      final container = await _container(lessons: [_lesson(1), _lesson(2)]);
+      addTearDown(container.dispose);
+      await _pumpSettings(tester, container);
+      await _scrollTo(tester, find.text('Моя подгруппа'));
+
+      expect(find.widgetWithText(ChoiceChip, '1-я'), findsOneWidget);
+      expect(find.widgetWithText(ChoiceChip, '2-я'), findsOneWidget);
+      expect(find.widgetWithText(ChoiceChip, '3-я'), findsNothing);
+    });
+
+    testWidgets('разбиение на три подгруппы даёт три чипа', (tester) async {
+      final container =
+          await _container(lessons: [_lesson(1), _lesson(2), _lesson(3)]);
+      addTearDown(container.dispose);
+      await _pumpSettings(tester, container);
+      await _scrollTo(tester, find.text('Моя подгруппа'));
+
+      expect(find.widgetWithText(ChoiceChip, '3-я'), findsOneWidget);
+      expect(find.widgetWithText(ChoiceChip, '4-я'), findsNothing);
+    });
+
+    testWidgets('по умолчанию выбрано «Все»', (tester) async {
+      final container = await _container(lessons: [_lesson(1), _lesson(2)]);
       addTearDown(container.dispose);
       await _pumpSettings(tester, container);
       await _scrollTo(tester, find.text('Моя подгруппа'));
@@ -252,21 +313,9 @@ void main() {
       expect(container.read(activeSubgroupProvider), isNull);
     });
 
-    testWidgets('чипов столько, сколько подгрупп у группы', (tester) async {
-      // Разбиение приходит из файла ЮФУ и не ограничено двумя: у группы с
-      // тремя подгруппами студент третьей должен видеть свой чип.
-      final container = await _container(prefsValues: {'selected_group_id': 5});
-      addTearDown(container.dispose);
-      await _pumpSettings(tester, container);
-      await _scrollTo(tester, find.text('Моя подгруппа'));
-
-      expect(find.widgetWithText(ChoiceChip, '3-я'), findsOneWidget);
-      expect(find.widgetWithText(ChoiceChip, '4-я'), findsNothing);
-    });
-
     testWidgets('выбор подгруппы сохраняется для активной группы',
         (tester) async {
-      final container = await _container();
+      final container = await _container(lessons: [_lesson(1), _lesson(2)]);
       addTearDown(container.dispose);
       await _pumpSettings(tester, container);
 
@@ -282,10 +331,10 @@ void main() {
     });
 
     testWidgets('«Все» снимает ранее выбранный фильтр', (tester) async {
-      final container = await _container(prefsValues: {
-        'selected_group_id': 3,
-        'subgroup_of_3': 1,
-      });
+      final container = await _container(
+        prefsValues: {'selected_group_id': 3, 'subgroup_of_3': 1},
+        lessons: [_lesson(1), _lesson(2)],
+      );
       addTearDown(container.dispose);
       await _pumpSettings(tester, container);
 

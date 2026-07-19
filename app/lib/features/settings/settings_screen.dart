@@ -7,6 +7,7 @@ import '../onboarding/favorite_groups.dart';
 import '../onboarding/group_picker.dart';
 import '../onboarding/group_repository.dart';
 import '../onboarding/selected_group.dart';
+import '../schedule/schedule_providers.dart';
 import '../schedule/subgroup_filter.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -75,12 +76,7 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 24),
           Text('Моя подгруппа', style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
-          _SubgroupSection(
-            groups: groupsAsync.maybeWhen(
-              data: (groups) => groups,
-              orElse: () => const <Group>[],
-            ),
-          ),
+          const _SubgroupSection(),
           const SizedBox(height: 24),
           Text('Тема', style: theme.textTheme.titleMedium),
           RadioGroup<ThemeMode>(
@@ -136,9 +132,7 @@ class SettingsScreen extends ConsumerWidget {
 /// Выбор подгруппы для АКТИВНОЙ группы: «Все» снимает фильтр. Хранится по
 /// группам, поэтому переключение активной показывает её собственный выбор.
 class _SubgroupSection extends ConsumerWidget {
-  const _SubgroupSection({required this.groups});
-
-  final List<Group> groups;
+  const _SubgroupSection();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -146,13 +140,23 @@ class _SubgroupSection extends ConsumerWidget {
     final current = ref.watch(activeSubgroupProvider);
     if (groupId == null) return const Text('Сначала выберите группу');
 
-    // Число подгрупп берём у группы, а не «всегда две»: разбиение приходит из
-    // файла ЮФУ и не ограничено двумя. При жёстких 1/2 студент третьей
-    // подгруппы не смог бы выбрать свою. Фолбэк 2 — офлайн, когда справочник
-    // групп ещё не загрузился.
-    var count = 2;
-    for (final g in groups) {
-      if (g.id == groupId) count = g.subgroupCount;
+    // Число подгрупп считаем ПО САМИМ ПАРАМ, а не по Group.subgroupCount:
+    // поле группы импорт не заполняет (в живой базе оно равно 1 у всех 40
+    // групп, при том что у трёх есть пары второй подгруппы), и опора на него
+    // отняла бы у этих студентов выбор своей подгруппы. Жёсткие «1 и 2» тоже
+    // не годятся: разбиение приходит из файла ЮФУ и двумя не ограничено.
+    final count = ref.watch(scheduleDataProvider).maybeWhen(
+          data: (data) => data.lessons.fold<int>(
+              0, (max, l) => l.subgroup > max ? l.subgroup : max),
+          orElse: () => 0,
+        );
+
+    // Ноль — у группы нет ни одной пары по подгруппам. Показывать фильтр,
+    // который ничего не изменит, значит обещать несуществующую настройку.
+    if (count == 0) {
+      return const Text(
+        'У вашей группы нет занятий по подгруппам — фильтровать нечего.',
+      );
     }
 
     return Column(
