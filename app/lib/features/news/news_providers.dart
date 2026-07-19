@@ -36,9 +36,16 @@ class NewsFeedNotifier extends AsyncNotifier<NewsFeed> {
 
   Future<void> refresh() async {
     _refreshing = true;
+    // catch, а не только finally: refresh дёргается из Future.microtask в
+    // build(), где исключение (например, кривой JSON — это TypeError, а не
+    // DioException, и репозиторий его не ловит) улетело бы необработанным,
+    // оставив экран на устаревшем кэше без единого признака сбоя. Та же
+    // починка, что уже сделана в контактах.
     try {
       final feed = await _repo.refresh();
       state = AsyncData(feed);
+    } catch (error, stack) {
+      state = AsyncError(error, stack);
     } finally {
       _refreshing = false;
     }

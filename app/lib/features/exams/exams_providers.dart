@@ -35,7 +35,14 @@ class ExamsFeedNotifier extends AsyncNotifier<ExamsFeed> {
   Future<void> refresh() async {
     final groupId = ref.read(selectedGroupIdProvider);
     if (groupId == null) return;
-    state = AsyncData(await _repo.refresh(groupId));
+    // try/catch по той же причине, что в новостях и контактах: refresh идёт
+    // из Future.microtask в build(), и необработанное исключение оставило бы
+    // экран на устаревшем кэше молча.
+    try {
+      state = AsyncData(await _repo.refresh(groupId));
+    } catch (error, stack) {
+      state = AsyncError(error, stack);
+    }
   }
 }
 

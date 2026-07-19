@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/offline_text.dart';
+
 import 'contact.dart';
 import 'contacts_providers.dart';
 import 'contacts_repository.dart';
@@ -95,10 +97,17 @@ class _ContactsList extends StatelessWidget {
 
     final Widget listBody;
     if (grouped.isEmpty) {
-      // «Никого не нашли» — только если реально что-то искали; иначе это
-      // пустой справочник (в т.ч. офлайн без кэша) — итог ревью
-      final message =
-          query.trim().isNotEmpty ? 'Никого не нашли' : 'Справочник пуст';
+      // «Никого не нашли» — только если реально что-то искали. Пустой
+      // справочник без запроса при неудачном синке — это «не загрузилось»:
+      // кэш был бы непустым, если бы хоть раз загрузился.
+      final String message;
+      if (query.trim().isNotEmpty) {
+        message = 'Никого не нашли';
+      } else if (feed.offline) {
+        message = noDataText;
+      } else {
+        message = 'Справочник пуст';
+      }
       listBody = ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
@@ -135,7 +144,9 @@ class _ContactsList extends StatelessWidget {
 
     return Column(
       children: [
-        if (feed.offline)
+        // Только когда есть что показывать — иначе плашка обещает кэш,
+        // которого нет.
+        if (feed.offline && feed.items.isNotEmpty)
           MaterialBanner(
             content: const Text('Нет сети. Показаны сохранённые контакты'),
             actions: [

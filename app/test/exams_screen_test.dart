@@ -135,6 +135,28 @@ void main() {
     expect(find.text('Экзамены не назначены'), findsOneWidget);
   });
 
+  testWidgets('офлайн без кэша — «нужна сеть», а не «экзаменов нет»',
+      (tester) async {
+    // Пустой список при неудачном синке значит «не загрузилось», а не
+    // «экзаменов не назначено»: студент прочитал бы сбой сети как хорошую
+    // новость и не стал бы обновлять.
+    await tester.pumpWidget(_screen(const ExamsFeed(items: [], offline: true)));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Нет данных. Для первой загрузки нужна сеть'),
+        findsOneWidget);
+    expect(find.text('Экзамены не назначены'), findsNothing);
+  });
+
+  testWidgets('офлайн без кэша не обещает сохранённых экзаменов',
+      (tester) async {
+    // Плашка «Показаны сохранённые экзамены» над пустым экраном — прямая ложь.
+    await tester.pumpWidget(_screen(const ExamsFeed(items: [], offline: true)));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Показаны сохранённые'), findsNothing);
+  });
+
   testWidgets('офлайн-плашка при недоступной сети', (tester) async {
     await tester.pumpWidget(_screen(ExamsFeed(
       items: [_exam(examAt: DateTime(2026, 4, 21, 9))],

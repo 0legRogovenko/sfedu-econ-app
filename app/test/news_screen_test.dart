@@ -117,6 +117,18 @@ void main() {
     expect(find.text('Открыть на сайте'), findsOneWidget);
   });
 
+  testWidgets('офлайн без кэша — «нужна сеть», а не «новостей нет»',
+      (tester) async {
+    await tester.pumpWidget(await _app([], offline: true));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Новости'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Нет данных. Для первой загрузки нужна сеть'),
+        findsOneWidget);
+    expect(find.textContaining('Показаны сохранённые'), findsNothing);
+  });
+
   testWidgets('офлайн-плашка при недоступной сети', (tester) async {
     await tester.pumpWidget(await _app([_item()], offline: true));
     await tester.pumpAndSettle();

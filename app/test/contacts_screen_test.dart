@@ -131,6 +131,19 @@ void main() {
     expect(find.text('Никого не нашли'), findsOneWidget);
   });
 
+  testWidgets('офлайн без кэша — «нужна сеть», а не «справочник пуст»',
+      (tester) async {
+    await tester.pumpWidget(await _app([], offline: true));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Контакты'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Нет данных. Для первой загрузки нужна сеть'),
+        findsOneWidget);
+    expect(find.text('Справочник пуст'), findsNothing);
+    expect(find.textContaining('Показаны сохранённые'), findsNothing);
+  });
+
   testWidgets('офлайн-плашка при недоступной сети', (tester) async {
     await tester.pumpWidget(await _app([_c()], offline: true));
     await tester.pumpAndSettle();

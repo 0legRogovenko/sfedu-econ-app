@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/offline_text.dart';
+
 import 'news_date.dart';
 import 'news_item.dart';
 import 'news_providers.dart';
@@ -70,8 +72,19 @@ class _NewsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (feed.items.isEmpty && !feed.offline) {
-      return const Center(child: Text('Новостей пока нет'));
+    if (feed.items.isEmpty) {
+      // Пусто И синк не удался — «не загрузилось», а не «новостей нет».
+      // Раньше офлайн с пустым кэшем давал экран вообще без объяснения:
+      // плашка «показаны сохранённые» над пустотой.
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
+            feed.offline ? noDataText : 'Новостей пока нет',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
     }
 
     return Column(

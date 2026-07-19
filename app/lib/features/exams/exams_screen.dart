@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/clock.dart';
+import '../../core/offline_text.dart';
 import '../../core/room_format.dart';
+import '../schedule/schedule_widgets.dart' show formatScheduleDate;
 import 'exam_event.dart';
 import 'exams_logic.dart';
 import 'exams_providers.dart';
@@ -61,10 +63,14 @@ class _ExamsList extends StatelessWidget {
 
     final Widget listBody;
     if (feed.items.isEmpty) {
+      // Пусто И синк не удался — это «не загрузилось», а не «экзаменов нет».
+      // Кэш был бы непустым, если бы хоть раз загрузился, поэтому пустота
+      // вместе с offline однозначно означает отсутствие данных.
+      final message = feed.offline ? noDataText : 'Экзамены не назначены';
       listBody = ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        children: const [
-          SizedBox(height: 300, child: Center(child: Text('Экзамены не назначены'))),
+        children: [
+          SizedBox(height: 300, child: Center(child: Text(message))),
         ],
       );
     } else {
@@ -98,9 +104,15 @@ class _ExamsList extends StatelessWidget {
 
     return Column(
       children: [
-        if (feed.offline)
+        // Плашка только когда есть что показывать: «показаны сохранённые»
+        // над пустым экраном — прямая ложь. Пустой случай уже объяснён текстом.
+        if (feed.offline && feed.items.isNotEmpty)
           MaterialBanner(
-            content: const Text('Нет сети. Показаны сохранённые экзамены'),
+            content: Text(
+              feed.syncedAt == null
+                  ? 'Нет сети. Показаны сохранённые экзамены'
+                  : 'Нет сети. Данные от ${formatScheduleDate(feed.syncedAt!)}',
+            ),
             actions: [
               TextButton(onPressed: onRefresh, child: const Text('Обновить')),
             ],
