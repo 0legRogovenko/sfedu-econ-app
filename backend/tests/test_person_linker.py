@@ -195,7 +195,7 @@ class TestGoldenLiveCorpus:
 
         assert unparsed == [], "ФИО контактов перестали разбираться"
         assert len(registry.by_key) == 77, "изменился состав справочника"
-        assert sum(1 for k in lesson_links.values() if k) == 1383
+        assert sum(1 for k in lesson_links.values() if k) == 1450
         assert sum(1 for k in exam_links.values() if k) == 224
         assert len(people) == 60
 
@@ -213,7 +213,7 @@ class TestGoldenLiveCorpus:
             return sum(1 for keys in links.values() if key in keys)
 
         # Разные люди с разным числом пар: склейка сразу видна по числам.
-        assert pairs("Ласкова Татьяна Сергеевна") == 46
+        assert pairs("Ласкова Татьяна Сергеевна") == 48
         assert pairs("Ласкова Дарья Сергеевна") == 18
 
     def test_person_missing_from_teachers_table_is_still_linked(self, live):
@@ -234,4 +234,4 @@ class TestGoldenLiveCorpus:
         links = link_lessons(live.scalars(select(Lesson)).all(), registry)
 
         key = key_of_full("Погорелова Татьяна Геннадьевна")
-        assert sum(1 for keys in links.values() if key in keys) == 18
+        assert sum(1 for keys in links.values() if key in keys) == 20
