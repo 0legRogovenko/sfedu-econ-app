@@ -49,6 +49,9 @@ class _FakeApi implements AssistantApi {
     questions.add(question);
     return _result;
   }
+
+  @override
+  Future<bool> forget(String deviceId) async => true;
 }
 
 Future<Widget> _app(_FakeApi api) async {

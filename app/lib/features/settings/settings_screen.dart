@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/device_id.dart';
 import '../../core/theme_mode.dart';
+import '../assistant/assistant_providers.dart';
 import '../onboarding/favorite_groups.dart';
 import '../onboarding/group_picker.dart';
 import '../onboarding/group_repository.dart';
@@ -120,10 +122,58 @@ class SettingsScreen extends ConsumerWidget {
             icon: const Icon(Icons.open_in_new),
             label: const Text('sfedu.ru'),
           ),
+          const SizedBox(height: 24),
+          Text('Данные и приватность', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 8),
+          const Text(
+            'На сервере хранятся только обезличенные обращения к помощнику '
+            '(для ограничения числа запросов). Их можно удалить. Настройки на '
+            'телефоне (группа, тема, избранное) хранятся локально.',
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: () => _deleteMyData(context, ref),
+            icon: const Icon(Icons.delete_outline),
+            label: const Text('Удалить мои данные'),
+          ),
         ],
       ),
     );
   }
+}
+
+/// «Удалить мои данные»: сносит с сервера логи помощника этого устройства.
+/// Спрашивает подтверждение и честно сообщает результат.
+Future<void> _deleteMyData(BuildContext context, WidgetRef ref) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Удалить мои данные?'),
+      content: const Text(
+        'С сервера будут удалены сохранённые обращения к помощнику с этого '
+        'устройства. Настройки на телефоне не затрагиваются.',
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Отмена')),
+        TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Удалить')),
+      ],
+    ),
+  );
+  if (confirmed != true || !context.mounted) return;
+
+  final ok = await ref
+      .read(assistantApiProvider)
+      .forget(ref.read(deviceIdProvider));
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(ok ? 'Данные удалены' : 'Не удалось удалить. Нужна сеть'),
+    ),
+  );
 }
 
 /// Открывает ссылку в браузере; если не вышло — говорит об этом через SnackBar,

@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sfedu_econ/core/prefs.dart';
 import 'package:sfedu_econ/core/theme_mode.dart';
+import 'package:sfedu_econ/features/assistant/assistant_api.dart';
+import 'package:sfedu_econ/features/assistant/assistant_providers.dart';
 import 'package:sfedu_econ/features/contacts/contacts_providers.dart';
 import 'package:sfedu_econ/features/contacts/contacts_repository.dart';
 import 'package:sfedu_econ/features/news/news_providers.dart';
@@ -95,9 +97,24 @@ Lesson _lesson(int subgroup) => Lesson(
       teacherName: null,
     );
 
+class _RecordingApi implements AssistantApi {
+  final List<String> forgotDevices = [];
+
+  @override
+  Future<AskResult> ask(String question, String deviceId) async =>
+      const AskAnswer(text: 'x', fallback: false);
+
+  @override
+  Future<bool> forget(String deviceId) async {
+    forgotDevices.add(deviceId);
+    return true;
+  }
+}
+
 Future<ProviderContainer> _container({
   Map<String, Object> prefsValues = const {'selected_group_id': 3},
   List<Lesson> lessons = const [],
+  AssistantApi? assistantApi,
 }) async {
   SharedPreferences.setMockInitialValues(prefsValues);
   final prefs = await SharedPreferences.getInstance();
@@ -113,6 +130,8 @@ Future<ProviderContainer> _container({
       syncStatusProvider.overrideWith(_FakeSync.new),
       newsFeedProvider.overrideWith(_FakeNewsFeed.new),
       contactsFeedProvider.overrideWith(_FakeContactsFeed.new),
+      if (assistantApi != null)
+        assistantApiProvider.overrideWithValue(assistantApi),
     ],
   );
 }
@@ -179,6 +198,27 @@ void main() {
 
     expect(container.read(themeModeProvider), ThemeMode.dark);
     expect(container.read(sharedPreferencesProvider).getString('theme_mode'), 'dark');
+  });
+
+  testWidgets('«Удалить мои данные» после подтверждения зовёт forget',
+      (tester) async {
+    final api = _RecordingApi();
+    final container = await _container(assistantApi: api);
+    addTearDown(container.dispose);
+    await _pumpSettings(tester, container);
+
+    final button = find.text('Удалить мои данные');
+    await _scrollTo(tester, button);
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+
+    // Диалог подтверждения — без него ничего не удаляем.
+    expect(api.forgotDevices, isEmpty);
+    await tester.tap(find.widgetWithText(TextButton, 'Удалить'));
+    await tester.pumpAndSettle();
+
+    expect(api.forgotDevices, hasLength(1));
+    expect(find.text('Данные удалены'), findsOneWidget);
   });
 
   group('избранные группы', () {

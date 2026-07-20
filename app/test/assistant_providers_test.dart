@@ -25,6 +25,9 @@ class _FakeApi implements AssistantApi {
     if (gate != null) await gate!.future;
     return _result;
   }
+
+  @override
+  Future<bool> forget(String deviceId) async => true;
 }
 
 /// API, который падает неожиданным исключением мимо всех наших типов ошибок.
@@ -36,6 +39,9 @@ class _ThrowingApi implements AssistantApi {
     calls.add(question);
     throw StateError('что-то, чего мы не предусмотрели');
   }
+
+  @override
+  Future<bool> forget(String deviceId) async => true;
 }
 
 /// Транспорт, который ведёт себя как настоящий: рвёт запрос по receiveTimeout

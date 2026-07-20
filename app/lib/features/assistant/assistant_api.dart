@@ -38,6 +38,9 @@ class AskUnavailable extends AskResult {
 /// Абстракция сетевого доступа к помощнику. В тестах подменяется фейком.
 abstract interface class AssistantApi {
   Future<AskResult> ask(String question, String deviceId);
+
+  /// Удаляет с сервера логи помощника этого устройства. true — удалено.
+  Future<bool> forget(String deviceId);
 }
 
 class DioAssistantApi implements AssistantApi {
@@ -66,6 +69,19 @@ class DioAssistantApi implements AssistantApi {
       // Сервер ответил — связь есть, это не «нет интернета».
       if (error.response != null) return const AskUnavailable();
       return const AskFailed();
+    }
+  }
+
+  @override
+  Future<bool> forget(String deviceId) async {
+    try {
+      final response = await _dio.delete<Map<String, dynamic>>(
+        '/api/assistant/data',
+        queryParameters: {'device_id': deviceId},
+      );
+      return response.statusCode == 200;
+    } on DioException {
+      return false;
     }
   }
 
