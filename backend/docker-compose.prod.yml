@@ -1,0 +1,68 @@
+# Продакшен: Caddy (авто-HTTPS) → api → db.
+# db и админка наружу НЕ торчат; публично только https://DOMAIN/api и /health.
+#
+# Запуск на сервере:
+#   cp .env.example .env   # задать DOMAIN, DB_PASSWORD, ADMIN_PASSWORD, SECRET_KEY
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Отличия от dev docker-compose.yml: пароль БД из env (не sfedu:sfedu), порт БД
+# не проброшен на хост, api не проброшен на хост (только через Caddy),
+# restart: always, лимиты памяти, авто-HTTPS.
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?задайте DOMAIN в .env (например econ.example.ru)}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+
+  api:
+    build: .
+    restart: always
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://sfedu:${DB_PASSWORD:?задайте DB_PASSWORD в .env}@db:5432/sfedu_econ
+      ENABLE_SCHEDULER: "1"
+    expose:
+      - "8000"            # только внутри compose-сети, не на хост
+    depends_on:
+      db:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: sfedu
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?задайте DB_PASSWORD в .env}
+      POSTGRES_DB: sfedu_econ
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sfedu -d sfedu_econ"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    # порт на хост НЕ пробрасываем — БД доступна только сервису api
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

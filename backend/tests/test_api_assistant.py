@@ -284,3 +284,35 @@ def test_question_reaches_model_trimmed(client, db_session, kb, fake_client):
     assert response.status_code == 200
     _, question = fake_client.calls[0]
     assert question == "Как получить справку?"
+
+
+def test_forget_device_deletes_only_that_device(client, db_session):
+    # «Удалить мои данные»: сносим логи только своего устройства, чужие целы.
+    _add_logs(db_session, 3, device_id="device-1")
+    _add_logs(db_session, 2, device_id="other-device")
+
+    resp = client.delete("/api/assistant/data", params={"device_id": "device-1"})
+
+    assert resp.status_code == 200
+    assert resp.json() == {"deleted": 3}
+    remaining = db_session.scalars(select(AssistantLog)).all()
+    assert len(remaining) == 2
+    assert all(log.device_id == "other-device" for log in remaining)
+
+
+def test_forget_device_is_idempotent(client, db_session):
+    resp = client.delete("/api/assistant/data", params={"device_id": "no-logs"})
+    assert resp.status_code == 200
+    assert resp.json() == {"deleted": 0}
+
+
+def test_purge_old_assistant_logs_removes_only_expired(db_session):
+    from src.maintenance import purge_old_assistant_logs
+
+    _add_logs(db_session, 3, device_id="d1", age=timedelta(days=200))  # > 180
+    _add_logs(db_session, 2, device_id="d1", age=timedelta(days=1))  # свежие
+
+    removed = purge_old_assistant_logs(db_session)
+
+    assert removed == 3
+    assert len(db_session.scalars(select(AssistantLog)).all()) == 2

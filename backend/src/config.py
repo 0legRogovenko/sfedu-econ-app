@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     # смена id на каждый запрос; этот потолок бюджета — защита от неоплаченного
     # (для нас) вычерпывания ключа ANTHROPIC генерацией новых device_id.
     assistant_global_daily_limit: int = 500
+    # Срок хранения логов помощника (вопрос/ответ + device_id). Старше —
+    # авточистка суточной задачей планировщика. Приватность: сырые обращения не
+    # копятся вечно.
+    assistant_log_retention_days: int = 180
 
 
 settings = Settings()

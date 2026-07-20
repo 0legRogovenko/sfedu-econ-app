@@ -54,6 +54,16 @@ def create_scheduler() -> BackgroundScheduler:
         max_instances=1,
         coalesce=True,
     )
+    scheduler.add_job(
+        _run_log_retention_job,
+        trigger="interval",
+        hours=24,
+        # Приватность: раз в сутки чистим логи помощника старше срока хранения.
+        next_run_time=datetime.now(timezone.utc) + timedelta(minutes=15),
+        id="log_retention",
+        max_instances=1,
+        coalesce=True,
+    )
     return scheduler
 
 
@@ -72,3 +82,15 @@ def _run_schedule_job() -> None:
     logger.info("Запуск импорта расписания по расписанию")
     result = run_schedule_import()
     logger.info("Импорт расписания завершён: %s", result)
+
+
+def _run_log_retention_job() -> None:
+    from src.database import SessionLocal
+    from src.maintenance import purge_old_assistant_logs
+
+    db = SessionLocal()
+    try:
+        removed = purge_old_assistant_logs(db)
+        logger.info("Авточистка логов помощника: удалено %d", removed)
+    finally:
+        db.close()

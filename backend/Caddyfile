@@ -1,0 +1,31 @@
+# Caddy: авто-HTTPS (Let's Encrypt) и реверс-прокси к api.
+# Наружу отдаём ТОЛЬКО /api и /health. Админка в интернет не выставляется.
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Публичное API приложения
+	handle /api/* {
+		reverse_proxy api:8000
+	}
+	handle /health {
+		reverse_proxy api:8000
+	}
+
+	# Админка (sqladmin) НЕ доступна из интернета. Способы попасть в неё:
+	#  1) SSH-туннель: `ssh -L 8000:localhost:8000 user@server`, затем
+	#     открыть http://localhost:8000/admin (api слушает только внутри
+	#     compose-сети, но туннель к контейнеру можно сделать через хост —
+	#     проще временно добавить `ports: 127.0.0.1:8000:8000` к api).
+	#  2) Или раскомментировать блок ниже и ограничить свой офисный IP:
+	# @admin path /admin*
+	# handle @admin {
+	# 	@office remote_ip 203.0.113.7/32
+	# 	handle @office { reverse_proxy api:8000 }
+	# 	respond "Forbidden" 403
+	# }
+
+	# Всё прочее наружу не отдаём
+	handle {
+		respond "Not found" 404
+	}
+}

@@ -1,8 +1,8 @@
 from datetime import timedelta
 from functools import lru_cache
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import func, select
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from src.config import settings
@@ -110,3 +110,18 @@ def ask(
         db.commit()
 
     return AskResponse(answer=answer, fallback=result.text is None)
+
+
+@router.delete("/assistant/data")
+def forget_device(
+    device_id: str = Query(min_length=1, max_length=64),
+    db: Session = Depends(get_db),
+):
+    """Удаляет все логи помощника этого устройства (кнопка «Удалить мои данные»
+    в приложении, требование приватности). Идемпотентно: нет строк — deleted 0.
+    """
+    result = db.execute(
+        delete(AssistantLog).where(AssistantLog.device_id == device_id)
+    )
+    db.commit()
+    return {"deleted": result.rowcount}
