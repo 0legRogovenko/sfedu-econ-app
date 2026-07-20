@@ -40,6 +40,10 @@ class _PersonScheduleScreenState extends ConsumerState<PersonScheduleScreen> {
   /// сегодняшнем дне, не текущий — на понедельнике первой недели).
   bool _dayAligned = false;
 
+  /// Пользователь сам выбрал день в ленте (в т.ч. пока грузилось расписание).
+  /// Тогда стартовое выравнивание его НЕ перетирает.
+  bool _userPickedDay = false;
+
   @override
   void initState() {
     super.initState();
@@ -68,10 +72,9 @@ class _PersonScheduleScreenState extends ConsumerState<PersonScheduleScreen> {
   @override
   Widget build(BuildContext context) {
     final scheduleAsync = ref.watch(personScheduleProvider(widget.person.id));
-    final groups = ref.watch(groupsProvider).maybeWhen(
-          data: (list) => list,
-          orElse: () => const <Group>[],
-        );
+    final groups = ref
+        .watch(groupsProvider)
+        .maybeWhen(data: (list) => list, orElse: () => const <Group>[]);
     final now = ref.read(clockProvider)();
 
     // Семестры из расписания преподавателя; стартовый выбор — тот же, что у
@@ -89,9 +92,14 @@ class _PersonScheduleScreenState extends ConsumerState<PersonScheduleScreen> {
     // «Сейчас»), не текущий — на понедельнике его первой недели.
     if (!_dayAligned && scheduleAsync.hasValue) {
       _dayAligned = true;
-      _dayIndex = (selectedSemester != null && !selectedSemester.contains(now))
-          ? 0
-          : (now.weekday == DateTime.sunday ? 0 : now.weekday - 1);
+      // День, выбранный пользователем во время загрузки, сохраняем; иначе
+      // выставляем стартовый по семестру.
+      if (!_userPickedDay) {
+        _dayIndex =
+            (selectedSemester != null && !selectedSemester.contains(now))
+            ? 0
+            : (now.weekday == DateTime.sunday ? 0 : now.weekday - 1);
+      }
       _pageController = PageController(initialPage: _dayIndex);
     }
 
@@ -102,7 +110,9 @@ class _PersonScheduleScreenState extends ConsumerState<PersonScheduleScreen> {
     );
     final nowWeekType = scheduleAsync.maybeWhen(
       data: (data) => weekTypeForDate(
-          data.weekCalendar, DateTime(now.year, now.month, now.day)),
+        data.weekCalendar,
+        DateTime(now.year, now.month, now.day),
+      ),
       orElse: () => null,
     );
 
@@ -114,8 +124,10 @@ class _PersonScheduleScreenState extends ConsumerState<PersonScheduleScreen> {
             Center(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Text(moduleName,
-                    style: Theme.of(context).textTheme.bodySmall),
+                child: Text(
+                  moduleName,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
               ),
             ),
           // Тот же переключатель семестра, что и у студента; тип недели
@@ -135,7 +147,10 @@ class _PersonScheduleScreenState extends ConsumerState<PersonScheduleScreen> {
           DayStrip(
             selected: _dayIndex,
             onSelect: (index) {
-              setState(() => _dayIndex = index);
+              setState(() {
+                _dayIndex = index;
+                _userPickedDay = true;
+              });
               // hasClients: полоса дней доступна и в loading, когда PageView
               // ещё не построен (та же защита, что на экране студента).
               if (_pageController?.hasClients ?? false) {

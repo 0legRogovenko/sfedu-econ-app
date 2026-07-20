@@ -72,7 +72,9 @@ class SemesterButton extends StatelessWidget {
   String _itemLabel(Semester semester) {
     final sameLabel =
         semesters.where((s) => s.label == semester.label).length > 1;
-    return sameLabel ? '${semester.label} ${semester.from.year}' : semester.label;
+    return sameLabel
+        ? '${semester.label} ${semester.from.year}'
+        : semester.label;
   }
 
   @override
@@ -143,6 +145,11 @@ class DayPage extends ConsumerWidget {
       onRefresh: onRefresh,
       child: lessons.isEmpty
           ? ListView(
+              // Иначе на Android короткий (нескроллящийся) список не даёт
+              // овердрага, и pull-to-refresh на пустом дне не срабатывает —
+              // а при пустом кэше это единственный путь перезагрузки (баннера
+              // с «Обновить» ещё нет, syncedAt == null). Как в экране экзаменов.
+              physics: const AlwaysScrollableScrollPhysics(),
               children: [
                 const SizedBox(height: 120),
                 Center(
@@ -217,8 +224,10 @@ class LessonCard extends StatelessWidget {
                 const Spacer(),
                 if (isNow)
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: scheme.primary,
                       borderRadius: BorderRadius.circular(999),
@@ -231,7 +240,10 @@ class LessonCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 4),
-            Text(lesson.subject, style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              lesson.subject,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             if (details.isNotEmpty) ...[
               const SizedBox(height: 2),
               Text(details, style: Theme.of(context).textTheme.bodySmall),

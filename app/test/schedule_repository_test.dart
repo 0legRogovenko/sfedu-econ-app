@@ -112,6 +112,26 @@ void main() {
     expect((await db.lessonsForScope('group:3')).length, 1);
   });
 
+  test('битый 200 (неизвестный тип недели) → failed, прежний кэш цел', () async {
+    // Регрессия #5: разбор тела 200 может бросить (WeekType.fromValue на
+    // неизвестном значении). Раньше исключение уходило необработанным, синк
+    // «падал в тишину», а экран показывал «Пар нет» вместо честного сбоя.
+    final bad = _lessonJson(2)..['week_type'] = 'диагональ';
+    final api = FakeApi([
+      ScheduleApiResponse.ok(_schedule([_lessonJson(1)]), '"e1"'),
+      ScheduleApiResponse.ok(_schedule([bad]), '"e2"'),
+    ]);
+    final repo = ScheduleRepository(api, db);
+
+    await repo.sync(const ScheduleScope.group(3)); // кэш = 1 пара
+    final result = await repo.sync(const ScheduleScope.group(3)); // битый
+
+    expect(result, SyncResult.failed);
+    // прежний (успешный) кэш не затёрт битым ответом
+    expect((await db.lessonsForScope('group:3')).length, 1);
+    expect((await db.metaForScope('group:3'))!.etag, '"e1"');
+  });
+
   test('скоуп преподавателя кэшируется отдельно от скоупа группы', () async {
     // Пара с одним id приходит в обоих расписаниях; без скоупа вторая
     // синхронизация затирала бы первую.

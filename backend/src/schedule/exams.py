@@ -385,6 +385,23 @@ def _split_subject_and_teachers(text: str) -> tuple[str, tuple[str, ...]]:
     return joined.strip(" ,;"), ()
 
 
+def _safe_date(day: str, month: str, year: str) -> date | None:
+    # Регэксп проверяет только число цифр, не диапазон: '31.09', '05.16' (месяц
+    # 16), '30.02' проходят. Невозможную дату отбрасываем (ячейка уйдёт в
+    # unparsed), а не роняем исключением весь файл сессии.
+    try:
+        return date(2000 + int(year), int(month), int(day))
+    except ValueError:
+        return None
+
+
+def _safe_time(hh: str, mm: str) -> time | None:
+    try:
+        return time(int(hh), int(mm))
+    except ValueError:
+        return None
+
+
 def _parse_slot(text: str) -> ExamSlot:
     """Ячейка даты → дата, время, форма, аудитория.
 
@@ -404,21 +421,22 @@ def _parse_slot(text: str) -> ExamSlot:
 
     rest = " ".join(lines)
     dates = tuple(
-        date(2000 + int(year), int(month), int(day))
+        d
         for day, month, year in _DATE.findall(rest)
+        if (d := _safe_date(day, month, year)) is not None
     )
     rest = _DATE.sub(" ", rest)
 
     time_start = time_end = None
     span = _TIME_RANGE.search(rest)
     if span:
-        time_start = time(int(span.group(1)), int(span.group(2)))
-        time_end = time(int(span.group(3)), int(span.group(4)))
+        time_start = _safe_time(span.group(1), span.group(2))
+        time_end = _safe_time(span.group(3), span.group(4))
         rest = rest[: span.start()] + " " + rest[span.end() :]
     else:
         point = _TIME_SINGLE.search(rest)
         if point:
-            time_start = time(int(point.group(1)), int(point.group(2)))
+            time_start = _safe_time(point.group(1), point.group(2))
             rest = rest[: point.start()] + " " + rest[point.end() :]
 
     kind = _flat(rest).strip(" ,;.")

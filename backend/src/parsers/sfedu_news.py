@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import re
 import ssl
+import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from urllib.parse import urljoin
@@ -16,6 +17,8 @@ from urllib.parse import urljoin
 import requests
 import truststore
 from bs4 import BeautifulSoup
+
+from src.schedule.fetch import CRAWL_DELAY_SECONDS
 
 BASE_URL = "https://sfedu.ru"
 LISTING_URL = f"{BASE_URL}/press-center/mainpage"
@@ -176,7 +179,23 @@ def _make_session() -> requests.Session:
     return session
 
 
+# Троттл реального фетчера: время последнего запроса (монотонно). Модульное
+# состояние, а не поле объекта, потому что _default_fetch — свободная функция;
+# в тестах инжектируется фейковый fetch, поэтому троттл там не срабатывает.
+_last_fetch_at: float | None = None
+
+
 def _default_fetch(url: str) -> str:
+    # Crawl-delay: 30 к sfedu.ru, как в schedule.Fetcher. Троттлим между ЛЮБЫМИ
+    # запросами (листинг + каждая статья): иначе холодный старт или «новостный»
+    # день выдавал бы пачку запросов в секунду и рисковал баном IP, который
+    # положил бы и импорт расписания, и справочник — тот же хост и IP.
+    global _last_fetch_at
+    if _last_fetch_at is not None:
+        remaining = CRAWL_DELAY_SECONDS - (time.monotonic() - _last_fetch_at)
+        if remaining > 0:
+            time.sleep(remaining)
+    _last_fetch_at = time.monotonic()
     response = _make_session().get(url, timeout=15)
     response.raise_for_status()
     return response.text

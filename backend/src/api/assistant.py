@@ -41,6 +41,18 @@ def _questions_last_24h(db: Session, device_id: str) -> int:
     )
 
 
+def _billed_last_24h(db: Session) -> int:
+    # Строки AssistantLog пишутся ТОЛЬКО на оплаченный вызов, поэтому их число
+    # за 24 часа по всем устройствам = число биллинговых обращений. Служит
+    # глобальным потолком бюджета, не завязанным на клиентский device_id.
+    cutoff = db.scalar(select(func.now())) - timedelta(hours=24)
+    return db.scalar(
+        select(func.count())
+        .select_from(AssistantLog)
+        .where(AssistantLog.created_at >= cutoff)
+    )
+
+
 @router.post("/assistant/ask", response_model=AskResponse)
 def ask(
     payload: AskRequest,
@@ -53,6 +65,19 @@ def ask(
             detail=(
                 f"Можно задать не больше {settings.assistant_daily_limit} вопросов "
                 "за 24 часа. Попробуйте позже или обратитесь в деканат."
+            ),
+        )
+
+    # Глобальный потолок ДО обращения к платной модели: per-device лимит выше
+    # обходится сменой device_id на каждый запрос, поэтому нужен предел, не
+    # завязанный на клиентский идентификатор, — иначе безлимитная генерация
+    # новых device_id жгла бы бюджет ключа (финансовый DoS).
+    if _billed_last_24h(db) >= settings.assistant_global_daily_limit:
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                "Помощник сейчас перегружен. Попробуйте позже или обратитесь "
+                "в деканат."
             ),
         )
 

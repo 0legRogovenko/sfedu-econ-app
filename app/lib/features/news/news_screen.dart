@@ -76,13 +76,39 @@ class _NewsList extends StatelessWidget {
       // Пусто И синк не удался — «не загрузилось», а не «новостей нет».
       // Раньше офлайн с пустым кэшем давал экран вообще без объяснения:
       // плашка «показаны сохранённые» над пустотой.
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Text(
-            feed.offline ? noDataText : 'Новостей пока нет',
-            textAlign: TextAlign.center,
-          ),
+      //
+      // Даём путь восстановления: pull-to-refresh (нужен
+      // AlwaysScrollableScrollPhysics — короткий список иначе не тянется на
+      // Android) и явная кнопка «Обновить». Иначе при первом офлайн-заходе
+      // экран застревал до перезапуска приложения.
+      return RefreshIndicator(
+        onRefresh: onRefresh,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            const SizedBox(height: 120),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      feed.offline ? noDataText : 'Новостей пока нет',
+                      textAlign: TextAlign.center,
+                    ),
+                    if (feed.offline) ...[
+                      const SizedBox(height: 12),
+                      TextButton(
+                        onPressed: onRefresh,
+                        child: const Text('Обновить'),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -196,8 +222,11 @@ class _Chip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style:
-            TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

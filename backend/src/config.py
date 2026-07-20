@@ -30,6 +30,11 @@ class Settings(BaseSettings):
     anthropic_api_key: str | None = None
     assistant_model: str = "claude-haiku-4-5"
     assistant_daily_limit: int = 20
+    # Глобальный потолок оплаченных вызовов за 24 часа ПО ВСЕМ устройствам.
+    # Per-device лимит выше завязан на клиентский device_id, и его обходит
+    # смена id на каждый запрос; этот потолок бюджета — защита от неоплаченного
+    # (для нас) вычерпывания ключа ANTHROPIC генерацией новых device_id.
+    assistant_global_daily_limit: int = 500
 
 
 settings = Settings()

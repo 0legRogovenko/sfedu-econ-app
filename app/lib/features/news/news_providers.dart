@@ -7,14 +7,13 @@ import '../schedule/schedule_providers.dart' show databaseProvider;
 import 'news_api.dart';
 import 'news_repository.dart';
 
-final newsApiProvider =
-    Provider<NewsApi>((ref) => DioNewsApi(ref.watch(dioProvider)));
+final newsApiProvider = Provider<NewsApi>(
+  (ref) => DioNewsApi(ref.watch(dioProvider)),
+);
 
 final newsRepositoryProvider = Provider<NewsRepository>(
-  (ref) => NewsRepository(
-    ref.watch(newsApiProvider),
-    ref.watch(databaseProvider),
-  ),
+  (ref) =>
+      NewsRepository(ref.watch(newsApiProvider), ref.watch(databaseProvider)),
 );
 
 /// Лента новостей: мгновенно из кэша, затем фоновый refresh; пагинация.
@@ -41,11 +40,21 @@ class NewsFeedNotifier extends AsyncNotifier<NewsFeed> {
     // DioException, и репозиторий его не ловит) улетело бы необработанным,
     // оставив экран на устаревшем кэше без единого признака сбоя. Та же
     // починка, что уже сделана в контактах.
+    final previous = state.asData?.value;
     try {
       final feed = await _repo.refresh();
       state = AsyncData(feed);
     } catch (error, stack) {
-      state = AsyncError(error, stack);
+      // Битый ответ при обновлении НЕ должен стирать уже показанный кэш на
+      // full-screen ошибку без retry (офлайн-первый принцип: показываем кэш,
+      // не врём). Оставляем прежние новости, помечаем offline — сработает
+      // баннер «Показаны сохранённые» с кнопкой «Обновить». Только когда
+      // показывать нечего (кэш пуст), уходим в ошибку.
+      if (previous != null) {
+        state = AsyncData(previous.copyWith(offline: true));
+      } else {
+        state = AsyncError(error, stack);
+      }
     } finally {
       _refreshing = false;
     }
@@ -61,5 +70,6 @@ class NewsFeedNotifier extends AsyncNotifier<NewsFeed> {
   }
 }
 
-final newsFeedProvider =
-    AsyncNotifierProvider<NewsFeedNotifier, NewsFeed>(NewsFeedNotifier.new);
+final newsFeedProvider = AsyncNotifierProvider<NewsFeedNotifier, NewsFeed>(
+  NewsFeedNotifier.new,
+);

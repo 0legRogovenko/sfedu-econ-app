@@ -1,10 +1,9 @@
 from fastapi import APIRouter
 
-from src.api import persons, assistant, contacts, exams, groups, news, schedule, teachers
+from src.api import persons, assistant, contacts, exams, groups, news, schedule
 
 router = APIRouter(prefix="/api")
 router.include_router(groups.router)
-router.include_router(teachers.router)
 router.include_router(persons.router)
 router.include_router(schedule.router)
 router.include_router(exams.router)

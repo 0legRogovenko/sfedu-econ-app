@@ -202,7 +202,7 @@ class TestLiveContactsInvariant:
             else:
                 iof.append(name)
 
-        assert (len(live_contact_names), len(fio), len(iof)) == (85, 73, 12), (
+        assert (len(live_contact_names), len(fio), len(iof)) == (86, 74, 12), (
             "состав справочника разошёлся с ожиданием: всего "
             f"{len(live_contact_names)}, ФИО {len(fio)}, ИОФ {len(iof)}; "
             "если справочник правда обновился — поправьте числа, "

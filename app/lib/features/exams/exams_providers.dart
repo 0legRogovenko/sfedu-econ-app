@@ -6,14 +6,13 @@ import '../schedule/schedule_providers.dart' show databaseProvider;
 import 'exams_api.dart';
 import 'exams_repository.dart';
 
-final examsApiProvider =
-    Provider<ExamsApi>((ref) => DioExamsApi(ref.watch(dioProvider)));
+final examsApiProvider = Provider<ExamsApi>(
+  (ref) => DioExamsApi(ref.watch(dioProvider)),
+);
 
 final examsRepositoryProvider = Provider<ExamsRepository>(
-  (ref) => ExamsRepository(
-    ref.watch(examsApiProvider),
-    ref.watch(databaseProvider),
-  ),
+  (ref) =>
+      ExamsRepository(ref.watch(examsApiProvider), ref.watch(databaseProvider)),
 );
 
 /// Экзамены выбранной группы: мгновенно из кэша, затем фоновый refresh.
@@ -39,12 +38,19 @@ class ExamsFeedNotifier extends AsyncNotifier<ExamsFeed> {
     // из Future.microtask в build(), и необработанное исключение оставило бы
     // экран на устаревшем кэше молча.
     try {
-      state = AsyncData(await _repo.refresh(groupId));
+      final feed = await _repo.refresh(groupId);
+      // Пока ждали сеть, пользователь мог сменить группу — тот же провайдер
+      // уже показывает её кэш. Не перезаписываем свежую группу устаревшим
+      // ответом старой (гонка).
+      if (!ref.mounted || ref.read(selectedGroupIdProvider) != groupId) return;
+      state = AsyncData(feed);
     } catch (error, stack) {
+      if (!ref.mounted || ref.read(selectedGroupIdProvider) != groupId) return;
       state = AsyncError(error, stack);
     }
   }
 }
 
-final examsFeedProvider =
-    AsyncNotifierProvider<ExamsFeedNotifier, ExamsFeed>(ExamsFeedNotifier.new);
+final examsFeedProvider = AsyncNotifierProvider<ExamsFeedNotifier, ExamsFeed>(
+  ExamsFeedNotifier.new,
+);

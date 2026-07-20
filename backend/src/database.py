@@ -16,7 +16,15 @@ class Base(DeclarativeBase):
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
 
 
-engine = create_engine(settings.database_url)
+# pool_pre_ping: контейнер api живёт долго, а БД могут перезапустить
+# (обновление, docker compose restart, простой). Без проверки пул отдавал бы
+# мёртвые соединения — первый же запрос на каждом получал бы 500 (в т.ч.
+# /health). pool_recycle подстраховывает от простоя дольше idle-таймаута.
+engine = create_engine(
+    settings.database_url,
+    pool_pre_ping=True,
+    pool_recycle=1800,
+)
 SessionLocal = sessionmaker(bind=engine, autoflush=False)
 
 

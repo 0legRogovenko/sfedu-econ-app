@@ -545,6 +545,24 @@ def _import_link(session, fetcher, link) -> DocumentReport:
     # Категория назначена — теперь докажи её. accounted после prove() считает
     # только ячейки, чья категория подтверждена содержимым/БД/позицией.
     report.ledger.prove(session, document)
+    # Инвариант «ни одна ячейка не потеряна молча» до сих пор проверялся ТОЛЬКО
+    # в тестах: prove() считал accounted/total, но в проде их никто не сравнивал.
+    # На новой вёрстке ЮФУ ячейка может потеряться (accounted < total) — тогда
+    # студент молча недосчитается пары. Сигналим админу и в лог.
+    if report.ledger.accounted < report.ledger.total:
+        deficit = report.ledger.total - report.ledger.accounted
+        logger.error(
+            "Ledger: документ %s (%s) — не учтено %d из %d ячеек",
+            link.p_doc_id,
+            link.label,
+            deficit,
+            report.ledger.total,
+        )
+        notify_admin(
+            f"Расписание ЮФУ: в файле {link.p_doc_id} ({link.label}) не учтено "
+            f"{deficit} из {report.ledger.total} ячеек — возможна тихая потеря "
+            "пар (сменилась вёрстка sfedu.ru?). Нужна проверка."
+        )
     if report.status == STATUS_REIMPORTED:
         after = _snapshot(session, document)
         diff = _diff(before, after)

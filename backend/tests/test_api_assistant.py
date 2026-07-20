@@ -222,6 +222,42 @@ def test_limit_is_per_device(client, db_session, kb, fake_client):
     assert response.status_code == 200
 
 
+def test_global_budget_caps_rotating_device_ids(
+    client, db_session, kb, fake_client, monkeypatch
+):
+    # Смена device_id обходит per-device лимит, но НЕ глобальный потолок бюджета:
+    # иначе безлимитная генерация новых device_id жгла бы ключ ANTHROPIC.
+    from src.config import settings
+
+    monkeypatch.setattr(settings, "assistant_global_daily_limit", 3)
+    # три оплаченных вызова с РАЗНЫХ устройств — глобальный потолок достигнут
+    _add_logs(db_session, 1, device_id="d-1")
+    _add_logs(db_session, 1, device_id="d-2")
+    _add_logs(db_session, 1, device_id="d-3")
+
+    # свежий device_id: его per-device счётчик 0, но глобальный потолок исчерпан
+    response = _ask(client, device_id="brand-new-device")
+
+    assert response.status_code == 429
+    assert "перегружен" in response.json()["detail"]
+    # платного вызова не было — потолок сработал до обращения к модели
+    assert fake_client.calls == []
+
+
+def test_global_budget_does_not_block_under_ceiling(
+    client, db_session, kb, fake_client, monkeypatch
+):
+    # Ниже глобального потолка обычный вопрос проходит как раньше.
+    from src.config import settings
+
+    monkeypatch.setattr(settings, "assistant_global_daily_limit", 500)
+    _add_logs(db_session, 3, device_id="d-1")
+
+    response = _ask(client, device_id="brand-new-device")
+
+    assert response.status_code == 200
+
+
 @pytest.mark.parametrize(
     "payload",
     [

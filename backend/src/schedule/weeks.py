@@ -124,8 +124,21 @@ def parse_week_calendar(grid: Grid) -> WeekCalendarParse:
                 )
                 continue
 
-            date_from = _date(match.group(1), match.group(2), match.group(3))
-            date_to = _date(match.group(4), match.group(5), match.group(6))
+            try:
+                date_from = _date(match.group(1), match.group(2), match.group(3))
+                date_to = _date(match.group(4), match.group(5), match.group(6))
+            except ValueError:
+                # Невозможная дата (31.11, 29.02 невисокосного, месяц > 12):
+                # регэксп проверяет только число цифр, не диапазон. Строку — в
+                # аномалии, а не роняем импорт всего семестра из-за одной строки
+                # (обещание докстринга «испорченная строка не уносит остальные»).
+                anomalies.append(
+                    CalendarAnomaly(
+                        reason="календарь недель: невозможная дата",
+                        raw_text=raw,
+                    )
+                )
+                continue
             if iso_parity_week_type(date_from) is not week_type:
                 # Верим файлу, не формуле: неделя всё равно попадёт в календарь.
                 anomalies.append(

@@ -52,7 +52,8 @@ def person_schedule(
             l.id,
         )
     )
-    # joinedload здесь не нужен: teacher в карточке человека не показываем.
+    # teacher у пар подгружен заранее (joinedload в lessons_for_person):
+    # LessonOut его сериализует, иначе был бы N+1 по SELECT на каждую пару.
 
     document_ids = sorted({l.document_id for l in lessons if l.document_id})
     modules: list[Module] = []

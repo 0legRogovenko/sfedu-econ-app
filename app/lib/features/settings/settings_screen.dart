@@ -116,16 +116,36 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
-            onPressed: () => launchUrl(
-              Uri.parse('https://sfedu.ru'),
-              mode: LaunchMode.externalApplication,
-            ),
+            onPressed: () => _openSite(context, 'https://sfedu.ru'),
             icon: const Icon(Icons.open_in_new),
             label: const Text('sfedu.ru'),
           ),
         ],
       ),
     );
+  }
+}
+
+/// Открывает ссылку в браузере; если не вышло — говорит об этом через SnackBar,
+/// а не падает молча (как _openSite в детальном экране новостей).
+Future<void> _openSite(BuildContext context, String url) async {
+  const failure = 'Не удалось открыть браузер';
+  try {
+    final ok = await launchUrl(
+      Uri.parse(url),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text(failure)));
+    }
+  } catch (_) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text(failure)));
+    }
   }
 }
 
@@ -145,9 +165,13 @@ class _SubgroupSection extends ConsumerWidget {
     // групп, при том что у трёх есть пары второй подгруппы), и опора на него
     // отняла бы у этих студентов выбор своей подгруппы. Жёсткие «1 и 2» тоже
     // не годятся: разбиение приходит из файла ЮФУ и двумя не ограничено.
-    final count = ref.watch(scheduleDataProvider).maybeWhen(
+    final count = ref
+        .watch(scheduleDataProvider)
+        .maybeWhen(
           data: (data) => data.lessons.fold<int>(
-              0, (max, l) => l.subgroup > max ? l.subgroup : max),
+            0,
+            (max, l) => l.subgroup > max ? l.subgroup : max,
+          ),
           orElse: () => 0,
         );
 
@@ -222,8 +246,7 @@ class _FavoriteGroupsSection extends ConsumerWidget {
               onPressed: () =>
                   ref.read(favoriteGroupIdsProvider.notifier).remove(id),
             ),
-            onTap: () =>
-                ref.read(selectedGroupIdProvider.notifier).select(id),
+            onTap: () => ref.read(selectedGroupIdProvider.notifier).select(id),
           ),
         // Активная группа не обязана быть избранной (пикер выше выбирает
         // любую) — кнопка появляется, когда текущей нет в списке.

@@ -20,7 +20,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from src.models import Contact, DirectoryOverride, ExamEvent, Lesson, Teacher
 from src.persons.extract import find_names
@@ -195,7 +195,13 @@ def lessons_for_person(db: Session, key: tuple[str, str, str]) -> list[Lesson]:
     # сегментацию по предметам делает по всем парам ячейки — поэтому чужие
     # пары многопредметной ячейки к нему не прилипнут.
     registry = Registry(by_key={key: []})
-    lessons = db.scalars(select(Lesson)).all()
+    # joinedload(teacher): LessonOut сериализует поле teacher, и без него
+    # /api/persons/{id}/schedule делал бы по SELECT на каждую пару (N+1) —
+    # у занятого преподавателя это ~150 запросов на один ответ. Как в
+    # get_schedule.
+    lessons = db.scalars(
+        select(Lesson).options(joinedload(Lesson.teacher))
+    ).all()
     links = link_lessons(lessons, registry)
     linked_ids = {lid for lid, keys in links.items() if key in keys}
     return [l for l in lessons if l.id in linked_ids]
