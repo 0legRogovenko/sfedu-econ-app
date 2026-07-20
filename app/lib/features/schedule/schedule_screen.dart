@@ -165,6 +165,12 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                 ),
               ],
             ),
+          // Межсезонье: семестры в данных есть, но сегодня не входит ни в один
+          // (лето, зимние каникулы) — показана первая неделя выбранного
+          // семестра, и об этом говорим явно.
+          if (selectedSemester != null &&
+              !semesters.any((s) => s.contains(now)))
+            VacationBanner(semester: selectedSemester),
           DayStrip(
             selected: _dayIndex,
             onSelect: (index) {

@@ -139,6 +139,16 @@ void main() {
       expect(find.textContaining('Нужна сеть'), findsOneWidget);
     });
 
+    testWidgets('в каникулы видна плашка межсезонья', (tester) async {
+      // _now — июль: семестры в данных есть, но дата вне всех — экран
+      // преподавателя, как и студенческий, явно говорит про каникулы.
+      final c = _container(data: _yearData);
+      addTearDown(c.dispose);
+      await _pump(tester, c, const PersonScheduleScreen(person: _person));
+
+      expect(find.textContaining('каникулы'), findsOneWidget);
+    });
+
     testWidgets('в шапке НЕТ типа недели (верхняя/нижняя)', (tester) async {
       // Бейдж «верхняя/нижняя» убран у преподавателя, как и у студента: он был
       // справочным, а пары и так отфильтрованы по типу недели.

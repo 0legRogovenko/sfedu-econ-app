@@ -144,6 +144,11 @@ class _PersonScheduleScreenState extends ConsumerState<PersonScheduleScreen> {
       ),
       body: Column(
         children: [
+          // Межсезонье — как на экране группы: семестры есть, а сегодня вне
+          // всех; показана первая неделя семестра, о чём говорим явно.
+          if (selectedSemester != null &&
+              !semesters.any((s) => s.contains(now)))
+            VacationBanner(semester: selectedSemester),
           DayStrip(
             selected: _dayIndex,
             onSelect: (index) {

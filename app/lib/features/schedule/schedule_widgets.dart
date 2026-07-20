@@ -112,6 +112,45 @@ class SemesterButton extends StatelessWidget {
   }
 }
 
+/// Плашка межсезонья. Когда «сегодня» не входит ни в один семестр (лето,
+/// зимние каникулы), экран показывает не текущую неделю, а первую неделю
+/// выбранного семестра — без пояснения июльский запуск выглядит как молчаливо
+/// устаревшее расписание. Показывать её решает вызывающий (оба экрана
+/// расписания), логика показа у них общая: семестры найдены, но дата вне всех.
+class VacationBanner extends StatelessWidget {
+  const VacationBanner({super.key, required this.semester});
+
+  final Semester semester;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    // label — «Осенний»/«Весенний»; в предложении нужен родительный падеж.
+    final genitive = semester.label == 'Осенний' ? 'осеннего' : 'весеннего';
+    return Container(
+      width: double.infinity,
+      color: scheme.tertiaryContainer,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          Icon(Icons.beach_access_outlined,
+              size: 18, color: scheme.onTertiaryContainer),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Сейчас каникулы. Показано расписание $genitive семестра',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: scheme.onTertiaryContainer),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class DayPage extends ConsumerWidget {
   const DayPage({
     super.key,

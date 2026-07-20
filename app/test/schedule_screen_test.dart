@@ -278,6 +278,27 @@ void main() {
       expect(find.text('Весенний предмет'), findsNothing);
     });
 
+    testWidgets('летом видна плашка каникул и расписание семестра',
+        (tester) async {
+      // Июль: семестры в данных есть, но сегодня не входит ни в один. Экран
+      // показывает первую неделю последнего (весеннего) семестра — и явно
+      // говорит про межсезонье, а не молча показывает старое расписание.
+      await tester
+          .pumpWidget(await _screen(data: data, now: DateTime(2026, 7, 13, 9)));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('каникулы'), findsOneWidget);
+      expect(find.textContaining('весеннего семестра'), findsOneWidget);
+      expect(find.text('Весенний предмет'), findsOneWidget);
+    });
+
+    testWidgets('внутри семестра плашки каникул нет', (tester) async {
+      await tester.pumpWidget(await _screen(data: data, now: autumnNow));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('каникулы'), findsNothing);
+    });
+
     testWidgets('выбор весеннего перематывает на его неделю', (tester) async {
       await tester.pumpWidget(await _screen(data: data, now: autumnNow));
       await tester.pumpAndSettle();
