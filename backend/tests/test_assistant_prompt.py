@@ -78,3 +78,19 @@ def test_prompt_has_instruction():
     assert "русском" in prompt
     assert "базы знаний" in prompt
     assert "деканат" in prompt.lower()
+
+
+def test_prompt_forbids_markdown_formatting():
+    # Приложение показывает ответ обычным Text — Markdown-разметка была бы видна
+    # буквально (** вместо жирного).
+    prompt = build_system_prompt(_articles(), _contacts())
+
+    assert "Markdown" in prompt
+    assert "**" in prompt  # явно называем символ, который нельзя использовать
+
+
+def test_prompt_points_to_official_sources():
+    prompt = build_system_prompt(_articles(), _contacts())
+
+    assert "econ-sfedu.ru" in prompt
+    assert "sfedu.ru" in prompt
