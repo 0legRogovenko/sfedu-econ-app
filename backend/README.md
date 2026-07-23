@@ -1,6 +1,6 @@
 # Эконом ЮФУ — бэкенд
 
-FastAPI + PostgreSQL. См. спеку в `../docs/superpowers/specs/`.
+FastAPI + PostgreSQL. Продакшен-развёртывание — см. `DEPLOY.md`.
 
 ## Запуск (Docker)
 
@@ -19,16 +19,23 @@ PostgreSQL). Внутри compose-сети api ходит в db:5432.
 Read-only ручки для приложения (все отдают ETag, поддерживают If-None-Match):
 
     GET /api/groups                      — группы по курсам и уровням
-    GET /api/teachers                    — преподаватели ({id, full_name})
     GET /api/schedule?group_id=<id>      — расписание группы (вся неделя)
-    GET /api/schedule?teacher_id=<id>    — расписание преподавателя
+    GET /api/persons                     — единый справочник людей
+    GET /api/persons/{id}/schedule       — расписание человека
+    GET /api/persons/{id}/exams          — экзамены человека
     GET /api/exams?group_id=<id>         — ближайшая сессия группы
     GET /api/news?before=<iso>&before_id=<id>&limit=20 — новости, keyset-пагинация
     GET /api/contacts                    — справочник контактов
+    GET /api/version                     — минимально поддерживаемый build клиента
 
-Единственная не-GET ручка:
+Не-GET ручки:
 
-    POST /api/assistant/ask              — {question, device_id} → {answer, fallback}
+    POST   /api/assistant/ask            — {question, device_id} → {answer, fallback}
+    DELETE /api/assistant/data?device_id= — удалить логи помощника устройства
+
+Названия предметов можно кураторски переименовывать (кривые переносы и
+опечатки исходных PDF): админка → «Переименования предметов»; БД хранит
+текст источника дословно, подмена происходит при отдаче API.
 
 Демо-данные: `python -m src.seed` (идемпотентно; в Docker —
 `docker compose exec api python -m src.seed`).
@@ -68,7 +75,9 @@ Read-only ручки для приложения (все отдают ETag, по
 день): границу окна считает та же СУБД, что пишет `assistant_logs.created_at`,
 поэтому часы приложения и БД не могут разойтись.
 
-База знаний (`kb_articles`) наполняется вручную в админке; `assistant_logs`
+База знаний (`kb_articles`) наполняется двумя путями: базовый набор —
+`python -m src.kb_seed` (идемпотентный upsert по slug; статьи с другими slug
+не трогает), дополнения — вручную в админке; `assistant_logs`
 показывает, каких статей не хватает. Системный промпт = инструкция + все
 статьи + контакты; на него ставится `cache_control: ephemeral`, но у
 `claude-haiku-4-5` кэш включается только с 4096 токенов — пока база знаний

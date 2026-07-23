@@ -91,18 +91,22 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000   # Android-эмул
 ```
 sfedu-econ-app/
 ├── backend/            FastAPI-бэкенд (см. backend/README.md)
-│   ├── src/api/        read-only ручки приложения + помощник
+│   ├── src/api/        ручки приложения: расписание, экзамены, новости,
+│   │                   справочник, помощник, версионный гейт
 │   ├── src/schedule/   импорт расписания: разбор docx/PDF, модули, недели
 │   ├── src/parsers/    новости и справочник сотрудников
 │   ├── src/persons/    связывание людей с расписанием (по тексту ячеек)
 │   ├── src/services/   AI-помощник
-│   └── tests/          pytest
+│   ├── tests/          pytest (в т.ч. золотой корпус реальных файлов ЮФУ)
+│   ├── DEPLOY.md       развёртывание в продакшен (Docker + Caddy HTTPS)
+│   └── scripts/        бэкап БД с ротацией
 ├── app/                Flutter-клиент (см. app/README.md)
-│   ├── lib/core/       тема ЮФУ, API-клиент, drift-БД, prefs
+│   ├── lib/core/       тема ЮФУ, API-клиент, drift-БД, prefs, версия
 │   ├── lib/features/   onboarding, schedule, exams, news, contacts, people,
 │   │                   assistant, settings
 │   └── test/           flutter test
-└── docs/               спека и планы (docs/superpowers/)
+├── PRIVACY.md          политика конфиденциальности
+└── LICENSE             AGPL-3.0
 ```
 
 ## Разработка
@@ -114,6 +118,15 @@ cd backend && pytest -v
 # app
 cd app && flutter test && flutter analyze
 ```
+
+CI (GitHub Actions): pytest, проверка миграций против моделей (alembic check),
+flutter analyze + test — на каждый push.
+
+## Продакшен
+
+Развёртывание бэкенда (VPS, авто-HTTPS, бэкапы): [`backend/DEPLOY.md`](backend/DEPLOY.md).
+Приватность: [`PRIVACY.md`](PRIVACY.md) — приложение хранит только обезличенные
+обращения к помощнику; данные устройства удаляются кнопкой в настройках.
 
 ## Лицензия
 
