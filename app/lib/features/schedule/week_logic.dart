@@ -48,13 +48,41 @@ bool lessonVisibleOn(Lesson lesson, DateTime date, WeekType? weekType,
   return true;
 }
 
+/// Известный данным учебный период: объединённый охват календаря недель и
+/// модулей — (первый день, последний день). null, если ни того ни другого нет
+/// (демо/ручные данные).
+(DateTime, DateTime)? _dataCoverage(ScheduleData data) {
+  final ranges = <(DateTime, DateTime)>[
+    for (final w in data.weekCalendar) (w.dateFrom, w.dateTo),
+    for (final m in data.modules) (m.dateFrom, m.dateTo),
+  ];
+  if (ranges.isEmpty) return null;
+  var (from, to) = ranges.first;
+  for (final (f, t) in ranges.skip(1)) {
+    if (f.isBefore(from)) from = f;
+    if (t.isAfter(to)) to = t;
+  }
+  return (from, to);
+}
+
 /// Пары на конкретную дату: фильтр по правилу резолвинга,
 /// сортировка по номеру пары и подгруппе.
 List<Lesson> lessonsForDay(ScheduleData data, DateTime date, {int? subgroup}) {
   final weekType = weekTypeForDate(data.weekCalendar, date);
-  final result = data.lessons
-      .where((l) => lessonVisibleOn(l, date, weekType, subgroup: subgroup))
-      .toList()
+  // Пара без окна действия (validFrom и validTo == null — файл без модулей)
+  // подходит под любой matching-день, в том числе летом и в каникулы. Бьём по
+  // известному данным учебному периоду (календарь ∪ модули): вне его такие
+  // пары не показываем. Ни календаря, ни модулей нет — фильтр не применяем
+  // (демо/ручные пары).
+  final coverage = _dataCoverage(data);
+  final result = data.lessons.where((l) {
+    if (!lessonVisibleOn(l, date, weekType, subgroup: subgroup)) return false;
+    if (coverage != null && l.validFrom == null && l.validTo == null) {
+      final day = DateTime(date.year, date.month, date.day);
+      if (day.isBefore(coverage.$1) || day.isAfter(coverage.$2)) return false;
+    }
+    return true;
+  }).toList()
     ..sort((a, b) {
       final byPair = a.pairNumber.compareTo(b.pairNumber);
       return byPair != 0 ? byPair : a.subgroup.compareTo(b.subgroup);

@@ -200,6 +200,16 @@ void main() {
     expect(container.read(sharedPreferencesProvider).getString('theme_mode'), 'dark');
   });
 
+  testWidgets('есть кнопка «Сообщить об ошибке»', (tester) async {
+    final container = await _container();
+    addTearDown(container.dispose);
+    await _pumpSettings(tester, container);
+
+    final button = find.text('Сообщить об ошибке');
+    await _scrollTo(tester, button);
+    expect(button, findsOneWidget);
+  });
+
   testWidgets('«Удалить мои данные» после подтверждения зовёт forget',
       (tester) async {
     final api = _RecordingApi();

@@ -12,6 +12,7 @@ class Person {
     required this.email,
     required this.hasSchedule,
     required this.lessonCount,
+    required this.examCount,
   });
 
   final String id;
@@ -22,6 +23,7 @@ class Person {
   final String? email;
   final bool hasSchedule;
   final int lessonCount;
+  final int examCount;
 
   factory Person.fromJson(Map<String, dynamic> json) => Person(
         id: json['id'] as String,
@@ -36,6 +38,7 @@ class Person {
         email: json['email'] as String?,
         hasSchedule: json['has_schedule'] as bool? ?? false,
         lessonCount: json['lesson_count'] as int? ?? 0,
+        examCount: json['exam_count'] as int? ?? 0,
       );
 }
 

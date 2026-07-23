@@ -6,6 +6,8 @@ GET /api/persons/{id}/schedule      — расписание человека (�
                                       существующим виджетом)
 """
 
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
@@ -16,10 +18,12 @@ from src.models import Lesson, Module, WeekCalendar
 from src.persons.directory import (
     build_directory,
     decode_id,
+    exams_for_person,
     lessons_for_person,
     person_display,
 )
-from src.schemas import LessonOut, ModuleOut, ScheduleOut, WeekCalendarOut
+from src.renames import apply_renames
+from src.schemas import ExamEventOut, LessonOut, ModuleOut, ScheduleOut, WeekCalendarOut
 
 router = APIRouter()
 
@@ -75,4 +79,26 @@ def person_schedule(
         modules=[ModuleOut.model_validate(m) for m in modules],
         week_calendar=[WeekCalendarOut.model_validate(w) for w in calendar],
     ).model_dump(mode="json")
+    apply_renames(db, payload["lessons"])
+    return json_with_etag(request, response, payload)
+
+
+@router.get("/persons/{person_id}/exams", response_model=list[ExamEventOut])
+def person_exams(
+    person_id: str,
+    request: Request,
+    response: Response,
+    db=Depends(get_db),
+):
+    """Экзамены человека — для карточки в справочнике (у пар есть аналог
+    /persons/{id}/schedule; связывание то же — по тексту ячейки)."""
+    key = decode_id(person_id)
+    if key is None:
+        raise HTTPException(status_code=404, detail="Человек не найден")
+
+    exams = exams_for_person(db, key)
+    # exam_at=None — в конец; id — стабильный тайбрейкер (стабильный ETag).
+    exams.sort(key=lambda e: (e.exam_at is None, e.exam_at or datetime.min, e.id))
+    payload = [ExamEventOut.model_validate(e).model_dump(mode="json") for e in exams]
+    apply_renames(db, payload)
     return json_with_etag(request, response, payload)

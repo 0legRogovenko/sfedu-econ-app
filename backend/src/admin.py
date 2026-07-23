@@ -156,6 +156,19 @@ class DirectoryOverrideAdmin(ModelView, model=models.DirectoryOverride):
     ]
 
 
+class SubjectRenameAdmin(ModelView, model=models.SubjectRename):
+    """Переименования кривых предметов из PDF: точный текст → красивое имя."""
+
+    name = "Переименование предмета"
+    name_plural = "Переименования предметов"
+    column_list = [
+        models.SubjectRename.id,
+        models.SubjectRename.match_subject,
+        models.SubjectRename.display_subject,
+    ]
+    column_searchable_list = [models.SubjectRename.match_subject]
+
+
 class KbArticleAdmin(ModelView, model=models.KbArticle):
     name_plural = "База знаний"
     column_list = [models.KbArticle.id, models.KbArticle.slug, models.KbArticle.title]
@@ -191,6 +204,7 @@ def setup_admin(app: FastAPI) -> None:
         NewsAdmin,
         ContactAdmin,
         DirectoryOverrideAdmin,
+        SubjectRenameAdmin,
         KbArticleAdmin,
         AssistantLogAdmin,
     ):

@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from src.api.etag import json_with_etag
 from src.database import get_db
 from src.models import ExamEvent, Group
+from src.renames import apply_renames
 from src.schemas import ExamEventOut
 
 router = APIRouter()
@@ -29,4 +30,5 @@ def list_exams(
         .order_by(nulls_last(ExamEvent.exam_at.asc()), ExamEvent.id)
     ).all()
     payload = [ExamEventOut.model_validate(e).model_dump(mode="json") for e in exams]
+    apply_renames(db, payload)
     return json_with_etag(request, response, payload)

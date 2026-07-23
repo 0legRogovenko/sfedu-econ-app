@@ -153,14 +153,30 @@ void main() {
       expect(day.every((l) => l.weekType == null), isTrue);
     });
 
-    test('пустое окно (validFrom/validTo null) — весь семестр', () {
+    test('пустое окно (validFrom/validTo null) — в пределах учебного периода',
+        () {
       final always = ScheduleData(
         lessons: [_lesson(id: 9, pairNumber: 1)],
-        modules: _modules,
+        modules: _modules, // до 31.12.2025
         weekCalendar: _calendar,
       );
+      // Внутри известного периода (календарь ∪ модули) — видна…
       expect(lessonsForDay(always, DateTime(2025, 9, 1)).map((l) => l.id), [9]);
-      expect(lessonsForDay(always, DateTime(2026, 3, 2)).map((l) => l.id), [9]);
+      expect(
+          lessonsForDay(always, DateTime(2025, 11, 3)).map((l) => l.id), [9]);
+      // …а в межсезонье (март за пределами данных) — НЕТ: раньше пара без
+      // окна маячила круглый год, даже летом (отложка шага 8 закрыта).
+      expect(lessonsForDay(always, DateTime(2026, 3, 2)), isEmpty);
+    });
+
+    test('без календаря и модулей пара без окна видна всегда (демо/ручные)',
+        () {
+      final demo = ScheduleData(
+        lessons: [_lesson(id: 9, pairNumber: 1)],
+        modules: const [],
+        weekCalendar: const [],
+      );
+      expect(lessonsForDay(demo, DateTime(2026, 3, 2)).map((l) => l.id), [9]);
     });
   });
 

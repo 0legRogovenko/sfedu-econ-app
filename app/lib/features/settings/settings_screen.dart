@@ -122,6 +122,13 @@ class SettingsScreen extends ConsumerWidget {
             icon: const Icon(Icons.open_in_new),
             label: const Text('sfedu.ru'),
           ),
+          const SizedBox(height: 8),
+          // Канал обратной связи: неверное расписание, битые данные, идеи.
+          OutlinedButton.icon(
+            onPressed: () => _reportProblem(context),
+            icon: const Icon(Icons.bug_report_outlined),
+            label: const Text('Сообщить об ошибке'),
+          ),
           const SizedBox(height: 24),
           Text('Данные и приватность', style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
@@ -185,6 +192,30 @@ Future<void> _openSite(BuildContext context, String url) async {
       Uri.parse(url),
       mode: LaunchMode.externalApplication,
     );
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text(failure)));
+    }
+  } catch (_) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text(failure)));
+    }
+  }
+}
+
+/// Письмо разработчику: тема подставлена, чтобы фидбек не терялся в почте.
+Future<void> _reportProblem(BuildContext context) async {
+  const failure = 'Не удалось открыть почту';
+  final uri = Uri(
+    scheme: 'mailto',
+    path: '080806oleg@gmail.com',
+    query: 'subject=Эконом ЮФУ: ошибка или предложение',
+  );
+  try {
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!ok && context.mounted) {
       ScaffoldMessenger.of(
         context,

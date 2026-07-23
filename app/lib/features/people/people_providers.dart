@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api_client.dart';
+import '../exams/exam_event.dart';
 import '../schedule/schedule_data.dart';
 import 'person.dart';
 
@@ -29,4 +30,18 @@ final personScheduleProvider =
     options: Options(validateStatus: (status) => status == 200),
   );
   return ScheduleData.fromJson(response.data ?? const {});
+});
+
+/// Экзамены человека — для карточки. Той же природы, что personScheduleProvider:
+/// без drift-кэша, autoDispose, офлайн — честная ошибка.
+final personExamsProvider =
+    FutureProvider.autoDispose.family<List<ExamEvent>, String>((ref, id) async {
+  final dio = ref.watch(dioProvider);
+  final response = await dio.get<List<dynamic>>(
+    '/api/persons/$id/exams',
+    options: Options(validateStatus: (status) => status == 200),
+  );
+  return (response.data ?? const [])
+      .map((e) => ExamEvent.fromJson(e as Map<String, dynamic>))
+      .toList();
 });

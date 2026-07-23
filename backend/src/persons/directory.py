@@ -207,6 +207,15 @@ def lessons_for_person(db: Session, key: tuple[str, str, str]) -> list[Lesson]:
     return [l for l in lessons if l.id in linked_ids]
 
 
+def exams_for_person(db: Session, key: tuple[str, str, str]) -> list[ExamEvent]:
+    """Экзамены, связанные с человеком, — тем же линкером, что и пары."""
+    registry = Registry(by_key={key: []})
+    exams = db.scalars(select(ExamEvent)).all()
+    links = link_exams(exams, registry)
+    linked_ids = {eid for eid, keys in links.items() if key in keys}
+    return [e for e in exams if e.id in linked_ids]
+
+
 def person_display(rows: Iterable[PersonRow]) -> list[dict]:
     """Строки справочника → JSON-контракт /api/persons."""
     return [

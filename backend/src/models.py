@@ -365,6 +365,25 @@ class DirectoryOverride(Base):
     hidden: Mapped[bool] = mapped_column(default=False)
 
 
+class SubjectRename(Base):
+    """Кураторское переименование предмета на СЛОЕ ЧТЕНИЯ.
+
+    В исходных PDF встречаются кривые названия («Институциональна я экономика»
+    — перенос без дефиса, «Data Sciience» — опечатка). Импортёр хранит текст
+    дословно (верность источнику + инвариант доказуемости), а красивое имя
+    подставляется при отдаче API. Автозабор правку не видит и не затирает.
+
+    Матчинг — по точному тексту предмета, как он лежит в lessons.subject /
+    exam_events.subject.
+    """
+
+    __tablename__ = "subject_renames"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    match_subject: Mapped[str] = mapped_column(String(500), unique=True)
+    display_subject: Mapped[str] = mapped_column(String(500))
+
+
 class KbArticle(Base):
     __tablename__ = "kb_articles"
 

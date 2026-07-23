@@ -5,7 +5,9 @@ import 'package:sfedu_econ/core/clock.dart';
 import 'package:sfedu_econ/features/onboarding/group_repository.dart';
 import 'package:sfedu_econ/features/people/people_providers.dart';
 import 'package:sfedu_econ/features/people/person.dart';
+import 'package:sfedu_econ/features/exams/exam_event.dart';
 import 'package:sfedu_econ/features/people/person_schedule_screen.dart';
+import 'package:sfedu_econ/features/people/person_screen.dart';
 import 'package:sfedu_econ/features/people/people_search_screen.dart';
 import 'package:sfedu_econ/features/schedule/lesson.dart';
 import 'package:sfedu_econ/features/schedule/schedule_data.dart';
@@ -22,6 +24,7 @@ const _person = Person(
   email: null,
   hasSchedule: true,
   lessonCount: 2,
+  examCount: 0,
 );
 
 const _groups = [
@@ -228,6 +231,49 @@ void main() {
     });
   });
 
+  group('карточка человека', () {
+    testWidgets('показывает экзамены преподавателя', (tester) async {
+      const examPerson = Person(
+        id: 'p9',
+        shortName: 'Ласкова Т.С.',
+        fullName: 'Ласкова Татьяна Сергеевна',
+        sections: [],
+        roles: [],
+        email: null,
+        hasSchedule: true,
+        lessonCount: 0,
+        examCount: 1,
+      );
+      final c = ProviderContainer(overrides: [
+        personExamsProvider.overrideWith((ref, id) async => [
+              ExamEvent(
+                id: 1,
+                groupId: 3,
+                subject: 'Экономика',
+                teacher: 'Ласкова Т.С.',
+                consultationAt: null,
+                examAt: DateTime(2026, 1, 15, 10, 0),
+                room: '220',
+                kind: null,
+              ),
+            ]),
+      ]);
+      addTearDown(c.dispose);
+      await _pump(tester, c, const PersonScreen(person: examPerson));
+
+      expect(find.text('Экзамены'), findsOneWidget);
+      expect(find.text('Экономика'), findsOneWidget);
+    });
+
+    testWidgets('без экзаменов секции нет', (tester) async {
+      final c = ProviderContainer();
+      addTearDown(c.dispose);
+      await _pump(tester, c, const PersonScreen(person: _person));
+
+      expect(find.text('Экзамены'), findsNothing);
+    });
+  });
+
   group('поиск преподавателя из расписания', () {
     ProviderContainer searchContainer(List<Person> people) =>
         ProviderContainer(overrides: [
@@ -246,6 +292,7 @@ void main() {
           email: 'm@sfedu.ru',
           hasSchedule: false,
           lessonCount: 0,
+          examCount: 0,
         ),
       ]);
       addTearDown(c.dispose);

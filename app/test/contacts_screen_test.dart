@@ -56,6 +56,7 @@ Person _person({
       email: email,
       hasSchedule: hasSchedule,
       lessonCount: lessonCount,
+      examCount: 0,
     );
 
 Future<Widget> _app(List<Person> people, {Object? error}) async {

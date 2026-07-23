@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/room_format.dart';
+import '../exams/exams_logic.dart';
+import 'people_providers.dart';
 import 'person.dart';
 
 /// Карточка человека: ПОЛНОЕ имя, должность(и), кафедра, почта и — если у
 /// человека есть занятия — переход к его расписанию. У методистов деканата
 /// расписания нет по должности, у них кнопки не будет.
-class PersonScreen extends StatelessWidget {
+class PersonScreen extends ConsumerWidget {
   const PersonScreen({super.key, required this.person});
 
   final Person person;
@@ -35,7 +39,7 @@ class PersonScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     // Должность и кафедра в одну строку: у человека с двумя ролями (деканат +
     // кафедра) показываем обе.
@@ -66,6 +70,51 @@ class PersonScreen extends StatelessWidget {
               icon: const Icon(Icons.calendar_today_outlined),
               label: const Text('Расписание'),
             ),
+          ],
+          // Экзамены человека: есть у преподавателей из файлов сессий.
+          if (person.examCount > 0) ...[
+            const SizedBox(height: 24),
+            Text('Экзамены', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 8),
+            ref.watch(personExamsProvider(person.id)).when(
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (error, _) => Text(
+                    'Не удалось загрузить экзамены. Нужна сеть',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  data: (exams) => Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final exam in exams)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(exam.subject,
+                                      style: theme.textTheme.titleSmall),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    [
+                                      'Экзамен: '
+                                          '${formatExamDateTime(exam.examAt)}',
+                                      if (exam.room != null)
+                                        formatRoom(exam.room!),
+                                    ].join(' · '),
+                                    style: theme.textTheme.bodySmall,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
           ],
           if (person.email == null && !person.hasSchedule) ...[
             const SizedBox(height: 8),

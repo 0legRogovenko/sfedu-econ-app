@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session, joinedload
 from src.api.etag import json_with_etag
 from src.database import get_db
 from src.models import Group, Lesson, Module, Teacher, WeekCalendar
+from src.renames import apply_renames
 from src.schemas import LessonOut, ModuleOut, ScheduleOut, WeekCalendarOut
 
 router = APIRouter()
@@ -70,4 +71,6 @@ def get_schedule(
         modules=[ModuleOut.model_validate(m) for m in modules],
         week_calendar=[WeekCalendarOut.model_validate(w) for w in calendar],
     ).model_dump(mode="json")
+    # Кураторские переименования кривых названий из PDF — на слое чтения.
+    apply_renames(db, payload["lessons"])
     return json_with_etag(request, response, payload)
