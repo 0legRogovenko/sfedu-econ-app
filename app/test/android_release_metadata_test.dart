@@ -5,8 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   test('Android beta identity and version are frozen', () {
     final gradle = File('android/app/build.gradle.kts').readAsStringSync();
-    final manifest =
-        File('android/app/src/main/AndroidManifest.xml').readAsStringSync();
+    final manifest = File(
+      'android/app/src/main/AndroidManifest.xml',
+    ).readAsStringSync();
     final pubspec = File('pubspec.yaml').readAsStringSync();
 
     expect(gradle, contains('namespace = "ru.olegrogovenko.econapp"'));
@@ -21,18 +22,16 @@ void main() {
 
     expect(gradle, isNot(contains('signingConfigs.getByName("debug")')));
     expect(gradle, contains('key.properties'));
-    expect(
-      gradle,
-      contains('Release signing requires android/key.properties'),
-    );
+    expect(gradle, contains('Release signing requires android/key.properties'));
     expect(gitignore, contains('app/android/key.properties'));
     expect(gitignore, contains('*.jks'));
     expect(gitignore, contains('*.keystore'));
   });
 
   test('Android beta workflow builds a signed private artifact', () {
-    final workflow =
-        File('../.github/workflows/android-beta.yml').readAsStringSync();
+    final workflow = File(
+      '../.github/workflows/android-beta.yml',
+    ).readAsStringSync();
 
     expect(workflow, contains('workflow_dispatch:'));
     expect(workflow, contains("'beta-v*'"));
@@ -54,5 +53,21 @@ void main() {
     expect(workflow, contains('actions/upload-artifact@v4'));
     expect(workflow, isNot(contains('action-gh-release')));
     expect(workflow, isNot(contains('gh release')));
+  });
+
+  test('beta release and focus-group handoff are documented', () {
+    final appReadme = File('README.md').readAsStringSync();
+    final testing = File('../BETA_TESTING.md').readAsStringSync();
+
+    expect(appReadme, contains('flutter build apk --release'));
+    expect(appReadme, contains('API_BASE_URL'));
+    expect(appReadme, contains('key.properties'));
+    expect(appReadme, contains('ANDROID_KEYSTORE_BASE64'));
+    expect(testing, contains('актуальное расписание'));
+    expect(testing, contains('SHA-256'));
+    expect(testing, contains('неизвестных источников'));
+    expect(testing, contains('Официальное расписание ЮФУ'));
+    expect(testing.toLowerCase(), contains('офлайн'));
+    expect(testing, contains('Сообщить об ошибке'));
   });
 }
