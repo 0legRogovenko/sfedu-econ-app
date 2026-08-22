@@ -1,0 +1,126 @@
+name: Android beta APK
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'beta-v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-beta-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: signed universal APK
+    runs-on: ubuntu-latest
+    environment: android-beta
+    env:
+      BETA_API_BASE_URL: ${{ vars.BETA_API_BASE_URL }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.6
+          channel: stable
+          cache: true
+
+      - name: Install Dart dependencies
+        working-directory: app
+        run: flutter pub get
+
+      - name: Validate beta API origin
+        id: endpoint
+        working-directory: app
+        run: |
+          set -euo pipefail
+          origin="$(dart tool/validate_beta_url.dart "$BETA_API_BASE_URL")"
+          echo "origin=$origin" >> "$GITHUB_OUTPUT"
+
+      - name: Configure release signing
+        working-directory: app
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for variable in KEYSTORE_B64 STORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [[ -z "${!variable}" ]]; then
+              echo "::error::$variable is not configured"
+              exit 1
+            fi
+          done
+
+          printf '%s' "$KEYSTORE_B64" \
+            | base64 --decode > "$RUNNER_TEMP/upload-keystore.jks"
+          chmod 600 "$RUNNER_TEMP/upload-keystore.jks"
+          {
+            printf 'storeFile=%s\n' "$RUNNER_TEMP/upload-keystore.jks"
+            printf 'storePassword=%s\n' "$STORE_PASSWORD"
+            printf 'keyAlias=%s\n' "$KEY_ALIAS"
+            printf 'keyPassword=%s\n' "$KEY_PASSWORD"
+          } > android/key.properties
+          chmod 600 android/key.properties
+
+      - name: Analyze
+        working-directory: app
+        run: flutter analyze --no-pub
+
+      - name: Test
+        working-directory: app
+        run: flutter test --no-pub
+
+      - name: Build signed APK
+        working-directory: app
+        run: >-
+          flutter build apk --release --no-pub
+          --dart-define=API_BASE_URL=${{ steps.endpoint.outputs.origin }}
+
+      - name: Package artifact and checksum
+        working-directory: app
+        env:
+          API_ORIGIN: ${{ steps.endpoint.outputs.origin }}
+        run: |
+          set -euo pipefail
+          app_version="$(awk '/^version:/ {print $2}' pubspec.yaml)"
+          apk_name="econ-yufu-${app_version}.apk"
+          mkdir -p dist
+          cp build/app/outputs/flutter-apk/app-release.apk "dist/$apk_name"
+          (
+            cd dist
+            sha256sum "$apk_name" > "$apk_name.sha256"
+          )
+          {
+            printf 'version=%s\n' "$app_version"
+            printf 'commit=%s\n' "$GITHUB_SHA"
+            printf 'run_id=%s\n' "$GITHUB_RUN_ID"
+            printf 'api_origin=%s\n' "$API_ORIGIN"
+            printf 'sha256=%s\n' "$(cut -d ' ' -f1 "dist/$apk_name.sha256")"
+          } > dist/beta-manifest.txt
+
+      - name: Upload private handoff artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: econ-yufu-${{ github.ref_name }}-${{ github.run_number }}
+          path: app/dist/*
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Remove signing material
+        if: always()
+        run: |
+          rm -f app/android/key.properties
+          rm -f "$RUNNER_TEMP/upload-keystore.jks"
