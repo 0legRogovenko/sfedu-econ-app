@@ -16,6 +16,22 @@ void main() {
     expect(pubspec, contains('version: 0.1.0-beta.1+1'));
   });
 
+  test('MainActivity follows the release namespace', () {
+    final activity = File(
+      'android/app/src/main/kotlin/ru/olegrogovenko/econapp/MainActivity.kt',
+    );
+    final staleActivity = File(
+      'android/app/src/main/kotlin/ru/sfedu/econ/sfedu_econ/MainActivity.kt',
+    );
+
+    expect(activity.existsSync(), isTrue);
+    expect(
+      activity.readAsStringSync(),
+      contains('package ru.olegrogovenko.econapp'),
+    );
+    expect(staleActivity.existsSync(), isFalse);
+  });
+
   test('release never falls back to debug signing', () {
     final gradle = File('android/app/build.gradle.kts').readAsStringSync();
     final gitignore = File('../.gitignore').readAsStringSync();
