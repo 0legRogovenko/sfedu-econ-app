@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -74,5 +76,31 @@ void main() {
 
     expect(find.text('Ошибка конфигурации'), findsOneWidget);
     expect(find.textContaining('HTTPS API_BASE_URL'), findsOneWidget);
+  });
+
+  group('validate_beta_url tool', () {
+    test('rejects credentials without echoing them', () {
+      const secret = 'do-not-print-this-password';
+      final result = Process.runSync('dart', [
+        'tool/validate_beta_url.dart',
+        'http://user:$secret@beta.econ.example',
+      ]);
+
+      expect(result.exitCode, isNonZero);
+      final output = '${result.stdout}${result.stderr}';
+      expect(output, contains('Некорректный API_BASE_URL.'));
+      expect(output, isNot(contains(secret)));
+    });
+
+    test('prints the normalized HTTPS origin', () {
+      final result = Process.runSync('dart', [
+        'tool/validate_beta_url.dart',
+        ' https://beta.econ.example/ ',
+      ]);
+
+      expect(result.exitCode, 0, reason: '${result.stdout}${result.stderr}');
+      expect(result.stdout.toString().trim(), 'https://beta.econ.example');
+      expect(result.stderr.toString(), isEmpty);
+    });
   });
 }
