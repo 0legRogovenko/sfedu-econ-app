@@ -1,4 +1,4 @@
-package ru.sfedu.econ.sfedu_econ
+package ru.olegrogovenko.econapp
 
 import io.flutter.embedding.android.FlutterActivity
 

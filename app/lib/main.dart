@@ -4,19 +4,60 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/app_version.dart';
 import 'core/prefs.dart';
+import 'core/release_config.dart';
 import 'core/theme.dart';
 import 'core/theme_mode.dart';
 import 'router.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  late final ReleaseConfig releaseConfig;
+  try {
+    releaseConfig = loadReleaseConfig();
+  } on ReleaseConfigurationException catch (error) {
+    runApp(ReleaseConfigurationErrorApp(message: error.message));
+    return;
+  }
   final prefs = await SharedPreferences.getInstance();
   runApp(
     ProviderScope(
-      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        releaseConfigProvider.overrideWithValue(releaseConfig),
+      ],
       child: const SfeduEconApp(),
     ),
   );
+}
+
+class ReleaseConfigurationErrorApp extends StatelessWidget {
+  const ReleaseConfigurationErrorApp({required this.message, super.key});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Эконом ЮФУ',
+      home: Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.error_outline, size: 56),
+                const SizedBox(height: 16),
+                const Text('Ошибка конфигурации'),
+                const SizedBox(height: 8),
+                Text(message, textAlign: TextAlign.center),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class SfeduEconApp extends ConsumerWidget {

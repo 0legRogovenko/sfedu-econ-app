@@ -28,6 +28,11 @@ app/macos/
 app/windows/
 app/web/
 
+# Android release signing
+app/android/key.properties
+*.jks
+*.keystore
+
 # ── AI tooling (никогда не коммитить) ────────────────────────────────────
 # graphify: локальный граф знаний и его инструкции — не часть проекта
 .claude/
