@@ -231,6 +231,16 @@ void main() {
       ];
       expect(tops.toSet(), hasLength(1));
       expect(tester.getTopRight(find.text('3.6')).dx, lessThanOrEqualTo(390));
+
+      await tester.tap(find.text('3.1'));
+      await tester.pumpAndSettle();
+      final selectedChip = tester.widget<ChoiceChip>(
+        find.widgetWithText(ChoiceChip, '3.1'),
+      );
+      expect(selectedChip.selected, isTrue);
+      // Галочка Material отнимает ширину у короткого номера и превращает
+      // выбранное «3.1» в «3…» на реальном iPhone.
+      expect(selectedChip.showCheckmark, isFalse);
     });
   });
 }

@@ -249,6 +249,7 @@ class _GroupPickerState extends State<GroupPicker> {
                 label: Text(group.displayName),
                 selected: _selectedId == group.id,
                 onSelected: (_) => _selectGroup(group),
+                showCheckmark: false,
                 visualDensity: VisualDensity.compact,
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 labelPadding: const EdgeInsets.symmetric(horizontal: 2),
