@@ -324,11 +324,13 @@ class TestCorpus:
         assert all(c.reason and c.raw_text.strip() and c.document_id for c in cells)
 
 
-def test_current_fourth_course_pdf_does_not_lose_the_main_schedule():
-    """14178: страницы 2–4 обязаны доехать, не только отдельная группа 3.7.
+def test_current_fourth_course_pdf_does_not_import_foreign_course_group():
+    """14178: страницы 2–4 доезжают, а вложенная 3.7 не становится группой.
 
     Это отдельная актуальная регрессионная фикстура, а не часть исторического
     golden-корпуса: официальный файл появился 25.08.2026 уже после его снятия.
+    На странице 5 лежит дополнительный блок 3.7, хотя документ подписан
+    «4 курс». В пользовательском списке у 3 и 4 курса должно быть по 6 групп.
     """
     content = (FIXTURES / "14178.pdf").read_bytes()
     session = make_session()
@@ -363,6 +365,9 @@ def test_current_fourth_course_pdf_does_not_lose_the_main_schedule():
         assert importer.REASON_NO_PAIR not in reasons
         assert lower_week_lesson is not None
         assert lower_week_lesson.week_type is WeekType.LOWER
+        assert session.scalar(
+            select(Group).where(Group.number == "3.7")
+        ) is None
     finally:
         session.close()
 

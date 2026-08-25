@@ -207,5 +207,30 @@ void main() {
       expect(find.text('2.1'), findsOneWidget);
       expect(picked, isNull); // без явного тапа колбэк не дёргаем
     });
+
+    testWidgets('шесть бакалаврских групп помещаются в одну строку',
+        (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final groups = [
+        for (var index = 1; index <= 6; index++)
+          _bachelor(index, 3, '3.$index'),
+      ];
+      await pump(tester, groups: groups, onSelected: (_) {});
+
+      await tester.tap(find.text('Бакалавриат'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('3 курс'));
+      await tester.pumpAndSettle();
+
+      final tops = [
+        for (var index = 1; index <= 6; index++)
+          tester.getTopLeft(find.text('3.$index')).dy,
+      ];
+      expect(tops.toSet(), hasLength(1));
+      expect(tester.getTopRight(find.text('3.6')).dx, lessThanOrEqualTo(390));
+    });
   });
 }

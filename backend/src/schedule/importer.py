@@ -619,6 +619,16 @@ def _import_grid_document(session, document, content: bytes, link, report) -> No
         found = parse_header(grid)
         first_row: int | None = None
         if found is not None:
+            if _is_foreign_bachelor_block(found, link.label):
+                # В актуальном файле «4 курс» (14178) последней страницей
+                # приложен отдельный блок 3.7. Это не седьмая группа курса и
+                # не должно расширять пользовательский каталог групп.
+                _mark_skipped_grid(report.ledger, index, grid)
+                header = None
+                prev_shape = None
+                carry_day = None
+                carry_module = None
+                continue
             # Тот же блок групп на новой странице — модуль тянем вперёд. Заголовок
             # модуля стоит только на ПЕРВОЙ странице модуля: 13470 — три страницы
             # одних и тех же 6 групп (Пн/Вт, Ср/Чт, Пт/Сб), '(1 сентября – 2
@@ -685,6 +695,22 @@ def _drop_empty_modules(session, document) -> None:
         if used is None:
             session.delete(module)
     session.flush()
+
+
+def _is_foreign_bachelor_block(header: GridHeader, label: str) -> bool:
+    """Блок N.x внутри файла другого курса не становится отдельной группой."""
+    if header.level is not EducationLevel.BACHELOR:
+        return False
+    match = _MASTER_COURSE.search(label)
+    if match is None:
+        return False
+    document_course = int(match.group(1))
+    group_courses = {
+        int(group.number.split(".")[0])
+        for group in header.groups
+        if group.number is not None
+    }
+    return bool(group_courses) and group_courses != {document_course}
 
 
 def _import_row(
@@ -1208,6 +1234,15 @@ def _mark_structural_grid(ledger: Ledger, index: int, grid: Grid) -> None:
             ledger.mark(index, cell, CELL_EMPTY)
         else:
             ledger.mark_structural(index, cell)
+
+
+def _mark_skipped_grid(ledger: Ledger, index: int, grid: Grid) -> None:
+    """Осознанно исключённый блок: каждая ячейка остаётся в Ledger."""
+    for cell in grid.cells:
+        if cell.is_empty:
+            ledger.mark(index, cell, CELL_EMPTY)
+        else:
+            ledger.mark_skipped(index, cell)
 
 
 def _group_ids(header: GridHeader) -> tuple:

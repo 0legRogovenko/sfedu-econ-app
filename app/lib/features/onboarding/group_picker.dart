@@ -242,13 +242,16 @@ class _GroupPickerState extends State<GroupPicker> {
       ),
       if (groups.isNotEmpty) ...[
         const SizedBox(height: 16),
-        _ChipRow(
+        _GroupChipRow(
           children: [
             for (final group in groups)
               ChoiceChip(
                 label: Text(group.displayName),
                 selected: _selectedId == group.id,
                 onSelected: (_) => _selectGroup(group),
+                visualDensity: VisualDensity.compact,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                labelPadding: const EdgeInsets.symmetric(horizontal: 2),
               ),
           ],
         ),
@@ -275,13 +278,16 @@ class _GroupPickerState extends State<GroupPicker> {
       ),
       if (groups.isNotEmpty) ...[
         const SizedBox(height: 16),
-        _ChipRow(
+        _GroupChipRow(
           children: [
             for (final group in groups)
               ChoiceChip(
                 label: Text('${group.course} курс'),
                 selected: _selectedId == group.id,
                 onSelected: (_) => _selectGroup(group),
+                visualDensity: VisualDensity.compact,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                labelPadding: const EdgeInsets.symmetric(horizontal: 2),
               ),
           ],
         ),
@@ -298,5 +304,31 @@ class _ChipRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Wrap(spacing: 8, runSpacing: 8, children: children);
+  }
+}
+
+/// Конечный ряд групп не переносится: у каждого курса шесть коротких номеров,
+/// поэтому делим доступную ширину поровну. Уровни/курсы/длинные направления
+/// выше остаются Wrap — перенос там полезен и ожидаем.
+class _GroupChipRow extends StatelessWidget {
+  const _GroupChipRow({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (var index = 0; index < children.length; index++)
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(
+                right: index == children.length - 1 ? 0 : 4,
+              ),
+              child: SizedBox(width: double.infinity, child: children[index]),
+            ),
+          ),
+      ],
+    );
   }
 }

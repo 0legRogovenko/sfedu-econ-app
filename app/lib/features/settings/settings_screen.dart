@@ -307,8 +307,13 @@ class _FavoriteGroupsSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final favorites = ref.watch(favoriteGroupIdsProvider);
+    final validIds = groups.map((group) => group.id).toSet();
+    final favorites = ref
+        .watch(favoriteGroupIdsProvider)
+        .where(validIds.contains)
+        .toList();
     final selectedId = ref.watch(selectedGroupIdProvider);
+    final selectedExists = selectedId != null && validIds.contains(selectedId);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -331,7 +336,7 @@ class _FavoriteGroupsSection extends ConsumerWidget {
           ),
         // Активная группа не обязана быть избранной (пикер выше выбирает
         // любую) — кнопка появляется, когда текущей нет в списке.
-        if (selectedId != null && !favorites.contains(selectedId)) ...[
+        if (selectedExists && !favorites.contains(selectedId)) ...[
           const SizedBox(height: 8),
           OutlinedButton.icon(
             onPressed: () =>

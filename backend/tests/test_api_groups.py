@@ -1,4 +1,6 @@
-from src.models import EducationLevel, Group
+from datetime import time
+
+from src.models import DocType, EducationLevel, Group, Lesson, ScheduleDocument
 
 
 def _add_groups(db_session):
@@ -117,3 +119,36 @@ def test_groups_etag_changes_with_data(client, db_session):
     )
     assert second.status_code == 200
     assert second.headers["etag"] != first.headers["etag"]
+
+
+def test_imported_catalog_hides_group_without_any_schedule(client, db_session):
+    """Старая группа не остаётся в выборе после замены комплекта файлов."""
+    active = Group(course=3, number="3.1")
+    orphan = Group(course=3, number="3.7")
+    document = ScheduleDocument(
+        p_doc_id=14177,
+        section="Осенний семестр",
+        label="3 курс",
+        doc_type=DocType.SEMESTER_GRID_BACHELOR,
+        sha256="a" * 64,
+        source_url="https://sfedu.ru/current",
+    )
+    db_session.add_all([active, orphan, document])
+    db_session.flush()
+    db_session.add(
+        Lesson(
+            group_id=active.id,
+            document_id=document.id,
+            weekday=0,
+            pair_number=1,
+            starts_at=time(8),
+            ends_at=time(9, 35),
+            subject="Экономика",
+            subgroup=0,
+        )
+    )
+    db_session.flush()
+
+    numbers = [item["number"] for item in client.get("/api/groups").json()]
+
+    assert numbers == ["3.1"]

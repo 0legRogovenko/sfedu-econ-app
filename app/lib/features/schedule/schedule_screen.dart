@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -33,6 +35,15 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     _baseMonday = currentWeekMonday(now);
     _dayIndex = now.weekday == DateTime.sunday ? 0 : now.weekday - 1;
     _pageController = PageController(initialPage: _dayIndex);
+    // Серверный импорт может пересоздать группы с другими id. Сверяем
+    // SharedPreferences с живым справочником до показа переключателя.
+    ref.listenManual(groupsProvider, (_, next) {
+      next.whenData((groups) {
+        unawaited(ref
+            .read(favoriteGroupIdsProvider.notifier)
+            .reconcile([for (final group in groups) group.id]));
+      });
+    }, fireImmediately: true);
     // фоновая синхронизация при открытии экрана
     Future.microtask(() => ref.read(syncStatusProvider.notifier).sync());
   }
@@ -225,12 +236,14 @@ class _GroupSwitcherTitle extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final groupId = ref.watch(selectedGroupIdProvider);
-    final favorites = ref.watch(favoriteGroupIdsProvider);
-    // Справочник имён; офлайн-фолбэк «Группа N» даёт groupNameOf.
+    final storedFavorites = ref.watch(favoriteGroupIdsProvider);
+    // Справочник имён; при устаревшем id не показываем внутренний ключ БД.
     final groups = ref.watch(groupsProvider).maybeWhen(
           data: (list) => list,
           orElse: () => const <Group>[],
         );
+    final validIds = groups.map((group) => group.id).toSet();
+    final favorites = storedFavorites.where(validIds.contains).toList();
     if (groupId == null) return const Text('Расписание');
     final title = Row(
       mainAxisSize: MainAxisSize.min,
