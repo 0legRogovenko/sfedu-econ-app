@@ -31,7 +31,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 from collections import Counter
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime, time
 
 import pdfplumber
@@ -619,10 +619,11 @@ def _import_grid_document(session, document, content: bytes, link, report) -> No
         found = parse_header(grid)
         first_row: int | None = None
         if found is not None:
+            found = _correct_known_group_header(found, link)
             if _is_foreign_bachelor_block(found, link.label):
-                # В актуальном файле «4 курс» (14178) последней страницей
-                # приложен отдельный блок 3.7. Это не седьмая группа курса и
-                # не должно расширять пользовательский каталог групп.
+                # Неизвестный блок другого курса не переносим автоматически:
+                # это может быть действительно приложенная чужая таблица.
+                # Подтверждённые опечатки исправляются точечно выше.
                 _mark_skipped_grid(report.ledger, index, grid)
                 header = None
                 prev_shape = None
@@ -711,6 +712,30 @@ def _is_foreign_bachelor_block(header: GridHeader, label: str) -> bool:
         if group.number is not None
     }
     return bool(group_courses) and group_courses != {document_course}
+
+
+def _correct_known_group_header(header: GridHeader, link) -> GridHeader:
+    """Исправляет подтверждённую опечатку в конкретном официальном файле.
+
+    14178 целиком подписан «4 курс», а отдельная последняя страница программы
+    «Информационные технологии и бизнес-аналитика» помечена как 3.7. Это группа
+    4.7: пользователь подтвердил принадлежность, и в блоке есть две реальные
+    пары. Общую эвристику «чужой курс → переписать» не вводим — вложенный блок
+    действительно может относиться к другому курсу.
+    """
+    numbers = tuple(group.number for group in header.groups)
+    if (
+        str(link.p_doc_id) == "14178"
+        and link.label.strip().lower() == "4 курс"
+        and header.level is EducationLevel.BACHELOR
+        and numbers == ("3.7",)
+    ):
+        return replace(
+            header,
+            groups=(replace(header.groups[0], number="4.7"),),
+            course=4,
+        )
+    return header
 
 
 def _import_row(
@@ -810,7 +835,11 @@ def _add_lesson(
 
     # Границы занятия — реальное окно из ячейки времени (у блока в 3 ак. часа
     # оно шире одной пары); для обычной пары это те же внешние края её половин.
-    starts = slot.starts_at or _pair_bounds(slot.pair_number)[0]
+    starts = (
+        parsed.starts_at_override
+        or slot.starts_at
+        or _pair_bounds(slot.pair_number)[0]
+    )
     ends = slot.ends_at or _pair_bounds(slot.pair_number)[1]
     session.add(
         Lesson(

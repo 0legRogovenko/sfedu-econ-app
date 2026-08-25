@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from datetime import time
 
 from src.models import LessonKind, WeekType
 from src.schedule.rooms import normalize_room
@@ -39,6 +40,14 @@ _KIND = re.compile(r"\(\s*(лаб|л|с|c)\s*\)(?:\s*/\s*\(\s*(лаб|л|с|c)\s
 _DATE_PREFIX = re.compile(
     r"^\s*(До\s*\d\d?\.\d\d|С\s*\d\d?\.\d\d|\d\d?\.\d\d(?:\s*,\s*\d\d?\.\d\d)*)"
 )
+# Красная помета внутри ячейки: «С 8⁵⁰» PDF извлекает как «С 850». Это
+# локальное время начала, не дата и не часть предмета. Точку намеренно не
+# принимаем: «С 6.10» в корпусе — дата начала, её разбирает _DATE_PREFIX.
+_START_TIME_PREFIX = re.compile(
+    r"^\s*С\s*(?:(\d{1,2}):(\d{2})|(\d{1,2})\s*(\d{2}))\b",
+    re.IGNORECASE,
+)
+_MUAM_PREFIX = re.compile(r"^\s*МУАМ\b\s*", re.IGNORECASE)
 
 # Аудитория В КОНЦЕ строки — тянется жадно до конца ('ауд.Креативное пр-во').
 _ROOM_TAIL = re.compile(
@@ -85,6 +94,8 @@ class ParsedLesson:
     date_constraint_raw: str | None  # 'До 17.12' / '08.11, 15.11'
     subgroup: int | None  # только из текстовой метки 'Nп/г'
     week_type: WeekType | None  # None = каждую неделю (ОСНОВНОЙ случай)
+    # Уточнение «С 8:50» внутри предметной ячейки. None — брать начало строки.
+    starts_at_override: time | None
     cell_raw: str  # исходный текст ячейки целиком, ВСЕГДА
 
 
@@ -124,6 +135,25 @@ def split_lessons(text: str) -> list[str] | None:
     marks = list(_KIND.finditer(flat))
     if len(marks) <= 1:
         return [flat]
+
+    # В блоке МУАМ факультет перечисляет дисциплины без ФИО и аудиторий:
+    # «МУАМ Предмет A (л) Предмет B (л)». Здесь конец каждого маркера вида —
+    # однозначная граница, потому что после последнего маркера хвоста нет.
+    # Общее правило не расширяем: без явного заголовка тот же текст остаётся
+    # неоднозначным (между маркерами могло быть ФИО предыдущей пары).
+    muam = _MUAM_PREFIX.match(flat)
+    if muam:
+        parts: list[str] = []
+        start = muam.end()
+        for mark in marks:
+            subject = flat[start : mark.end()].strip()
+            if not subject:
+                return None
+            parts.append(f"МУАМ — {subject}")
+            start = mark.end()
+        if not flat[start:].strip():
+            return parts
+        return None
 
     parts: list[str] = []
     start = 0
@@ -181,6 +211,16 @@ def parse_lesson(text: str, cell_raw: str) -> ParsedLesson | None:
 
     head, tail = flat[: kind.start()], flat[kind.end() :]
 
+    starts_at_override = None
+    start_time = _START_TIME_PREFIX.match(head)
+    if start_time:
+        hour_text = start_time.group(1) or start_time.group(3)
+        minute_text = start_time.group(2) or start_time.group(4)
+        hour, minute = int(hour_text), int(minute_text)
+        if 0 <= hour <= 23 and 0 <= minute <= 59:
+            starts_at_override = time(hour, minute)
+            head = head[start_time.end() :]
+
     date_constraint_raw = None
     date = _DATE_PREFIX.match(head)
     if date:
@@ -211,6 +251,7 @@ def parse_lesson(text: str, cell_raw: str) -> ParsedLesson | None:
         date_constraint_raw=date_constraint_raw,
         subgroup=subgroup,
         week_type=week_type,
+        starts_at_override=starts_at_override,
         cell_raw=cell_raw,
     )
 

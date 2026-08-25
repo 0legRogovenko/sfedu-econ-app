@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+from datetime import time
 from pathlib import Path
 
 import pytest
@@ -78,6 +79,16 @@ def test_lesson_without_room_is_a_source_hole_too():
     assert lesson.subject == "Экономика фирмы"
     assert lesson.teachers == ("Ермишина А.В.",)
     assert lesson.room is None
+
+
+def test_inline_start_time_is_not_part_of_subject():
+    """14177 p3: красное «С 8:50» задаёт начало, а не название пары."""
+    lesson = only(
+        parse_cell("С 850 Анализ и моделирование БП (л) Калачев В.Ю. онлайн")
+    )
+
+    assert lesson.subject == "Анализ и моделирование БП"
+    assert lesson.starts_at_override == time(8, 50)
 
 
 def test_room_glued_to_teacher_without_space(grids_13469):
@@ -398,6 +409,21 @@ def test_elective_list_without_rooms_cannot_be_split():
     assert parse.lessons == ()
     assert parse.reason is not None
     assert "границ" in parse.reason
+
+
+def test_muam_electives_without_rooms_are_split_by_kind_markers():
+    """14177 p4: МУАМ — явный заголовок списка дисциплин без ФИО/аудиторий."""
+    parse = parse_cell(
+        "МУАМ\nСовременные платформы для построения корп. инф. систем (л)\n"
+        "Цифровые системы интеграции и управления бизнесом (л)"
+    )
+
+    assert parse.reason is None
+    assert [lesson.subject for lesson in parse.lessons] == [
+        "МУАМ — Современные платформы для построения корп. инф. систем",
+        "МУАМ — Цифровые системы интеграции и управления бизнесом",
+    ]
+    assert all(lesson.teachers == () and lesson.room is None for lesson in parse.lessons)
 
 
 def test_split_lessons_returns_none_when_boundary_is_unknown():

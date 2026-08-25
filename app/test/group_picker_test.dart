@@ -208,14 +208,14 @@ void main() {
       expect(picked, isNull); // без явного тапа колбэк не дёргаем
     });
 
-    testWidgets('шесть бакалаврских групп помещаются в одну строку',
+    testWidgets('семь бакалаврских групп помещаются в одну строку',
         (tester) async {
       tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
       final groups = [
-        for (var index = 1; index <= 6; index++)
+        for (var index = 1; index <= 7; index++)
           _bachelor(index, 3, '3.$index'),
       ];
       await pump(tester, groups: groups, onSelected: (_) {});
@@ -226,11 +226,11 @@ void main() {
       await tester.pumpAndSettle();
 
       final tops = [
-        for (var index = 1; index <= 6; index++)
+        for (var index = 1; index <= 7; index++)
           tester.getTopLeft(find.text('3.$index')).dy,
       ];
       expect(tops.toSet(), hasLength(1));
-      expect(tester.getTopRight(find.text('3.6')).dx, lessThanOrEqualTo(390));
+      expect(tester.getTopRight(find.text('3.7')).dx, lessThanOrEqualTo(390));
 
       await tester.tap(find.text('3.1'));
       await tester.pumpAndSettle();

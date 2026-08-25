@@ -324,13 +324,13 @@ class TestCorpus:
         assert all(c.reason and c.raw_text.strip() and c.document_id for c in cells)
 
 
-def test_current_fourth_course_pdf_does_not_import_foreign_course_group():
-    """14178: страницы 2–4 доезжают, а вложенная 3.7 не становится группой.
+def test_current_fourth_course_pdf_corrects_mislabeled_group_37_to_47():
+    """14178: страница 5 подписана 3.7, но это продолжение 4 курса — группа 4.7.
 
     Это отдельная актуальная регрессионная фикстура, а не часть исторического
     golden-корпуса: официальный файл появился 25.08.2026 уже после его снятия.
-    На странице 5 лежит дополнительный блок 3.7, хотя документ подписан
-    «4 курс». В пользовательском списке у 3 и 4 курса должно быть по 6 групп.
+    В источнике опечатка в шапке, но две пары блока принадлежат 4.7 и не должны
+    ни исчезать, ни попадать в каталог третьего курса.
     """
     content = (FIXTURES / "14178.pdf").read_bytes()
     session = make_session()
@@ -365,9 +365,14 @@ def test_current_fourth_course_pdf_does_not_import_foreign_course_group():
         assert importer.REASON_NO_PAIR not in reasons
         assert lower_week_lesson is not None
         assert lower_week_lesson.week_type is WeekType.LOWER
-        assert session.scalar(
-            select(Group).where(Group.number == "3.7")
-        ) is None
+        group_47 = session.scalar(select(Group).where(Group.number == "4.7"))
+        assert group_47 is not None
+        assert session.scalars(
+            select(Lesson.subject)
+            .where(Lesson.group_id == group_47.id)
+            .order_by(Lesson.pair_number)
+        ).all() == ["Цифровая экономика", "Цифровая экономика"]
+        assert session.scalar(select(Group).where(Group.number == "3.7")) is None
     finally:
         session.close()
 
@@ -795,9 +800,10 @@ class TestSemesterHeadingIsNotAModule:
         переноса модуля вперёд по страницам-продолжениям module=None остаётся
         ровно у семестровых 7 — остальные вернулись к своим модулям.
 
-        Всего пар 239, а не 241: две «подгруппы» на p11 были фантомом от съезда
-        ячейки семинара на 6% в колонку соседней группы (БАГ 3) — порог
-        значимого перекрытия их убрал, настоящая пара соседа осталась.
+        Всего пар 297: к прежним 239 подтверждённым парам добавились 58
+        субботних дисциплин МУАМ, которые раньше целиком уходили в unparsed как
+        «несколько занятий без границ». Две «подгруппы» на p11 по-прежнему
+        исключены как фантом от съезда ячейки на 6% в колонку соседа.
         """
         session = make_session()
         fetcher = FakeFetcher()
@@ -809,7 +815,7 @@ class TestSemesterHeadingIsNotAModule:
         importer.import_all(session, fetcher, links=links)
 
         lessons = session.scalars(select(Lesson)).all()
-        assert len(lessons) == 239, "пары потеряны вместе с фантомом"
+        assert len(lessons) == 297, "пары потеряны вместе с фантомом или МУАМ"
         by_module = Counter(lesson.module_id for lesson in lessons)
         assert by_module[None] == 7, (
             "module=None должен остаться только у семестрового блока p13, "
