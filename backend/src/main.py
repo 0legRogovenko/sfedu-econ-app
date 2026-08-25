@@ -8,7 +8,6 @@ from src.admin import setup_admin
 from src.api import router as api_router
 from src.config import settings
 from src.database import engine
-from src.scheduler import create_scheduler
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +16,10 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     scheduler = None
     if settings.enable_scheduler:
+        # Serverless beta runs imports in GitHub Actions.  Keep the heavy
+        # PDF/DOCX parser stack out of API cold starts when scheduling is off.
+        from src.scheduler import create_scheduler
+
         scheduler = create_scheduler()
         scheduler.start()
         logger.info("Планировщик парсеров запущен")

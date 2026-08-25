@@ -36,7 +36,7 @@ from src.models import (
 )
 from src.schedule import importer
 from src.schedule.fetch import FetchedDocument
-from src.schedule.source import download_url, parse_index
+from src.schedule.source import ScheduleLink, download_url, parse_index
 from src.schedule.structure import week_type_from_heading
 
 FIXTURES = Path(__file__).parent / "fixtures" / "schedule"
@@ -322,6 +322,49 @@ class TestCorpus:
         cells = session.scalars(select(UnparsedCell)).all()
         assert cells
         assert all(c.reason and c.raw_text.strip() and c.document_id for c in cells)
+
+
+def test_current_fourth_course_pdf_does_not_lose_the_main_schedule():
+    """14178: страницы 2–4 обязаны доехать, не только отдельная группа 3.7.
+
+    Это отдельная актуальная регрессионная фикстура, а не часть исторического
+    golden-корпуса: официальный файл появился 25.08.2026 уже после его снятия.
+    """
+    content = (FIXTURES / "14178.pdf").read_bytes()
+    session = make_session()
+    try:
+        report = importer.import_all(
+            session,
+            FakeFetcher(overrides={"14178": content}),
+            links=[ScheduleLink("Осенний семестр", "4 курс", "14178")],
+        )
+        document = report.documents[0]
+        course_four_lessons = session.scalar(
+            select(func.count())
+            .select_from(Lesson)
+            .join(Group, Lesson.group_id == Group.id)
+            .where(Group.course == 4)
+        )
+        reasons = session.scalars(select(UnparsedCell.reason)).all()
+        lower_week_lesson = session.scalar(
+            select(Lesson)
+            .join(Group, Lesson.group_id == Group.id)
+            .where(
+                Group.number == "4.1",
+                Lesson.subject == "Прикладная эконометрика",
+                Lesson.weekday == 2,
+                Lesson.pair_number == 3,
+            )
+        )
+
+        assert document.error is None
+        assert course_four_lessons >= 100
+        assert document.unparsed <= 5
+        assert importer.REASON_NO_PAIR not in reasons
+        assert lower_week_lesson is not None
+        assert lower_week_lesson.week_type is WeekType.LOWER
+    finally:
+        session.close()
 
 
 class TestGoldenCorpus:

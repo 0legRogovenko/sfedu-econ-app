@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+from fastapi import FastAPI
 
 
 def _client(**kwargs) -> TestClient:
@@ -36,3 +37,14 @@ def test_admin_login_with_wrong_password_rejected():
     )
     response = client.get("/admin/")
     assert response.status_code in (302, 307)
+
+
+def test_admin_routes_are_not_mounted_when_disabled(monkeypatch):
+    from src import admin as admin_module
+
+    app = FastAPI()
+    monkeypatch.setattr(admin_module.settings, "admin_enabled", False)
+
+    admin_module.setup_admin(app)
+
+    assert not any(route.path.startswith("/admin") for route in app.routes)

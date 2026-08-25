@@ -175,6 +175,65 @@ def test_week_type_inside_cell_does_not_leak_into_subject():
     assert lesson.room == "онлайн"
 
 
+@pytest.mark.parametrize(
+    ("text", "expected_week", "expected_subject"),
+    [
+        (
+            "В.Н. Теория риска и моделирование рисковых ситуаций (с) Шаль А.В. ауд.325",
+            WeekType.UPPER,
+            "Теория риска и моделирование рисковых ситуаций",
+        ),
+        (
+            "Н.Н. Прикладная эконометрика (с) Маслюкова Е.В. а.325",
+            WeekType.LOWER,
+            "Прикладная эконометрика",
+        ),
+        (
+            "По выбору: В.Н.Project Management (advanced Level) "
+            "(Управление проектами (продвинутый уровень)) (л) Никитаева А.Ю. Онлайн",
+            WeekType.UPPER,
+            "По выбору: Project Management (advanced Level) "
+            "(Управление проектами (продвинутый уровень))",
+        ),
+    ],
+)
+def test_short_week_marker_is_parsed_and_removed_from_subject(
+    text, expected_week, expected_subject,
+):
+    """PDF пишет тип недели сокращённо; маркер не является названием курса."""
+    lesson = only(parse_cell(text))
+
+    assert lesson.week_type is expected_week
+    assert lesson.subject == expected_subject
+
+
+def test_teacher_initials_are_not_mistaken_for_a_short_week_marker():
+    lesson = only(
+        parse_cell(
+            "Аналоговая и цифровая схемотехника (с) Пуховский В.Н. Онлайн"
+        )
+    )
+
+    assert lesson.week_type is None
+    assert lesson.teachers == ("Пуховский В.Н.",)
+
+
+def test_short_week_marker_after_multiword_room_starts_the_next_lesson():
+    """13472: «Креативное пр-во» целиком завершает вторую из трёх пар."""
+    parsed = parse_cell(
+        "Методы и инструменты бизнес-анализа (с) Крюков С.В. ауд.325 "
+        "Анализ и аудит персонала (с) Маличенко И.П. ауд. Креативное пр-во "
+        "В.Н. Международные стандарты финансовой отчетности (л)/(с) "
+        "Полховская Т.Ю., Шевченко А.А. ауд.209"
+    )
+
+    assert parsed.reason is None
+    assert len(parsed.lessons) == 3
+    assert parsed.lessons[1].room == "Креативное пр-во"
+    assert parsed.lessons[2].week_type is WeekType.UPPER
+    assert parsed.lessons[2].subject == "Международные стандарты финансовой отчетности"
+
+
 def test_no_week_marker_means_every_week():
     """NULL = каждую неделю. Это ОСНОВНОЙ случай, а не исключение."""
     lesson = only(parse_cell("Математика (с) Кораблина Ю.В. ауд.106"))

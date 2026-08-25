@@ -423,6 +423,10 @@ class ImportReport:
     def unparsed(self) -> int:
         return sum(d.unparsed for d in self.documents)
 
+    @property
+    def failed(self) -> int:
+        return sum(d.status == STATUS_FAILED for d in self.documents)
+
     def summary(self) -> str:
         by_status = Counter(d.status for d in self.documents)
         return (
@@ -479,7 +483,11 @@ def run_schedule_import(
     try:
         report = import_all(session, fetcher or Fetcher())
         logger.info("Импорт расписания завершён: %s", report.summary())
-        return {"summary": report.summary(), "missing": list(report.missing)}
+        return {
+            "summary": report.summary(),
+            "failed": report.failed,
+            "missing": list(report.missing),
+        }
     except Exception as exc:  # noqa: BLE001 — фоновая задача не роняет процесс
         session.rollback()
         logger.exception("Импорт расписания упал")

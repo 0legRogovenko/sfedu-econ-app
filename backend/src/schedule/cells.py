@@ -48,10 +48,19 @@ _ROOM_TAIL = re.compile(
 # Аудитория как ОГРАНИЧЕННЫЙ токен — только для поиска границы между занятиями.
 # Жадный вариант тут не годится: он проглотил бы следующее занятие целиком.
 _ROOM_TOKEN = re.compile(
-    r"(?:\bауд|\bа)\.\.?\s*\S+|Онлайн|онлайн|Moodle|\bГ-\d\S*"
+    r"(?:\bауд|\bа)\.\.?\s*"
+    r"(?:Креативное\s+пр-во|Креативное|Креат\.пр|Кр\.пр-во|\S+)"
+    r"|Онлайн|онлайн|Moodle|\bГ-\d\S*"
 )
 
 _WEEK = re.compile(r"\b(Верхняя|Нижняя)\s+неделя\b", re.IGNORECASE)
+# В PDF тип недели обычно стоит в начале занятия; иногда перед ним остаётся
+# служебное «По выбору:». Якорь защищает инициалы преподавателя «Пуховский В.Н.»
+# от ошибочного превращения в верхнюю неделю.
+_WEEK_SHORT = re.compile(
+    r"^(?P<prefix>По\s+выбору:\s*)?(?P<type>[ВН])\s*\.\s*Н\s*\.\s*",
+    re.IGNORECASE,
+)
 _SUBGROUP = re.compile(r"(\d)\s*п\s*/\s*г", re.IGNORECASE)
 # Заглушка «занятий нет»: '…………….', '……..', '.', ',,,,,,'
 _PLACEHOLDER = re.compile(r"^[.…,\s·]+$")
@@ -152,6 +161,12 @@ def parse_lesson(text: str, cell_raw: str) -> ParsedLesson | None:
     if week:
         week_type = WeekType.UPPER if week.group(1).lower() == "верхняя" else WeekType.LOWER
         flat = (flat[: week.start()] + " " + flat[week.end() :]).strip()
+
+    short_week = _WEEK_SHORT.match(flat)
+    if short_week:
+        week_type = WeekType.UPPER if short_week.group("type").lower() == "в" else WeekType.LOWER
+        prefix = short_week.group("prefix") or ""
+        flat = f"{prefix}{flat[short_week.end():]}".strip()
 
     subgroup = None
     label = _SUBGROUP.search(flat)
