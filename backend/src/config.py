@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     admin_username: str = "admin"
     admin_password: str
     secret_key: str
+    # Привилегированный интерфейс fail-closed: каждый доверенный deployment
+    # включает его явно. Публичный serverless beta оставляет значение false.
+    admin_enabled: bool = False
 
     # Планировщик парсеров. Выключен по умолчанию — не стартует в тестах
     # и при alembic; включается в контейнере api (ENABLE_SCHEDULER=1).

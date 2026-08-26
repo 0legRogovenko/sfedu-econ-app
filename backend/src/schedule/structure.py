@@ -64,7 +64,6 @@ _MASTER_PROGRAM = re.compile(r"Магистерск\w*\s*программ\w*\s*�
 # вшит в заголовок программы, строки 'Группа N.M' на странице нет.
 _TITLE_WITH_GROUP = re.compile(r"«(.+?)»\s*(\d+\.\d+)")
 _COURSE = re.compile(r"(\d)\s*курс", re.IGNORECASE)
-_TIME_HEADER = re.compile(r"Время", re.IGNORECASE)
 _FORM = re.compile(r"Очная\s*форма", re.IGNORECASE)
 _WEEK_HEADING = re.compile(r"(ВЕРХНЯЯ|НИЖНЯЯ)\s*НЕДЕЛЯ|НЕДЕЛЯ\s*:\s*(ВЕРХНЯЯ|НИЖНЯЯ)", re.IGNORECASE)
 
@@ -72,6 +71,13 @@ REASON_TIME_OFF_GRID = "время вне сетки пар"
 REASON_DAY_UNKNOWN = "день недели не распознан"
 
 _DAY_LETTERS = {day: Counter(day) for day in WEEKDAYS}
+_TIME_HEADER_LETTERS = Counter("ВРЕМЯ")
+
+
+def _is_time_header(text: str) -> bool:
+    """True для обычного «Время» и повёрнутого PDF-текста «я м е р В»."""
+    letters = Counter(re.sub(r"[^А-ЯЁа-яё]", "", text).upper())
+    return letters == _TIME_HEADER_LETTERS
 
 
 def decode_weekday(text: str) -> int | None:
@@ -284,7 +290,7 @@ def parse_header(grid: Grid) -> GridHeader | None:
     time_header = [
         cell.row
         for cell in grid.cells
-        if _TIME_HEADER.search(cell.text) and cell.col_start == time_col
+        if _is_time_header(cell.text) and cell.col_start == time_col
     ]
     if not time_header:
         return None  # страница-продолжение: колонка времени есть, а шапки нет
@@ -353,6 +359,37 @@ def _course_from_groups(groups: tuple[GroupColumn, ...]) -> int | None:
     return courses.pop() if len(courses) == 1 else None
 
 
+def _time_cell_for_row(grid: Grid, row: int, time_col: int) -> Cell | None:
+    """Ячейка времени строки, включая доказанное вертикальное объединение.
+
+    В PDF объединённая по высоте ячейка принадлежит только первой строке
+    pdfplumber. Наследуем её ниже лишь когда bbox времени геометрически
+    накрывает всю текущую строку; по одному только отсутствию времени не
+    угадываем, чтобы не протянуть предыдущую пару в новый слот.
+    """
+    direct = grid.cell_at(row, time_col)
+    if direct is not None:
+        return direct
+
+    row_boxes = [cell.bbox for cell in grid.row(row) if cell.bbox is not None]
+    if not row_boxes:
+        return None  # DOCX и строки без геометрии не дают доказательства
+    row_top = min(box[1] for box in row_boxes)
+    row_bottom = max(box[3] for box in row_boxes)
+
+    candidates = [
+        cell
+        for cell in grid.cells
+        if cell.row < row
+        and cell.col_start <= time_col <= cell.col_end
+        and cell.bbox is not None
+        and _SLOT.search(cell.text)
+        and cell.bbox[1] <= row_top + 1.0
+        and cell.bbox[3] >= row_bottom - 1.0
+    ]
+    return max(candidates, key=lambda cell: cell.row, default=None)
+
+
 def parse_rows(
     grid: Grid,
     header: GridHeader,
@@ -405,7 +442,7 @@ def parse_rows(
                 current_day = None
                 reason = REASON_DAY_UNKNOWN
 
-        time_cell = grid.cell_at(row, header.time_col)
+        time_cell = _time_cell_for_row(grid, row, header.time_col)
         time_raw = time_cell.text if time_cell and not time_cell.is_empty else None
         pair = parse_pair_number(time_raw) if time_raw else None
         bounds = parse_time_bounds(time_raw) if pair is not None else None

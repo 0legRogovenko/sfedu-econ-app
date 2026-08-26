@@ -14,8 +14,7 @@ from sqlalchemy import select
 from src.alerts import notify_admin
 from src.database import SessionLocal
 from src.models import News, NewsSource
-from src.parsers import sfedu_news
-from src.parsers.sfedu_news import _default_fetch
+from src.parsers import econ_news, sfedu_news
 
 logger = logging.getLogger(__name__)
 
@@ -76,19 +75,76 @@ def _sync_sfedu(session, fetch: Callable[[str], str]) -> int:
     return new_count
 
 
-_SOURCES: dict[str, Callable] = {"sfedu": _sync_sfedu}
+def _sync_econ(session, fetch: Callable[[str], str]) -> int:
+    """Синхронизирует официальную ленту экономического факультета."""
+    sitemap = fetch(econ_news.SITEMAP_URL)
+    candidates = econ_news.parse_sitemap(sitemap)
+    if not candidates:
+        logger.warning("econ: sitemap скачан, но новостей категории 15 нет")
+        notify_admin(
+            "Парсер новостей econ: sitemap скачан, но новостей категории 15 "
+            "не найдено — вероятно, изменилась структура сайта."
+        )
+        return 0
+
+    existing = set(
+        session.scalars(
+            select(News.url).where(News.source == NewsSource.ECON)
+        ).all()
+    )
+    new_count = 0
+    for candidate in candidates:
+        if candidate.url in existing:
+            continue
+
+        title = candidate.title
+        body = candidate.title
+        published_at = candidate.published_at
+        image_url = None
+        try:
+            parsed = econ_news.parse_article(fetch(candidate.url), candidate)
+            if parsed is not None:
+                title = parsed.title
+                body = parsed.body
+                published_at = parsed.published_at
+                image_url = parsed.image_url
+        except Exception:  # noqa: BLE001 — одна статья не роняет источник
+            logger.warning("Не удалось загрузить статью факультета %s", candidate.url)
+
+        session.add(
+            News(
+                title=title,
+                body=body,
+                source=NewsSource.ECON,
+                url=candidate.url,
+                image_url=image_url,
+                published_at=published_at,
+            )
+        )
+        existing.add(candidate.url)
+        new_count += 1
+
+    if new_count:
+        session.commit()
+    return new_count
+
+
+_SOURCES: dict[str, tuple[Callable, Callable[[str], str]]] = {
+    "sfedu": (_sync_sfedu, sfedu_news._default_fetch),
+    "econ": (_sync_econ, econ_news.default_fetch),
+}
 
 
 def run_news_parsers(
     session_factory: Callable = SessionLocal,
-    fetch: Callable[[str], str] = _default_fetch,
+    fetch: Callable[[str], str] | None = None,
 ) -> dict:
     """Запускает все источники, изолируя ошибки. Возвращает сводку по каждому."""
     result: dict[str, dict] = {}
-    for name, sync in _SOURCES.items():
+    for name, (sync, default_fetch) in _SOURCES.items():
         session = session_factory()
         try:
-            new_count = sync(session, fetch)
+            new_count = sync(session, fetch or default_fetch)
             result[name] = {"new": new_count}
         except Exception as exc:  # noqa: BLE001 — источник изолирован
             session.rollback()

@@ -64,6 +64,12 @@ def grids_13497():
     return extract_pdf(FIXTURES / "13497.pdf")
 
 
+@pytest.fixture(scope="module")
+def grids_14178():
+    """Актуальный 4 курс, осень 2026: PDF с повёрнутым словом «Время»."""
+    return extract_pdf(FIXTURES / "14178.pdf")
+
+
 def page(grids, number):
     return next(g for g in grids if g.page == number)
 
@@ -339,6 +345,43 @@ def test_time_column_is_not_always_column_one(grids_13830):
 
 def test_time_column_is_one_for_bachelors(grids_13469):
     assert find_time_column(grids_13469[1]) == 1
+
+
+def test_rotated_time_header_still_defines_bachelor_groups(grids_14178):
+    """14178 p2: Word повернул заголовок, pdfplumber вернул «я м е р В».
+
+    Колонка времени по слотам находится верно, но без распознавания самой
+    повёрнутой подписи parse_header возвращал None. В результате страницы 2–4
+    целиком пропускались, а у 4 курса в приложении оставались только две пары
+    отдельной группы 3.7 с последней страницы.
+    """
+    header = parse_header(page(grids_14178, 2))
+
+    assert header is not None
+    assert header.header_row == 1
+    assert header.time_col == 2
+    assert header.level is EducationLevel.BACHELOR
+    assert {group.number for group in header.groups} == {
+        "4.1", "4.2", "4.3", "4.4", "4.5", "4.6",
+    }
+
+
+def test_vertically_merged_time_is_inherited_by_split_week_rows(grids_14178):
+    """14178 p3: одна пара разбита на В.Н./Н.Н. двумя строками справа.
+
+    Ячейка времени 11:55–13:30 геометрически тянется через обе строки, но
+    pdfplumber прикрепляет её только к первой. Вторая строка с нижней неделей
+    обязана унаследовать тот же слот, а не уйти в очередь как «без времени».
+    """
+    grid = page(grids_14178, 3)
+    header = parse_header(grid)
+    rows = {row.row: row for row in parse_rows(grid, header)}
+
+    assert "Прикладная" in grid.row(11)[0].text
+    assert rows[11].weekday == 2
+    assert rows[11].pair_number == 3
+    assert rows[11].time_raw == rows[10].time_raw
+    assert rows[11].reason is None
 
 
 # --- магистры --------------------------------------------------------------

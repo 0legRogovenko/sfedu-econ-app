@@ -35,6 +35,7 @@ void main() {
 
     for (final invalid in [
       'http://beta.econ.example',
+      'https://beta.invalid',
       'https://localhost:8000',
       'https://127.0.0.1',
       'https://[::1]',

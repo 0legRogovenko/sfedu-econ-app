@@ -1,6 +1,7 @@
 # Эконом ЮФУ — бэкенд
 
-FastAPI + PostgreSQL. Продакшен-развёртывание — см. `DEPLOY.md`.
+FastAPI + PostgreSQL. Продакшен-развёртывание — см. `DEPLOY.md`; бесплатный
+serverless-стенд для закрытой Android-беты — `DEPLOY_FREE_BETA.md`.
 
 ## Запуск (Docker)
 

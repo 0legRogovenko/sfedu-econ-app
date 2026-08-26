@@ -176,6 +176,20 @@ def _apply_overrides(db: Session, people: dict[tuple, PersonRow]) -> None:
     for override in db.scalars(select(DirectoryOverride)):
         key = _override_key(override.match_name)
         if key is None:
+            # Пользователь может потребовать убрать устаревшую запись, когда
+            # известна только фамилия. Разрешаем такой формат ТОЛЬКО для
+            # hidden=True; почту без обоих инициалов назначать опасно.
+            surname = override.match_name.strip()
+            if (
+                override.hidden
+                and surname
+                and " " not in surname
+                and "." not in surname
+            ):
+                folded = person_key(surname, "", "")[0]
+                for person_key_value in list(people):
+                    if person_key_value[0] == folded:
+                        people.pop(person_key_value, None)
             continue
         if override.hidden:
             people.pop(key, None)

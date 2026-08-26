@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, Request, Response
-from sqlalchemy import select
+from sqlalchemy import exists, or_, select
 from sqlalchemy.orm import Session
 
 from src.api.etag import json_with_etag
 from src.database import get_db
-from src.models import Group
+from src.models import ExamEvent, Group, Lesson, ScheduleDocument
 from src.schemas import GroupOut
 
 router = APIRouter()
@@ -18,8 +18,21 @@ def list_groups(
     # (магистры). level пишется значением ('bachelor' < 'master'), так что
     # бакалавры идут раньше магистров; внутри курса номер разводит бакалаврские
     # группы, а программа — магистерские (у них number NULL и тождествен).
+    statement = select(Group)
+    if db.scalar(select(ScheduleDocument.id).limit(1)) is not None:
+        # После смены учебного года старые строки groups могут остаться без
+        # единой пары/экзамена. Не показываем технические сироты в онбординге,
+        # но в пустой dev-БД по-прежнему разрешаем ручные группы.
+        statement = statement.where(
+            or_(
+                exists(select(Lesson.id).where(Lesson.group_id == Group.id)),
+                exists(
+                    select(ExamEvent.id).where(ExamEvent.group_id == Group.id)
+                ),
+            )
+        )
     groups = db.scalars(
-        select(Group).order_by(
+        statement.order_by(
             Group.level, Group.course, Group.number, Group.program
         )
     ).all()

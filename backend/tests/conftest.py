@@ -5,6 +5,7 @@ os.environ["DATABASE_URL"] = "sqlite://"
 os.environ["ADMIN_USERNAME"] = "admin"
 os.environ["ADMIN_PASSWORD"] = "test-password"
 os.environ["SECRET_KEY"] = "test-secret"
+os.environ["ADMIN_ENABLED"] = "1"
 
 import pytest
 from sqlalchemy import create_engine

@@ -57,6 +57,10 @@ void main() {
     expect(workflow, contains('flutter-version: 3.44.6'));
     expect(workflow, contains(r'vars.BETA_API_BASE_URL'));
     expect(workflow, contains('dart tool/validate_beta_url.dart'));
+    expect(workflow, contains('Probe beta API contract'));
+    expect(workflow, contains(r'"$origin/health"'));
+    expect(workflow, contains(r'"$origin/api/version"'));
+    expect(workflow, contains(r'"$origin/api/groups"'));
     expect(workflow, contains('ANDROID_KEYSTORE_BASE64'));
     expect(workflow, contains('ANDROID_KEYSTORE_PASSWORD'));
     expect(workflow, contains('ANDROID_KEY_ALIAS'));

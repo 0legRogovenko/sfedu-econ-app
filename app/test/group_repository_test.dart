@@ -109,4 +109,8 @@ void main() {
     });
     expect(group.level, EducationLevel.bachelor);
   });
+
+  test('неизвестный id не показывается студенту как номер группы', () {
+    expect(groupNameOf(const [], 146), 'Группа');
+  });
 }

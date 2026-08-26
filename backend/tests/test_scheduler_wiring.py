@@ -67,6 +67,28 @@ def test_schedule_import_failure_alerts_admin_and_does_not_raise(monkeypatch):
     assert alerts and "сеть недоступна" in alerts[0]
 
 
+def test_schedule_import_reports_partial_document_failures(monkeypatch):
+    from src.schedule import importer
+
+    report = importer.ImportReport(
+        documents=[
+            importer.DocumentReport(
+                p_doc_id="1",
+                section="Осень",
+                label="1 курс",
+                doc_type=importer.DocType.UNKNOWN,
+                status=importer.STATUS_FAILED,
+                error="broken document",
+            )
+        ]
+    )
+    monkeypatch.setattr(importer, "import_all", lambda *args, **kwargs: report)
+
+    result = importer.run_schedule_import(session_factory=_FakeSession)
+
+    assert result["failed"] == 1
+
+
 def test_notify_admin_never_raises_without_config(monkeypatch):
     # без токена/чата notify_admin молчит и не бросает
     from src import alerts

@@ -36,7 +36,7 @@ from src.models import (
 )
 from src.schedule import importer
 from src.schedule.fetch import FetchedDocument
-from src.schedule.source import download_url, parse_index
+from src.schedule.source import ScheduleLink, download_url, parse_index
 from src.schedule.structure import week_type_from_heading
 
 FIXTURES = Path(__file__).parent / "fixtures" / "schedule"
@@ -322,6 +322,59 @@ class TestCorpus:
         cells = session.scalars(select(UnparsedCell)).all()
         assert cells
         assert all(c.reason and c.raw_text.strip() and c.document_id for c in cells)
+
+
+def test_current_fourth_course_pdf_corrects_mislabeled_group_37_to_47():
+    """14178: страница 5 подписана 3.7, но это продолжение 4 курса — группа 4.7.
+
+    Это отдельная актуальная регрессионная фикстура, а не часть исторического
+    golden-корпуса: официальный файл появился 25.08.2026 уже после его снятия.
+    В источнике опечатка в шапке, но две пары блока принадлежат 4.7 и не должны
+    ни исчезать, ни попадать в каталог третьего курса.
+    """
+    content = (FIXTURES / "14178.pdf").read_bytes()
+    session = make_session()
+    try:
+        report = importer.import_all(
+            session,
+            FakeFetcher(overrides={"14178": content}),
+            links=[ScheduleLink("Осенний семестр", "4 курс", "14178")],
+        )
+        document = report.documents[0]
+        course_four_lessons = session.scalar(
+            select(func.count())
+            .select_from(Lesson)
+            .join(Group, Lesson.group_id == Group.id)
+            .where(Group.course == 4)
+        )
+        reasons = session.scalars(select(UnparsedCell.reason)).all()
+        lower_week_lesson = session.scalar(
+            select(Lesson)
+            .join(Group, Lesson.group_id == Group.id)
+            .where(
+                Group.number == "4.1",
+                Lesson.subject == "Прикладная эконометрика",
+                Lesson.weekday == 2,
+                Lesson.pair_number == 3,
+            )
+        )
+
+        assert document.error is None
+        assert course_four_lessons >= 100
+        assert document.unparsed <= 5
+        assert importer.REASON_NO_PAIR not in reasons
+        assert lower_week_lesson is not None
+        assert lower_week_lesson.week_type is WeekType.LOWER
+        group_47 = session.scalar(select(Group).where(Group.number == "4.7"))
+        assert group_47 is not None
+        assert session.scalars(
+            select(Lesson.subject)
+            .where(Lesson.group_id == group_47.id)
+            .order_by(Lesson.pair_number)
+        ).all() == ["Цифровая экономика", "Цифровая экономика"]
+        assert session.scalar(select(Group).where(Group.number == "3.7")) is None
+    finally:
+        session.close()
 
 
 class TestGoldenCorpus:
@@ -747,9 +800,10 @@ class TestSemesterHeadingIsNotAModule:
         переноса модуля вперёд по страницам-продолжениям module=None остаётся
         ровно у семестровых 7 — остальные вернулись к своим модулям.
 
-        Всего пар 239, а не 241: две «подгруппы» на p11 были фантомом от съезда
-        ячейки семинара на 6% в колонку соседней группы (БАГ 3) — порог
-        значимого перекрытия их убрал, настоящая пара соседа осталась.
+        Всего пар 297: к прежним 239 подтверждённым парам добавились 58
+        субботних дисциплин МУАМ, которые раньше целиком уходили в unparsed как
+        «несколько занятий без границ». Две «подгруппы» на p11 по-прежнему
+        исключены как фантом от съезда ячейки на 6% в колонку соседа.
         """
         session = make_session()
         fetcher = FakeFetcher()
@@ -761,7 +815,7 @@ class TestSemesterHeadingIsNotAModule:
         importer.import_all(session, fetcher, links=links)
 
         lessons = session.scalars(select(Lesson)).all()
-        assert len(lessons) == 239, "пары потеряны вместе с фантомом"
+        assert len(lessons) == 297, "пары потеряны вместе с фантомом или МУАМ"
         by_module = Counter(lesson.module_id for lesson in lessons)
         assert by_module[None] == 7, (
             "module=None должен остаться только у семестрового блока p13, "

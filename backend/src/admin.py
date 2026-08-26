@@ -187,6 +187,9 @@ class AssistantLogAdmin(ModelView, model=models.AssistantLog):
 
 
 def setup_admin(app: FastAPI) -> None:
+    if not settings.admin_enabled:
+        return
+
     admin = Admin(
         app,
         engine,

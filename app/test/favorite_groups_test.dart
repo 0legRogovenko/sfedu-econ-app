@@ -100,4 +100,25 @@ void main() {
     // переключать больше не на что — группа остаётся, просто не избранная
     expect(container.read(selectedGroupIdProvider), 3);
   });
+
+  test('устаревшие id заменяются реальной группой после загрузки справочника',
+      () async {
+    final container = await _container(prefsValues: {
+      'selected_group_id': 146,
+      'favorite_group_ids': ['146', '152'],
+    });
+
+    await container
+        .read(favoriteGroupIdsProvider.notifier)
+        .reconcile([6, 13]);
+
+    expect(container.read(selectedGroupIdProvider), 6);
+    expect(container.read(favoriteGroupIdsProvider), [6]);
+    expect(
+      container
+          .read(sharedPreferencesProvider)
+          .getStringList('favorite_group_ids'),
+      ['6'],
+    );
+  });
 }

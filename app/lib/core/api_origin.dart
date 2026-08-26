@@ -46,6 +46,15 @@ String resolveApiBaseUrl({
       'Release-сборка не может использовать локальный API_BASE_URL.',
     );
   }
+  // RFC 2606 reserves .invalid for names that must never resolve. A release
+  // APK built with such a placeholder looks correctly configured but can only
+  // spin/fail on every real device, which is worse than an explicit startup
+  // configuration error.
+  if (requireHttps && (host == 'invalid' || host.endsWith('.invalid'))) {
+    throw const ReleaseConfigurationException(
+      'Release-сборка не может использовать тестовый API_BASE_URL.',
+    );
+  }
 
   return uri.replace(path: '').toString().replaceFirst(RegExp(r'/$'), '');
 }

@@ -31,7 +31,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 from collections import Counter
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime, time
 
 import pdfplumber
@@ -423,6 +423,10 @@ class ImportReport:
     def unparsed(self) -> int:
         return sum(d.unparsed for d in self.documents)
 
+    @property
+    def failed(self) -> int:
+        return sum(d.status == STATUS_FAILED for d in self.documents)
+
     def summary(self) -> str:
         by_status = Counter(d.status for d in self.documents)
         return (
@@ -479,7 +483,11 @@ def run_schedule_import(
     try:
         report = import_all(session, fetcher or Fetcher())
         logger.info("Импорт расписания завершён: %s", report.summary())
-        return {"summary": report.summary(), "missing": list(report.missing)}
+        return {
+            "summary": report.summary(),
+            "failed": report.failed,
+            "missing": list(report.missing),
+        }
     except Exception as exc:  # noqa: BLE001 — фоновая задача не роняет процесс
         session.rollback()
         logger.exception("Импорт расписания упал")
@@ -611,6 +619,17 @@ def _import_grid_document(session, document, content: bytes, link, report) -> No
         found = parse_header(grid)
         first_row: int | None = None
         if found is not None:
+            found = _correct_known_group_header(found, link)
+            if _is_foreign_bachelor_block(found, link.label):
+                # Неизвестный блок другого курса не переносим автоматически:
+                # это может быть действительно приложенная чужая таблица.
+                # Подтверждённые опечатки исправляются точечно выше.
+                _mark_skipped_grid(report.ledger, index, grid)
+                header = None
+                prev_shape = None
+                carry_day = None
+                carry_module = None
+                continue
             # Тот же блок групп на новой странице — модуль тянем вперёд. Заголовок
             # модуля стоит только на ПЕРВОЙ странице модуля: 13470 — три страницы
             # одних и тех же 6 групп (Пн/Вт, Ср/Чт, Пт/Сб), '(1 сентября – 2
@@ -677,6 +696,46 @@ def _drop_empty_modules(session, document) -> None:
         if used is None:
             session.delete(module)
     session.flush()
+
+
+def _is_foreign_bachelor_block(header: GridHeader, label: str) -> bool:
+    """Блок N.x внутри файла другого курса не становится отдельной группой."""
+    if header.level is not EducationLevel.BACHELOR:
+        return False
+    match = _MASTER_COURSE.search(label)
+    if match is None:
+        return False
+    document_course = int(match.group(1))
+    group_courses = {
+        int(group.number.split(".")[0])
+        for group in header.groups
+        if group.number is not None
+    }
+    return bool(group_courses) and group_courses != {document_course}
+
+
+def _correct_known_group_header(header: GridHeader, link) -> GridHeader:
+    """Исправляет подтверждённую опечатку в конкретном официальном файле.
+
+    14178 целиком подписан «4 курс», а отдельная последняя страница программы
+    «Информационные технологии и бизнес-аналитика» помечена как 3.7. Это группа
+    4.7: пользователь подтвердил принадлежность, и в блоке есть две реальные
+    пары. Общую эвристику «чужой курс → переписать» не вводим — вложенный блок
+    действительно может относиться к другому курсу.
+    """
+    numbers = tuple(group.number for group in header.groups)
+    if (
+        str(link.p_doc_id) == "14178"
+        and link.label.strip().lower() == "4 курс"
+        and header.level is EducationLevel.BACHELOR
+        and numbers == ("3.7",)
+    ):
+        return replace(
+            header,
+            groups=(replace(header.groups[0], number="4.7"),),
+            course=4,
+        )
+    return header
 
 
 def _import_row(
@@ -776,7 +835,11 @@ def _add_lesson(
 
     # Границы занятия — реальное окно из ячейки времени (у блока в 3 ак. часа
     # оно шире одной пары); для обычной пары это те же внешние края её половин.
-    starts = slot.starts_at or _pair_bounds(slot.pair_number)[0]
+    starts = (
+        parsed.starts_at_override
+        or slot.starts_at
+        or _pair_bounds(slot.pair_number)[0]
+    )
     ends = slot.ends_at or _pair_bounds(slot.pair_number)[1]
     session.add(
         Lesson(
@@ -1200,6 +1263,15 @@ def _mark_structural_grid(ledger: Ledger, index: int, grid: Grid) -> None:
             ledger.mark(index, cell, CELL_EMPTY)
         else:
             ledger.mark_structural(index, cell)
+
+
+def _mark_skipped_grid(ledger: Ledger, index: int, grid: Grid) -> None:
+    """Осознанно исключённый блок: каждая ячейка остаётся в Ledger."""
+    for cell in grid.cells:
+        if cell.is_empty:
+            ledger.mark(index, cell, CELL_EMPTY)
+        else:
+            ledger.mark_skipped(index, cell)
 
 
 def _group_ids(header: GridHeader) -> tuple:

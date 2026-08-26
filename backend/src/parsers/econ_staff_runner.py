@@ -20,13 +20,37 @@ import time
 
 from src.alerts import notify_admin
 from src.database import SessionLocal
+from src.directory_seed import seed_directory_overrides
 from src.models import Contact, ContactSource
-from src.parsers import econ_staff
+from src.parsers import econ_staff, sfedu_staff
 from src.parsers.econ_staff import Person
 
 logger = logging.getLogger(__name__)
 
 DEANERY_SECTION = "Деканат"
+TEACHERS_SECTION = "Преподаватели"
+
+# Последний подтверждённый состав деканата с официальной страницы факультета.
+# Косолапова находится в отдельном блоке «Декан», а не в карусели, поэтому
+# старый парсер карточек её не видел. Список нужен только для секции fallback;
+# ФИО, должности и почты всегда берутся из живого реестра ЮФУ.
+_DEANERY_NAMES = frozenset(
+    {
+        "Косолапова Наталья Алексеевна",
+        "Ищенко-Падукова Оксана Александровна",
+        "Шаль Анна Викторовна",
+        "Чернова Ольга Анатольевна",
+        "Фурса Елена Владимировна",
+        "Алехин Валерий Викторович",
+        "Маличенко Ирина Петровна",
+        "Христова София Михайловна",
+        "Несоленая Олеся Владимировна",
+        "Педченко Екатерина Александровна",
+        "Максютова Лариса Вадимовна",
+        "Кудаева Элина Анзоровна",
+        "Сырых Кристина Алексеевна",
+    }
+)
 
 # robots.txt sfedu.ru: Crawl-delay: 30. Личные страницы там же, поэтому
 # соблюдаем ту же паузу, что и импорт расписания.
@@ -80,6 +104,26 @@ def _rows(section: str, people: list[Person], start_order: int) -> list[Contact]
     ]
 
 
+def _official_rows(people: list[sfedu_staff.StaffPerson]) -> list[Contact]:
+    """Живой реестр ЮФУ → две секции: деканат, затем преподаватели."""
+    ordered = sorted(people, key=lambda person: person.name.lower())
+    return [
+        Contact(
+            section=(
+                DEANERY_SECTION
+                if person.name in _DEANERY_NAMES
+                else TEACHERS_SECTION
+            ),
+            name=person.name,
+            role=person.role or None,
+            email=person.email,
+            source=ContactSource.ECON_SITE,
+            sort_order=index,
+        )
+        for index, person in enumerate(ordered)
+    ]
+
+
 # Проверять подстроку "sfedu.ru" нельзя: она входит и в "econ-sfedu.ru", и мы
 # бы ходили за почтой на страницы кафедр — по 30 секунд паузы впустую.
 #
@@ -122,6 +166,11 @@ def fill_emails(
     fetched_any = False
 
     for row in rows:
+        # Fallback-реестр ЮФУ уже публикует логин в своей таблице. Его адрес
+        # надёжнее и быстрее, чем повторно открывать ту же личную страницу.
+        if row.email:
+            filled += 1
+            continue
         cached = known.get(row.name)
         if cached:
             row.email = cached
@@ -203,6 +252,13 @@ def collect(fetch: Callable[[str], str]) -> tuple[list[Contact], list[Person]]:
         rows += _rows(department.name, people, start_order=order * 100)
         everyone += people
 
+    if not rows:
+        # econ-sfedu.ru периодически падает в index.php до формирования HTML.
+        # Не оставляем новую установку с пустым справочником: официальный
+        # университетский реестр доступен независимо и содержит логины почт.
+        fallback = sfedu_staff.parse_staff_page(fetch(sfedu_staff.STAFF_URL))
+        rows = _official_rows(fallback)
+
     return rows, everyone
 
 
@@ -259,6 +315,7 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO)
     with SessionLocal() as session:
         count = sync(session)
+        overrides = seed_directory_overrides(session)
         session.commit()
         manual = session.scalar(
             select(Contact)
@@ -270,6 +327,7 @@ def main() -> None:
             count,
             "; записи админа сохранены" if manual else "",
         )
+        logger.info("Подтверждённых правок справочника: %s", overrides)
 
 
 if __name__ == "__main__":
