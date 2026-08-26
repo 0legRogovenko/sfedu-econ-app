@@ -48,6 +48,22 @@ jobs:
           origin="$(dart tool/validate_beta_url.dart "$BETA_API_BASE_URL")"
           echo "origin=$origin" >> "$GITHUB_OUTPUT"
 
+      - name: Probe beta API contract
+        env:
+          API_ORIGIN: ${{ steps.endpoint.outputs.origin }}
+        run: |
+          set -euo pipefail
+          origin="$API_ORIGIN"
+          probe() {
+            curl --fail --silent --show-error \
+              --retry 2 --retry-all-errors \
+              --connect-timeout 10 --max-time 45 \
+              "$1" >/dev/null
+          }
+          probe "$origin/health"
+          probe "$origin/api/version"
+          probe "$origin/api/groups"
+
       - name: Configure release signing
         working-directory: app
         env:
