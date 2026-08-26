@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sfedu_econ/features/onboarding/group_repository.dart';
 
@@ -6,6 +8,19 @@ import 'package:sfedu_econ/features/onboarding/group_repository.dart';
 /// number:null роняли декод, а через него и весь список: одна испорченная
 /// группа отравляла ответ ВСЕМ, включая бакалавров.
 void main() {
+  test(
+    'зависший каталог групп завершается ошибкой, а не вечной загрузкой',
+    () async {
+      await expectLater(
+        enforceGroupCatalogDeadline(
+          Completer<List<Group>>().future,
+          const Duration(milliseconds: 10),
+        ),
+        throwsA(isA<TimeoutException>()),
+      );
+    },
+  );
+
   test('магистр без номера декодируется, а не бросает TypeError', () {
     final group = Group.fromJson(const {
       'id': 7,

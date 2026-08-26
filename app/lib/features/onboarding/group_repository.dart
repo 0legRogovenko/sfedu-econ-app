@@ -11,9 +11,9 @@ enum EducationLevel {
   /// Незнакомое значение (бэкенд завёл новый уровень) не должно ронять декод
   /// всего списка: одна такая группа оставила бы без онбординга всех.
   static EducationLevel parse(Object? raw) => EducationLevel.values.firstWhere(
-        (level) => level.name == raw,
-        orElse: () => EducationLevel.bachelor,
-      );
+    (level) => level.name == raw,
+    orElse: () => EducationLevel.bachelor,
+  );
 }
 
 class Group {
@@ -45,13 +45,13 @@ class Group {
   String get displayName => number ?? program ?? 'Группа $id';
 
   factory Group.fromJson(Map<String, dynamic> json) => Group(
-        id: json['id'] as int,
-        course: json['course'] as int,
-        number: json['number'] as String?,
-        program: json['program'] as String?,
-        level: EducationLevel.parse(json['level']),
-        subgroupCount: json['subgroup_count'] as int,
-      );
+    id: json['id'] as int,
+    course: json['course'] as int,
+    number: json['number'] as String?,
+    program: json['program'] as String?,
+    level: EducationLevel.parse(json['level']),
+    subgroupCount: json['subgroup_count'] as int,
+  );
 }
 
 /// Имя группы по id для подписей (заголовок расписания, избранные, карточка
@@ -66,10 +66,26 @@ String groupNameOf(List<Group> groups, int id) {
   return 'Группа';
 }
 
+/// Последний предохранитель первого запуска. Таймауты Dio ограничивают
+/// соединение и чтение ответа, но системный DNS/сетевой стек на отдельных
+/// Android-устройствах может зависнуть до того, как Dio начнёт одну из этих
+/// фаз. Future-level deadline гарантирует переход онбординга из спиннера в
+/// состояние «Повторить».
+final groupCatalogTimeoutProvider = Provider<Duration>(
+  (ref) => const Duration(seconds: 15),
+);
+
+Future<T> enforceGroupCatalogDeadline<T>(Future<T> request, Duration timeout) =>
+    request.timeout(timeout);
+
 /// Список групп с бэкенда. В тестах переопределяется оверрайдом.
 final groupsProvider = FutureProvider<List<Group>>((ref) async {
   final dio = ref.watch(dioProvider);
-  final response = await dio.get<List<dynamic>>('/api/groups');
+  final timeout = ref.watch(groupCatalogTimeoutProvider);
+  final response = await enforceGroupCatalogDeadline(
+    dio.get<List<dynamic>>('/api/groups'),
+    timeout,
+  );
   return (response.data ?? [])
       .map((item) => Group.fromJson(item as Map<String, dynamic>))
       .toList();
