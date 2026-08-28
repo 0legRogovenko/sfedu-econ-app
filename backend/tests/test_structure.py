@@ -162,6 +162,55 @@ def test_straddle_block_maps_to_the_starting_pair(time_raw, pair):
     assert parse_pair_number(time_raw) == pair
 
 
+def test_master_third_evening_slot_is_not_dropped():
+    """У магистров официальный вечерний слот продолжается до 21:40.
+
+    Это третий последовательный слот таблицы (после 16:40–18:20 и
+    18:25–20:00), поэтому для сортировки он занимает позицию 7. В обычной
+    бакалаврской сетке такой интервал по-прежнему не угадываем.
+    """
+    from datetime import time
+
+    raw = "2005-2050\n2055-2140"
+
+    assert parse_pair_number(raw) is None
+    assert parse_pair_number(raw, level=EducationLevel.MASTER) == 7
+    assert parse_time_bounds(raw, level=EducationLevel.MASTER) == (
+        time(20, 5),
+        time(21, 40),
+    )
+
+
+def test_master_single_late_half_keeps_the_first_evening_slot_free_of_collision():
+    """17:35–18:20 бывает отдельной лекцией перед слотом 18:25–20:00.
+
+    Ей нужен предыдущий порядковый ключ 5: если дать 6 по стандартной сетке,
+    следующая строка тоже получит 6 и одна из двух реальных пар исчезнет из-за
+    уникальности слота группы.
+    """
+    raw = "1735-1820"
+
+    assert parse_pair_number(raw) is None
+    assert parse_pair_number(raw, level=EducationLevel.MASTER) == 5
+
+
+@pytest.mark.parametrize(
+    "time_raw, pair",
+    [
+        ("1825-1910\n1915-200", 6),
+        ("1735-182\n1825-1910", 6),
+    ],
+)
+def test_master_pdf_superscript_does_not_cut_the_last_zero(time_raw, pair):
+    """В актуальном PDF 14160 последний ноль иногда выпадает из текста.
+
+    Рендер страницы всё равно показывает 18:20/20:00. Чиним только две
+    доказанные master-опечатки; для остальных уровней строка остаётся битой.
+    """
+    assert parse_pair_number(time_raw) is None
+    assert parse_pair_number(time_raw, level=EducationLevel.MASTER) == pair
+
+
 @pytest.mark.parametrize(
     "time_raw, pair",
     [

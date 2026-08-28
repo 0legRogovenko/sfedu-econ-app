@@ -10,6 +10,7 @@ import '../onboarding/group_picker.dart';
 import '../onboarding/group_repository.dart';
 import '../onboarding/selected_group.dart';
 import '../schedule/schedule_providers.dart';
+import '../schedule/muam_filter.dart';
 import '../schedule/subgroup_filter.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -79,6 +80,7 @@ class SettingsScreen extends ConsumerWidget {
           Text('Моя подгруппа', style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
           const _SubgroupSection(),
+          const _MuamSection(),
           const SizedBox(height: 24),
           Text('Тема', style: theme.textTheme.titleMedium),
           RadioGroup<ThemeMode>(
@@ -162,11 +164,13 @@ Future<void> _deleteMyData(BuildContext context, WidgetRef ref) async {
       ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Отмена')),
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Отмена'),
+        ),
         TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Удалить')),
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const Text('Удалить'),
+        ),
       ],
     ),
   );
@@ -294,6 +298,74 @@ class _SubgroupSection extends ConsumerWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+/// Для 3 курса МУАМ — один слот с несколькими дисциплинами по выбору. Полный
+/// перечень нужен здесь, но карточка расписания остаётся короткой: «МУАМ».
+class _MuamSection extends ConsumerWidget {
+  const _MuamSection();
+
+  String _optionLabel(String subject) =>
+      subject.replaceFirst(RegExp(r'^\s*МУАМ\s*[—-]\s*'), '').trim();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final groupId = ref.watch(selectedGroupIdProvider);
+    if (groupId == null) return const SizedBox.shrink();
+
+    final options = ref
+        .watch(scheduleDataProvider)
+        .maybeWhen(
+          data: (data) =>
+              data.lessons
+                  .map((lesson) => lesson.subject)
+                  .where((subject) => subject.trimLeft().startsWith('МУАМ'))
+                  .toSet()
+                  .toList()
+                ..sort(),
+          orElse: () => const <String>[],
+        );
+    if (options.isEmpty) return const SizedBox.shrink();
+    final selected = ref.watch(activeMuamSubjectProvider);
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('МУАМ', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          const Text('Выберите свою дисциплину курса по выбору.'),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            initialValue: options.contains(selected) ? selected : null,
+            isExpanded: true,
+            decoration: const InputDecoration(labelText: 'Дисциплина МУАМ'),
+            hint: const Text('Автоматически'),
+            items: [
+              for (final option in options)
+                DropdownMenuItem(
+                  value: option,
+                  child: Text(
+                    _optionLabel(option),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+            ],
+            onChanged: (value) =>
+                ref.read(muamFiltersProvider.notifier).set(groupId, value),
+          ),
+          if (selected != null)
+            TextButton(
+              onPressed: () =>
+                  ref.read(muamFiltersProvider.notifier).set(groupId, null),
+              child: const Text('Сбросить выбор'),
+            ),
+        ],
+      ),
     );
   }
 }

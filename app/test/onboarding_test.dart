@@ -94,7 +94,7 @@ void main() {
     expect(find.text('Расписание'), findsWidgets);
   });
 
-  testWidgets('онбординг магистра: уровень → направление → курс, без смешивания',
+  testWidgets('онбординг магистра: уровень → курс → направление, без смешивания',
       (tester) async {
     await tester.pumpWidget(await _app());
     await tester.pumpAndSettle();
@@ -103,12 +103,13 @@ void main() {
     await tester.tap(find.text('Магистратура'));
     await tester.pumpAndSettle();
     expect(find.text('1.1'), findsNothing);
-    expect(find.text('Финансы и кредит'), findsOneWidget);
+    expect(find.text('1 курс'), findsOneWidget);
 
-    // Магистр выбирает направление, затем курс — номера у него нет.
-    await tester.tap(find.text('Финансы и кредит'));
-    await tester.pumpAndSettle();
+    // Магистр явно выбирает курс, затем направление — номера у него нет.
     await tester.tap(find.text('1 курс'));
+    await tester.pumpAndSettle();
+    expect(find.text('Финансы и кредит'), findsOneWidget);
+    await tester.tap(find.text('Финансы и кредит'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Начать'));
     await tester.pumpAndSettle();

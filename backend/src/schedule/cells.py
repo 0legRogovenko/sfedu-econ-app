@@ -71,6 +71,13 @@ _WEEK_SHORT = re.compile(
     re.IGNORECASE,
 )
 _SUBGROUP = re.compile(r"(\d)\s*п\s*/\s*г", re.IGNORECASE)
+# Узкий fallback для единственного живого случая без ``(л)/(с)``: перед
+# аудиторией обязано стоять русское ФИО в формате «Фамилия И.О.». Без обоих
+# доказательств произвольный заголовок/примечание занятием не становится.
+_NO_KIND_PERSON = r"[А-ЯЁ][А-ЯЁа-яё-]+\s+[А-ЯЁ]\.\s*[А-ЯЁ]\."
+_NO_KIND_TEACHER_TAIL = re.compile(
+    rf"(?P<teachers>{_NO_KIND_PERSON}(?:\s*,\s*{_NO_KIND_PERSON})*)\s*$"
+)
 # Заглушка «занятий нет»: '…………….', '……..', '.', ',,,,,,'
 _PLACEHOLDER = re.compile(r"^[.…,\s·]+$")
 
@@ -153,7 +160,9 @@ def split_lessons(text: str) -> list[str] | None:
             start = mark.end()
         if not flat[start:].strip():
             return parts
-        return None
+        # В 14160 после каждого маркера есть ФИО и «онлайн». Это уже обычные
+        # доказанные границы по аудитории — специальное правило для «голого»
+        # списка МУАМ не должно мешать общему разрезанию ниже.
 
     parts: list[str] = []
     start = 0
@@ -182,8 +191,49 @@ def _kind_of(match: re.Match[str]) -> tuple[str, LessonKind | None]:
     return raw, _KIND_BY_TOKEN.get(raw)
 
 
+def _parse_without_kind(
+    flat: str,
+    cell_raw: str,
+    *,
+    week_type: WeekType | None,
+    subgroup: int | None,
+) -> ParsedLesson | None:
+    """Пара без вида, только когда предмет, ФИО и аудитория однозначны."""
+    room_match = _ROOM_TAIL.search(flat)
+    if room_match is None:
+        return None
+    room = normalize_room(room_match.group(1))
+    before_room = flat[: room_match.start(1)].strip()
+    teacher_match = _NO_KIND_TEACHER_TAIL.search(before_room)
+    if teacher_match is None:
+        return None
+    subject = before_room[: teacher_match.start()].strip().lstrip(".").strip()
+    date_constraint_raw = None
+    date_match = _DATE_PREFIX.match(subject)
+    if date_match:
+        date_constraint_raw = date_match.group(1)
+        subject = subject[date_match.end() :].strip()
+    if not subject:
+        return None
+    return ParsedLesson(
+        subject=subject,
+        kind_raw=None,
+        lesson_kind=None,
+        teachers=tuple(
+            teacher.strip()
+            for teacher in teacher_match.group("teachers").split(",")
+        ),
+        room=room,
+        date_constraint_raw=date_constraint_raw,
+        subgroup=subgroup,
+        week_type=week_type,
+        starts_at_override=None,
+        cell_raw=cell_raw,
+    )
+
+
 def parse_lesson(text: str, cell_raw: str) -> ParsedLesson | None:
-    """Одно занятие из уже нарезанного куска. None — вида занятия нет."""
+    """Одно занятие; без вида — только при доказанных ФИО и аудитории."""
     flat = _normalise(text)
 
     week_type = None
@@ -206,7 +256,12 @@ def parse_lesson(text: str, cell_raw: str) -> ParsedLesson | None:
 
     kind = _KIND.search(flat)
     if kind is None:
-        return None
+        return _parse_without_kind(
+            flat,
+            cell_raw,
+            week_type=week_type,
+            subgroup=subgroup,
+        )
     kind_raw, lesson_kind = _kind_of(kind)
 
     head, tail = flat[: kind.start()], flat[kind.end() :]

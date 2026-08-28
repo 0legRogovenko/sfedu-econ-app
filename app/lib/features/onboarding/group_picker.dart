@@ -5,7 +5,7 @@ import 'group_repository.dart';
 /// Разложенный по уровням список групп для селектора.
 ///
 /// Бакалавры и магистры не смешиваются: у бакалавра шаг «курс → группа»,
-/// у магистра — «направление → курс». Всё уже отсортировано, поэтому виджету
+/// у магистра — «курс → направление». Всё уже отсортировано, поэтому виджету
 /// остаётся только рисовать чипы в готовом порядке.
 class GroupPickerModel {
   const GroupPickerModel({
@@ -99,11 +99,20 @@ List<String> _chunks(String s) =>
     RegExp(r'\d+|\D+').allMatches(s).map((m) => m[0]!).toList();
 
 String _levelLabel(EducationLevel level) => switch (level) {
-      EducationLevel.bachelor => 'Бакалавриат',
-      EducationLevel.master => 'Магистратура',
-    };
+  EducationLevel.bachelor => 'Бакалавриат',
+  EducationLevel.master => 'Магистратура',
+};
 
-/// Двухшаговый селектор группы: уровень → (курс → группа | направление → курс).
+/// Если источник прислал английское название и русский перевод в скобках,
+/// в русском интерфейсе показываем перевод один раз.
+String masterProgramLabel(String program) {
+  final translated = RegExp(
+    r'\(([^()]*(?:[А-Яа-яЁё])[^()]*)\)\s*$',
+  ).firstMatch(program)?.group(1)?.trim();
+  return translated == null || translated.isEmpty ? program : translated;
+}
+
+/// Селектор группы: уровень → курс → (группа | направление).
 ///
 /// Виджет сам ведёт состояние выбора и сообщает наверх через [onSelected]:
 /// готовая [Group] при выборе конечного чипа, `null` — когда выбор сброшен
@@ -133,8 +142,7 @@ class _GroupPickerState extends State<GroupPicker> {
   late GroupPickerModel _model;
 
   EducationLevel? _level;
-  int? _course; // бакалаврский путь
-  String? _program; // магистерский путь
+  int? _course; // общий шаг бакалавриата и магистратуры
   int? _selectedId;
 
   @override
@@ -164,7 +172,7 @@ class _GroupPickerState extends State<GroupPicker> {
       if (group.level == EducationLevel.bachelor) {
         _course = group.course;
       } else {
-        _program = group.program;
+        _course = group.course;
       }
       return;
     }
@@ -174,7 +182,6 @@ class _GroupPickerState extends State<GroupPicker> {
     setState(() {
       _level = level;
       _course = null;
-      _program = null;
       _selectedId = null;
     });
     // Смена уровня сбрасывает нижний выбор — сообщаем наверх, чтобы, например,
@@ -185,14 +192,6 @@ class _GroupPickerState extends State<GroupPicker> {
   void _selectCourse(int course) {
     setState(() {
       _course = course;
-      _selectedId = null;
-    });
-    widget.onSelected(null);
-  }
-
-  void _selectProgram(String program) {
-    setState(() {
-      _program = program;
       _selectedId = null;
     });
     widget.onSelected(null);
@@ -226,8 +225,9 @@ class _GroupPickerState extends State<GroupPicker> {
 
   List<Widget> _bachelorSteps() {
     final courses = _model.bachelorByCourse.keys.toList();
-    final groups =
-        _course == null ? const <Group>[] : _model.bachelorByCourse[_course]!;
+    final groups = _course == null
+        ? const <Group>[]
+        : _model.bachelorByCourse[_course]!;
     return [
       const SizedBox(height: 16),
       _ChipRow(
@@ -261,39 +261,83 @@ class _GroupPickerState extends State<GroupPicker> {
   }
 
   List<Widget> _masterSteps() {
-    final programs = _model.masterByProgram.keys.toList();
-    final groups = _program == null
-        ? const <Group>[]
-        : _model.masterByProgram[_program]!;
+    final allGroups = _model.masterByProgram.values.expand((items) => items);
+    final courses = allGroups.map((group) => group.course).toSet().toList()
+      ..sort();
+    final groups =
+        _course == null
+              ? <Group>[]
+              : allGroups.where((group) => group.course == _course).toList()
+          ..sort(
+            (a, b) => masterProgramLabel(
+              a.program ?? '',
+            ).compareTo(masterProgramLabel(b.program ?? '')),
+          );
     return [
       const SizedBox(height: 16),
       _ChipRow(
         children: [
-          for (final program in programs)
+          for (final course in courses)
             ChoiceChip(
-              label: Text(program),
-              selected: _program == program,
-              onSelected: (_) => _selectProgram(program),
+              label: Text('$course курс'),
+              selected: _course == course,
+              onSelected: (_) => _selectCourse(course),
             ),
         ],
       ),
       if (groups.isNotEmpty) ...[
         const SizedBox(height: 16),
-        _GroupChipRow(
-          children: [
-            for (final group in groups)
-              ChoiceChip(
-                label: Text('${group.course} курс'),
-                selected: _selectedId == group.id,
-                onSelected: (_) => _selectGroup(group),
-                visualDensity: VisualDensity.compact,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                labelPadding: const EdgeInsets.symmetric(horizontal: 2),
-              ),
-          ],
+        _MasterProgramChoices(
+          groups: groups,
+          selectedId: _selectedId,
+          onSelected: _selectGroup,
         ),
       ],
     ];
+  }
+}
+
+class _MasterProgramChoices extends StatelessWidget {
+  const _MasterProgramChoices({
+    required this.groups,
+    required this.selectedId,
+    required this.onSelected,
+  });
+
+  final List<Group> groups;
+  final int? selectedId;
+  final ValueChanged<Group> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var index = 0; index < groups.length; index++) ...[
+          SizedBox(
+            width: double.infinity,
+            child: ChoiceChip(
+              label: Align(
+                alignment: Alignment.centerLeft,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    masterProgramLabel(groups[index].program!),
+                    maxLines: 1,
+                    softWrap: false,
+                  ),
+                ),
+              ),
+              selected: selectedId == groups[index].id,
+              onSelected: (_) => onSelected(groups[index]),
+              showCheckmark: false,
+            ),
+          ),
+          if (index != groups.length - 1) const SizedBox(height: 8),
+        ],
+      ],
+    );
   }
 }
 

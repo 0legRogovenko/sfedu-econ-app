@@ -4,22 +4,22 @@ import 'package:sfedu_econ/features/onboarding/group_picker.dart';
 import 'package:sfedu_econ/features/onboarding/group_repository.dart';
 
 Group _bachelor(int id, int course, String number) => Group(
-      id: id,
-      course: course,
-      number: number,
-      program: null,
-      level: EducationLevel.bachelor,
-      subgroupCount: 2,
-    );
+  id: id,
+  course: course,
+  number: number,
+  program: null,
+  level: EducationLevel.bachelor,
+  subgroupCount: 2,
+);
 
 Group _master(int id, int course, String program) => Group(
-      id: id,
-      course: course,
-      number: null,
-      program: program,
-      level: EducationLevel.master,
-      subgroupCount: 1,
-    );
+  id: id,
+  course: course,
+  number: null,
+  program: program,
+  level: EducationLevel.master,
+  subgroupCount: 1,
+);
 
 // Намеренно перемешанный вход: разные уровни, курсы и номера вперемешку,
 // чтобы проверить, что функция сама раскладывает и сортирует.
@@ -47,7 +47,9 @@ void main() {
     });
 
     test('уровень с одними магистрами не показывает бакалавриат', () {
-      final model = buildGroupPickerModel([_master(1, 1, 'Корпоративные финансы')]);
+      final model = buildGroupPickerModel([
+        _master(1, 1, 'Корпоративные финансы'),
+      ]);
       expect(model.levels, [EducationLevel.master]);
     });
 
@@ -56,14 +58,17 @@ void main() {
       expect(model.bachelorByCourse.keys.toList(), [1, 2]);
     });
 
-    test('бакалавр: группы внутри курса отсортированы натурально (2.2 < 2.10)',
-        () {
-      final model = buildGroupPickerModel(_mixed);
-      expect(
-        model.bachelorByCourse[2]!.map((g) => g.number).toList(),
-        ['2.1', '2.2', '2.10'],
-      );
-    });
+    test(
+      'бакалавр: группы внутри курса отсортированы натурально (2.2 < 2.10)',
+      () {
+        final model = buildGroupPickerModel(_mixed);
+        expect(model.bachelorByCourse[2]!.map((g) => g.number).toList(), [
+          '2.1',
+          '2.2',
+          '2.10',
+        ]);
+      },
+    );
 
     test('магистр не попадает в бакалаврские курсы', () {
       final model = buildGroupPickerModel(_mixed);
@@ -74,10 +79,10 @@ void main() {
 
     test('магистр: направления отсортированы по алфавиту', () {
       final model = buildGroupPickerModel(_mixed);
-      expect(
-        model.masterByProgram.keys.toList(),
-        ['Корпоративные финансы', 'Экономическая аналитика'],
-      );
+      expect(model.masterByProgram.keys.toList(), [
+        'Корпоративные финансы',
+        'Экономическая аналитика',
+      ]);
     });
 
     test('магистр: курсы внутри направления отсортированы, без дублей', () {
@@ -99,8 +104,8 @@ void main() {
 
     test('нет дублей: суммарно столько же групп, сколько на входе', () {
       final model = buildGroupPickerModel(_mixed);
-      final total = model.bachelorByCourse.values
-              .fold<int>(0, (s, l) => s + l.length) +
+      final total =
+          model.bachelorByCourse.values.fold<int>(0, (s, l) => s + l.length) +
           model.masterByProgram.values.fold<int>(0, (s, l) => s + l.length);
       expect(total, _mixed.length);
     });
@@ -113,20 +118,23 @@ void main() {
       required void Function(Group?) onSelected,
       int? initialSelectedId,
     }) async {
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(
-          body: GroupPicker(
-            groups: groups,
-            initialSelectedId: initialSelectedId,
-            onSelected: onSelected,
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: GroupPicker(
+              groups: groups,
+              initialSelectedId: initialSelectedId,
+              onSelected: onSelected,
+            ),
           ),
         ),
-      ));
+      );
       await tester.pumpAndSettle();
     }
 
-    testWidgets('показывает только реально присутствующие уровни',
-        (tester) async {
+    testWidgets('показывает только реально присутствующие уровни', (
+      tester,
+    ) async {
       await pump(tester, groups: [_bachelor(1, 1, '1.1')], onSelected: (_) {});
       expect(find.text('Бакалавриат'), findsOneWidget);
       expect(find.text('Магистратура'), findsNothing);
@@ -152,7 +160,7 @@ void main() {
       expect(picked?.number, '2.1');
     });
 
-    testWidgets('магистр: уровень → направление → курс', (tester) async {
+    testWidgets('магистр: уровень → курс → направление', (tester) async {
       Group? picked;
       await pump(tester, groups: _mixed, onSelected: (g) => picked = g);
 
@@ -160,16 +168,70 @@ void main() {
       await tester.pumpAndSettle();
       // Бакалаврские номера не примешаны к магистерскому пути.
       expect(find.text('1.1'), findsNothing);
-
-      await tester.tap(find.text('Корпоративные финансы'));
-      await tester.pumpAndSettle();
+      // Курс — отдельный явный шаг, а не спрятан за длинным направлением.
       expect(find.text('1 курс'), findsOneWidget);
       expect(find.text('2 курс'), findsOneWidget);
 
       await tester.tap(find.text('1 курс'));
       await tester.pumpAndSettle();
+      expect(find.text('Корпоративные финансы'), findsOneWidget);
+      expect(find.text('Экономическая аналитика'), findsNothing);
+
+      await tester.tap(
+        find.widgetWithText(ChoiceChip, 'Корпоративные финансы'),
+      );
+      await tester.pumpAndSettle();
       expect(picked?.program, 'Корпоративные финансы');
       expect(picked?.course, 1);
+    });
+
+    testWidgets('двуязычное направление показывает русское название один раз', (
+      tester,
+    ) async {
+      final bilingual = _master(
+        40,
+        1,
+        'International Economics and Analytics '
+        '(Международная экономика и аналитика)',
+      );
+      await pump(tester, groups: [bilingual], onSelected: (_) {});
+
+      await tester.tap(find.text('Магистратура'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('1 курс'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Международная экономика и аналитика'), findsOneWidget);
+      expect(find.textContaining('International Economics'), findsNothing);
+      final label = tester.widget<Text>(
+        find.text('Международная экономика и аналитика'),
+      );
+      expect(label.maxLines, 1);
+    });
+
+    testWidgets('магистерские направления выровнены по левому краю', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await pump(
+        tester,
+        groups: [_master(41, 1, 'Корпоративные финансы')],
+        onSelected: (_) {},
+      );
+
+      await tester.tap(find.text('Магистратура'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('1 курс'));
+      await tester.pumpAndSettle();
+
+      final chipRect = tester.getRect(
+        find.widgetWithText(ChoiceChip, 'Корпоративные финансы'),
+      );
+      final labelRect = tester.getRect(find.text('Корпоративные финансы'));
+      expect(labelRect.left - chipRect.left, lessThan(32));
     });
 
     testWidgets('смена уровня сбрасывает нижний выбор', (tester) async {
@@ -190,11 +252,14 @@ void main() {
       expect(picks.last, isNull);
       // Бакалаврский курс/группа больше не показаны.
       expect(find.text('2.1'), findsNothing);
-      expect(find.text('2 курс'), findsNothing);
+      // «2 курс» остаётся как магистерский шаг — это уже другой путь.
+      expect(find.text('2 курс'), findsOneWidget);
+      expect(find.text('Корпоративные финансы'), findsNothing);
     });
 
-    testWidgets('initialSelectedId открывает пикер на текущей группе',
-        (tester) async {
+    testWidgets('initialSelectedId открывает пикер на текущей группе', (
+      tester,
+    ) async {
       Group? picked;
       await pump(
         tester,
@@ -208,8 +273,9 @@ void main() {
       expect(picked, isNull); // без явного тапа колбэк не дёргаем
     });
 
-    testWidgets('семь бакалаврских групп помещаются в одну строку',
-        (tester) async {
+    testWidgets('семь бакалаврских групп помещаются в одну строку', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);

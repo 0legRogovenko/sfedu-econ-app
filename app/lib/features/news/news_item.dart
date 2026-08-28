@@ -21,16 +21,17 @@ class NewsItem {
   final DateTime publishedAt;
 
   /// Человекочитаемая метка источника для чипа в ленте.
-  String get sourceLabel => source == 'econ' ? 'эконфак' : 'ЮФУ';
+  String get sourceLabel =>
+      source == 'econ' ? 'Экономический факультет' : 'ЮФУ';
 
   factory NewsItem.fromJson(Map<String, dynamic> json) => NewsItem(
-        id: json['id'] as int,
-        title: json['title'] as String,
-        body: json['body'] as String,
-        source: json['source'] as String,
-        url: json['url'] as String,
-        imageUrl: json['image_url'] as String?,
-        isImportant: json['is_important'] as bool,
-        publishedAt: DateTime.parse(json['published_at'] as String),
-      );
+    id: json['id'] as int,
+    title: json['title'] as String,
+    body: json['body'] as String,
+    source: json['source'] as String,
+    url: json['url'] as String,
+    imageUrl: json['image_url'] as String?,
+    isImportant: json['is_important'] as bool,
+    publishedAt: DateTime.parse(json['published_at'] as String),
+  );
 }

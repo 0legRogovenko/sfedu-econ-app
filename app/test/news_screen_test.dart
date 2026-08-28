@@ -24,17 +24,16 @@ NewsItem _item({
   String title = 'Заголовок',
   String source = 'econ',
   bool important = false,
-}) =>
-    NewsItem(
-      id: id,
-      title: title,
-      body: 'Полный текст новости $id',
-      source: source,
-      url: 'https://sfedu.ru/news/$id',
-      imageUrl: null,
-      isImportant: important,
-      publishedAt: DateTime(2026, 7, 10, 12),
-    );
+}) => NewsItem(
+  id: id,
+  title: title,
+  body: 'Полный текст новости $id',
+  source: source,
+  url: 'https://sfedu.ru/news/$id',
+  imageUrl: null,
+  isImportant: important,
+  publishedAt: DateTime(2026, 7, 10, 12),
+);
 
 /// Фейковый нотифаер: сразу отдаёт готовую ленту, refresh/loadMore — no-op.
 class _FakeFeed extends NewsFeedNotifier {
@@ -60,13 +59,13 @@ Future<Widget> _app(List<NewsItem> items, {bool offline = false}) async {
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       selectedGroupIdProvider.overrideWith(() => FakeSelectedGroupId(3)),
-      scheduleDataProvider
-          .overrideWith((ref) => Stream.value(const ScheduleData.empty())),
+      scheduleDataProvider.overrideWith(
+        (ref) => Stream.value(const ScheduleData.empty()),
+      ),
       syncStatusProvider.overrideWith(_FakeSync.new),
       newsFeedProvider.overrideWith(
-        () => _FakeFeed(
-          NewsFeed(items: items, offline: offline, hasMore: false),
-        ),
+        () =>
+            _FakeFeed(NewsFeed(items: items, offline: offline, hasMore: false)),
       ),
     ],
     child: const SfeduEconApp(),
@@ -74,11 +73,17 @@ Future<Widget> _app(List<NewsItem> items, {bool offline = false}) async {
 }
 
 void main() {
+  test('источник econ подписан полным названием факультета', () {
+    expect(_item(source: 'econ').sourceLabel, 'Экономический факультет');
+  });
+
   testWidgets('лента рендерит заголовки и чипы источников', (tester) async {
-    await tester.pumpWidget(await _app([
-      _item(id: 1, title: 'Эконфак новость', source: 'econ'),
-      _item(id: 2, title: 'Универ новость', source: 'sfedu'),
-    ]));
+    await tester.pumpWidget(
+      await _app([
+        _item(id: 1, title: 'Эконфак новость', source: 'econ'),
+        _item(id: 2, title: 'Универ новость', source: 'sfedu'),
+      ]),
+    );
     await tester.pumpAndSettle();
 
     // переходим на вкладку новостей
@@ -87,16 +92,17 @@ void main() {
 
     expect(find.text('Эконфак новость'), findsOneWidget);
     expect(find.text('Универ новость'), findsOneWidget);
-    expect(find.text('эконфак'), findsOneWidget);
+    expect(find.text('Экономический факультет'), findsOneWidget);
     expect(find.text('ЮФУ'), findsOneWidget);
   });
 
-  testWidgets('«Важное» показывается только у важных новостей',
-      (tester) async {
-    await tester.pumpWidget(await _app([
-      _item(id: 1, important: true),
-      _item(id: 2, important: false),
-    ]));
+  testWidgets('«Важное» показывается только у важных новостей', (tester) async {
+    await tester.pumpWidget(
+      await _app([
+        _item(id: 1, important: true),
+        _item(id: 2, important: false),
+      ]),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Новости'));
     await tester.pumpAndSettle();
@@ -117,15 +123,18 @@ void main() {
     expect(find.text('Открыть на сайте'), findsOneWidget);
   });
 
-  testWidgets('офлайн без кэша — «нужна сеть», а не «новостей нет»',
-      (tester) async {
+  testWidgets('офлайн без кэша — «нужна сеть», а не «новостей нет»', (
+    tester,
+  ) async {
     await tester.pumpWidget(await _app([], offline: true));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Новости'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Нет данных. Для первой загрузки нужна сеть'),
-        findsOneWidget);
+    expect(
+      find.text('Нет данных. Для первой загрузки нужна сеть'),
+      findsOneWidget,
+    );
     expect(find.textContaining('Показаны сохранённые'), findsNothing);
   });
 

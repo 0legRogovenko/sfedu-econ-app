@@ -47,6 +47,23 @@ PAIR_HALVES: dict[int, tuple[tuple[int, int], tuple[int, int]]] = {
 
 _SLOT = re.compile(r"\b(\d{3,4})\s*-+\s*(\d{3,4})\b")
 
+# В актуальном master-PDF 14160 надстрочный последний ноль дважды выпадает из
+# текстового слоя, хотя на рендере страницы время напечатано как 18:20/20:00.
+# Исправления намеренно завязаны и на точную половину, и на уровень обучения:
+# произвольное трёхзначное окончание в бакалаврском файле остаётся артефактом.
+_MASTER_TRUNCATED_SLOTS = {
+    (1735, 182): (1735, 1820),
+    (1915, 200): (1915, 2000),
+}
+
+# Магистерские таблицы используют три последовательных вечерних окна:
+# 16:40–18:20, 18:25–20:00 и 20:05–21:40. Последнее выходит за стандартную
+# сетку ЮФУ, а отдельная лекция 17:35–18:20 занимает хвост первого окна.
+_MASTER_EVENING_PAIRS = {
+    ((1735, 1820),): 5,
+    ((2005, 2050), (2055, 2140)): 7,
+}
+
 # Начало первой половины каждой пары в минутах от полуночи — «сетка» для
 # привязки блока по времени начала.
 PAIR_STARTS: dict[int, int] = {
@@ -118,7 +135,22 @@ def _clean_slots(slots: list[tuple[int, int]]) -> list[tuple[int, int]] | None:
     return out
 
 
-def _block_pair(time_raw: str) -> int | None:
+def _raw_slots(
+    time_raw: str,
+    *,
+    level: EducationLevel | None = None,
+) -> list[tuple[int, int]]:
+    slots = [(int(a), int(b)) for a, b in _SLOT.findall(time_raw)]
+    if level is EducationLevel.MASTER:
+        return [_MASTER_TRUNCATED_SLOTS.get(slot, slot) for slot in slots]
+    return slots
+
+
+def _block_pair(
+    time_raw: str,
+    *,
+    level: EducationLevel | None = None,
+) -> int | None:
     """Номер пары для блока в 3+ ак. часа. None — это не блок.
 
     Блок начинается у границы пары (или чуть рядом — '1350' при начале пары
@@ -127,7 +159,7 @@ def _block_pair(time_raw: str) -> int | None:
     одинокие половины (короче), и склейка всей колонки времени (длиннее). Номер
     пары — ближайшая по времени начала: '800'→1, '1055'→3, '1350'→4.
     """
-    slots = _clean_slots([(int(a), int(b)) for a, b in _SLOT.findall(time_raw)])
+    slots = _clean_slots(_raw_slots(time_raw, level=level))
     if not slots:
         return None
     span = slots[-1][1] - slots[0][0]
@@ -159,7 +191,11 @@ def _straddle_pair(slots: list[tuple[int, int]]) -> int | None:
     return None
 
 
-def parse_pair_number(time_raw: str) -> int | None:
+def parse_pair_number(
+    time_raw: str,
+    *,
+    level: EducationLevel | None = None,
+) -> int | None:
     """Номер пары по тексту ячейки времени. None — время вне сетки.
 
     Точное совпадение с сеткой пар: половинами ('800-845 850-935') или слитно
@@ -169,9 +205,13 @@ def parse_pair_number(time_raw: str) -> int | None:
     времени начала. Всё прочее — одинокие половины, съехавшие мимо границы
     окна, битые артефакты — честный None: пара из них не выводится.
     """
-    slots = [(int(a), int(b)) for a, b in _SLOT.findall(time_raw)]
+    slots = _raw_slots(time_raw, level=level)
     if not slots:
         return None
+    if level is EducationLevel.MASTER:
+        master_pair = _MASTER_EVENING_PAIRS.get(tuple(slots))
+        if master_pair is not None:
+            return master_pair
     for pair, (first, second) in PAIR_HALVES.items():
         if slots == [first, second]:
             return pair
@@ -180,10 +220,14 @@ def parse_pair_number(time_raw: str) -> int | None:
     straddle = _straddle_pair(slots)
     if straddle is not None:
         return straddle
-    return _block_pair(time_raw)
+    return _block_pair(time_raw, level=level)
 
 
-def parse_time_bounds(time_raw: str) -> tuple[time, time] | None:
+def parse_time_bounds(
+    time_raw: str,
+    *,
+    level: EducationLevel | None = None,
+) -> tuple[time, time] | None:
     """Реальные границы занятия: начало первого слота, конец последнего.
 
     Для обычной пары это те же 08:00–09:35, что дают внешние края её половин;
@@ -191,7 +235,7 @@ def parse_time_bounds(time_raw: str) -> tuple[time, time] | None:
     Считается ТОЛЬКО когда parse_pair_number уже признал время: иначе граница
     занятия без номера пары бессмысленна.
     """
-    slots = _clean_slots([(int(a), int(b)) for a, b in _SLOT.findall(time_raw)])
+    slots = _clean_slots(_raw_slots(time_raw, level=level))
     if not slots:
         return None
     start, end = slots[0][0], slots[-1][1]
@@ -444,8 +488,12 @@ def parse_rows(
 
         time_cell = _time_cell_for_row(grid, row, header.time_col)
         time_raw = time_cell.text if time_cell and not time_cell.is_empty else None
-        pair = parse_pair_number(time_raw) if time_raw else None
-        bounds = parse_time_bounds(time_raw) if pair is not None else None
+        pair = parse_pair_number(time_raw, level=header.level) if time_raw else None
+        bounds = (
+            parse_time_bounds(time_raw, level=header.level)
+            if pair is not None
+            else None
+        )
         if time_raw and pair is None and reason is None:
             reason = REASON_TIME_OFF_GRID
         if current_day is None and reason is None:

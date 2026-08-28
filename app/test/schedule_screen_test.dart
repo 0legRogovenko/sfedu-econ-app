@@ -72,8 +72,11 @@ final _calendar = [
   ),
 ];
 
-final _data =
-    ScheduleData(lessons: _lessons, modules: const [], weekCalendar: _calendar);
+final _data = ScheduleData(
+  lessons: _lessons,
+  modules: const [],
+  weekCalendar: _calendar,
+);
 
 /// Фоновый sync в initState не должен трогать реальную drift-БД в тестах.
 class _FakeSync extends SyncStatusNotifier {
@@ -95,9 +98,9 @@ class _RecordingSync extends SyncStatusNotifier {
 class _FailedSync extends SyncStatusNotifier {
   @override
   SyncStatus build() => SyncStatus(
-        lastResult: SyncResult.failed,
-        syncedAt: DateTime(2026, 7, 12),
-      );
+    lastResult: SyncResult.failed,
+    syncedAt: DateTime(2026, 7, 12),
+  );
 
   @override
   Future<void> sync() async {}
@@ -164,12 +167,15 @@ Future<Widget> _screen({
   SyncStatusNotifier Function()? sync,
   ScheduleData? data,
   Map<String, Object> prefsValues = const {},
-}) async =>
-    UncontrolledProviderScope(
-      container: await _container(
-          now: now, sync: sync, data: data, prefsValues: prefsValues),
-      child: const MaterialApp(home: ScheduleScreen()),
-    );
+}) async => UncontrolledProviderScope(
+  container: await _container(
+    now: now,
+    sync: sync,
+    data: data,
+    prefsValues: prefsValues,
+  ),
+  child: const MaterialApp(home: ScheduleScreen()),
+);
 
 void main() {
   testWidgets('смена группы запускает синхронизацию', (tester) async {
@@ -180,10 +186,12 @@ void main() {
     final container = await _container(sync: _RecordingSync.new);
     addTearDown(container.dispose);
 
-    await tester.pumpWidget(UncontrolledProviderScope(
-      container: container,
-      child: const MaterialApp(home: ScheduleScreen()),
-    ));
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: ScheduleScreen()),
+      ),
+    );
     await tester.pumpAndSettle();
 
     final afterInit = _RecordingSync.calls; // стартовый синк из initState
@@ -243,22 +251,25 @@ void main() {
       ],
       modules: [
         Module(
-            id: 1,
-            name: 'Осень',
-            dateFrom: DateTime(2025, 9, 1),
-            dateTo: DateTime(2026, 1, 11)),
+          id: 1,
+          name: 'Осень',
+          dateFrom: DateTime(2025, 9, 1),
+          dateTo: DateTime(2026, 1, 11),
+        ),
         Module(
-            id: 2,
-            name: 'Весна',
-            dateFrom: DateTime(2026, 2, 9),
-            dateTo: DateTime(2026, 6, 22)),
+          id: 2,
+          name: 'Весна',
+          dateFrom: DateTime(2026, 2, 9),
+          dateTo: DateTime(2026, 6, 22),
+        ),
       ],
       weekCalendar: const [],
     );
     final autumnNow = DateTime(2025, 9, 15, 9, 30); // понедельник осени
 
-    testWidgets('кнопка семестра показана, когда семестров два',
-        (tester) async {
+    testWidgets('кнопка семестра показана, когда семестров два', (
+      tester,
+    ) async {
       await tester.pumpWidget(await _screen(data: data, now: autumnNow));
       await tester.pumpAndSettle();
 
@@ -278,13 +289,15 @@ void main() {
       expect(find.text('Весенний предмет'), findsNothing);
     });
 
-    testWidgets('летом видна плашка каникул и расписание семестра',
-        (tester) async {
+    testWidgets('летом видна плашка каникул и расписание семестра', (
+      tester,
+    ) async {
       // Июль: семестры в данных есть, но сегодня не входит ни в один. Экран
       // показывает первую неделю последнего (весеннего) семестра — и явно
       // говорит про межсезонье, а не молча показывает старое расписание.
-      await tester
-          .pumpWidget(await _screen(data: data, now: DateTime(2026, 7, 13, 9)));
+      await tester.pumpWidget(
+        await _screen(data: data, now: DateTime(2026, 7, 13, 9)),
+      );
       await tester.pumpAndSettle();
 
       expect(find.textContaining('каникулы'), findsOneWidget);
@@ -313,66 +326,71 @@ void main() {
       expect(find.text('Осенний предмет'), findsNothing);
     });
 
-    testWidgets('выбор весны переживает переэмит расписания (регрессия)',
-        (tester) async {
+    testWidgets('выбор весны переживает переэмит расписания (регрессия)', (
+      tester,
+    ) async {
       // Каждый билд создаёт новые объекты Semester, а drift-watch переэмитит
       // расписание НОВЫМИ объектами дат. Пока выбор хранился ОБЪЕКТОМ, при
       // переэмите он слетал на другой семестр. Ключ теста — эмитить данные с
       // НЕидентичными (но равными) DateTime, иначе идентичность случайно
       // совпадёт и баг не воспроизведётся.
       ScheduleData freshData() => ScheduleData(
-            lessons: [
-              for (final l in data.lessons)
-                Lesson(
-                  id: l.id,
-                  groupId: l.groupId,
-                  weekday: l.weekday,
-                  pairNumber: l.pairNumber,
-                  startsAt: l.startsAt,
-                  endsAt: l.endsAt,
-                  subject: l.subject,
-                  room: l.room,
-                  weekType: l.weekType,
-                  subgroup: l.subgroup,
-                  teacherName: l.teacherName,
-                  validFrom: l.validFrom == null
-                      ? null
-                      : DateTime.parse(l.validFrom!.toIso8601String()),
-                  validTo: l.validTo == null
-                      ? null
-                      : DateTime.parse(l.validTo!.toIso8601String()),
-                ),
-            ],
-            modules: [
-              for (final m in data.modules)
-                Module(
-                  id: m.id,
-                  name: m.name,
-                  dateFrom: DateTime.parse(m.dateFrom.toIso8601String()),
-                  dateTo: DateTime.parse(m.dateTo.toIso8601String()),
-                ),
-            ],
-            weekCalendar: const [],
-          );
+        lessons: [
+          for (final l in data.lessons)
+            Lesson(
+              id: l.id,
+              groupId: l.groupId,
+              weekday: l.weekday,
+              pairNumber: l.pairNumber,
+              startsAt: l.startsAt,
+              endsAt: l.endsAt,
+              subject: l.subject,
+              room: l.room,
+              weekType: l.weekType,
+              subgroup: l.subgroup,
+              teacherName: l.teacherName,
+              validFrom: l.validFrom == null
+                  ? null
+                  : DateTime.parse(l.validFrom!.toIso8601String()),
+              validTo: l.validTo == null
+                  ? null
+                  : DateTime.parse(l.validTo!.toIso8601String()),
+            ),
+        ],
+        modules: [
+          for (final m in data.modules)
+            Module(
+              id: m.id,
+              name: m.name,
+              dateFrom: DateTime.parse(m.dateFrom.toIso8601String()),
+              dateTo: DateTime.parse(m.dateTo.toIso8601String()),
+            ),
+        ],
+        weekCalendar: const [],
+      );
 
       final controller = StreamController<ScheduleData>();
       addTearDown(controller.close);
       SharedPreferences.setMockInitialValues(const {});
       final prefs = await SharedPreferences.getInstance();
-      final container = ProviderContainer(overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-        groupsProvider.overrideWith((ref) async => _groups),
-        selectedGroupIdProvider.overrideWith(() => FakeSelectedGroupId(3)),
-        scheduleDataProvider.overrideWith((ref) => controller.stream),
-        clockProvider.overrideWithValue(() => autumnNow),
-        syncStatusProvider.overrideWith(_FakeSync.new),
-      ]);
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          groupsProvider.overrideWith((ref) async => _groups),
+          selectedGroupIdProvider.overrideWith(() => FakeSelectedGroupId(3)),
+          scheduleDataProvider.overrideWith((ref) => controller.stream),
+          clockProvider.overrideWithValue(() => autumnNow),
+          syncStatusProvider.overrideWith(_FakeSync.new),
+        ],
+      );
       addTearDown(container.dispose);
 
-      await tester.pumpWidget(UncontrolledProviderScope(
-        container: container,
-        child: const MaterialApp(home: ScheduleScreen()),
-      ));
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(home: ScheduleScreen()),
+        ),
+      );
       controller.add(freshData());
       await tester.pumpAndSettle();
 
@@ -461,12 +479,14 @@ void main() {
       expect(find.text('Английский второй'), findsOneWidget);
     });
 
-    testWidgets('настройка подгруппы прячет чужую пару на экране',
-        (tester) async {
+    testWidgets('настройка подгруппы прячет чужую пару на экране', (
+      tester,
+    ) async {
       // Провод «настройка → экран»: сама логика проверена в week_logic_test,
       // здесь важно, что экран действительно передаёт фильтр в резолвер.
       await tester.pumpWidget(
-          await _screen(data: data, prefsValues: {'subgroup_of_3': 1}));
+        await _screen(data: data, prefsValues: {'subgroup_of_3': 1}),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('Английский первой'), findsOneWidget);
@@ -474,6 +494,54 @@ void main() {
       // Общая лекция остаётся — фильтр не прячет пары всей группы.
       expect(find.text('Макроэкономика'), findsOneWidget);
     });
+  });
+
+  testWidgets('выбранная дисциплина МУАМ видна в расписании', (tester) async {
+    const selected =
+        'МУАМ — Современные платформы для построения корп. инф. систем';
+    final data = ScheduleData(
+      lessons: const [
+        Lesson(
+          id: 20,
+          groupId: 3,
+          weekday: 0,
+          pairNumber: 1,
+          startsAt: '09:00:00',
+          endsAt: '10:35:00',
+          subject: 'МУАМ — Цифровая экономика',
+          room: '220',
+          weekType: null,
+          subgroup: 0,
+          teacherName: null,
+        ),
+        Lesson(
+          id: 21,
+          groupId: 3,
+          weekday: 0,
+          pairNumber: 1,
+          startsAt: '09:00:00',
+          endsAt: '10:35:00',
+          subject: selected,
+          room: '221',
+          weekType: null,
+          subgroup: 0,
+          teacherName: null,
+        ),
+      ],
+      modules: const [],
+      weekCalendar: const [],
+    );
+
+    await tester.pumpWidget(
+      await _screen(data: data, prefsValues: const {'muam_of_3': selected}),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Современные платформы для построения корп. инф. систем'),
+      findsOneWidget,
+    );
+    expect(find.text('МУАМ'), findsNothing);
   });
 
   testWidgets('аудитория-номер: в карточке ровно одно «ауд.»', (tester) async {
@@ -551,8 +619,9 @@ void main() {
     expect(find.text('Пар нет — отдыхаем'), findsOneWidget);
   });
 
-  testWidgets('в воскресенье показывается понедельник следующей недели',
-      (tester) async {
+  testWidgets('в воскресенье показывается понедельник следующей недели', (
+    tester,
+  ) async {
     // 19.07.2026 — воскресенье; след. понедельник 20.07 — нижняя неделя.
     await tester.pumpWidget(await _screen(now: DateTime(2026, 7, 19, 12, 0)));
     await tester.pumpAndSettle();
@@ -561,16 +630,18 @@ void main() {
     expect(find.text('Эконометрика'), findsNothing); // верхняя — исключена
   });
 
-  testWidgets('после неудачного синка показывается плашка с датой данных',
-      (tester) async {
+  testWidgets('после неудачного синка показывается плашка с датой данных', (
+    tester,
+  ) async {
     await tester.pumpWidget(await _screen(sync: _FailedSync.new));
     await tester.pumpAndSettle();
 
     expect(find.textContaining('Данные от 12.07.2026'), findsOneWidget);
   });
 
-  testWidgets('бейдж активного модуля виден для даты внутри модуля',
-      (tester) async {
+  testWidgets('бейдж активного модуля виден для даты внутри модуля', (
+    tester,
+  ) async {
     // Выбранный день — 13.07.2026, модуль накрывает весь июль.
     final data = ScheduleData(
       lessons: _lessons,
@@ -590,8 +661,9 @@ void main() {
     expect(find.text('2 модуль'), findsOneWidget);
   });
 
-  testWidgets('бейдж активного модуля скрыт для даты вне диапазонов',
-      (tester) async {
+  testWidgets('бейдж активного модуля скрыт для даты вне диапазонов', (
+    tester,
+  ) async {
     // Выбранный день — 13.07.2026, модуль относится к сентябрю.
     final data = ScheduleData(
       lessons: _lessons,
@@ -611,14 +683,17 @@ void main() {
     expect(find.text('1 модуль'), findsNothing);
   });
 
-  testWidgets('первый офлайн-запуск: честная плашка вместо «Пар нет»',
-      (tester) async {
+  testWidgets('первый офлайн-запуск: честная плашка вместо «Пар нет»', (
+    tester,
+  ) async {
     // Свежая установка: кэш пуст, первый синк упал (syncedAt == null).
     // Студент не должен видеть «Пар нет — отдыхаем» — данные просто не загружены.
-    await tester.pumpWidget(await _screen(
-      sync: _FirstLaunchFailedSync.new,
-      data: const ScheduleData.empty(),
-    ));
+    await tester.pumpWidget(
+      await _screen(
+        sync: _FirstLaunchFailedSync.new,
+        data: const ScheduleData.empty(),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Пар нет — отдыхаем'), findsNothing);
@@ -632,17 +707,22 @@ void main() {
     expect(find.text('2.1'), findsOneWidget);
   });
 
-  testWidgets('тап по заголовку — меню избранных, выбор переключает активную',
-      (tester) async {
-    final container = await _container(prefsValues: {
-      'favorite_group_ids': ['3', '4'],
-    });
+  testWidgets('тап по заголовку — меню избранных, выбор переключает активную', (
+    tester,
+  ) async {
+    final container = await _container(
+      prefsValues: {
+        'favorite_group_ids': ['3', '4'],
+      },
+    );
     addTearDown(container.dispose);
 
-    await tester.pumpWidget(UncontrolledProviderScope(
-      container: container,
-      child: const MaterialApp(home: ScheduleScreen()),
-    ));
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: ScheduleScreen()),
+      ),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('2.1'));

@@ -25,6 +25,8 @@ class CachedLessons extends Table {
   IntColumn get moduleId => integer().nullable()();
   TextColumn get validFrom => text().nullable()();
   TextColumn get validTo => text().nullable()();
+  // JSON array of yyyy-MM-dd; [] means the continuous window is sufficient.
+  TextColumn get specificDates => text().withDefault(const Constant('[]'))();
 
   // Пара с одним id лежит и в кэше группы, и в кэше её преподавателя —
   // одного id мало, ключ составной.
@@ -127,7 +129,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

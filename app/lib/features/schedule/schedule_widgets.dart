@@ -133,16 +133,18 @@ class VacationBanner extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          Icon(Icons.beach_access_outlined,
-              size: 18, color: scheme.onTertiaryContainer),
+          Icon(
+            Icons.beach_access_outlined,
+            size: 18,
+            color: scheme.onTertiaryContainer,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               'Сейчас каникулы. Показано расписание $genitive семестра',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: scheme.onTertiaryContainer),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: scheme.onTertiaryContainer,
+              ),
             ),
           ),
         ],
@@ -159,6 +161,7 @@ class DayPage extends ConsumerWidget {
     required this.noData,
     required this.onRefresh,
     this.groupLabelOf,
+    this.selectedMuamSubject,
   });
 
   final List<Lesson> lessons;
@@ -169,6 +172,9 @@ class DayPage extends ConsumerWidget {
   /// Режим преподавателя: чем подписать пару вместо преподавателя. null —
   /// режим группы (подпись остаётся преподавательской).
   final String Function(Lesson)? groupLabelOf;
+
+  /// Конкретный вариант МУАМ активной группы. null — общий блок «МУАМ».
+  final String? selectedMuamSubject;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -207,6 +213,7 @@ class DayPage extends ConsumerWidget {
                 lesson: lessons[index],
                 isNow: isLessonNow(lessons[index], nowWeekType, now),
                 groupLabel: groupLabelOf?.call(lessons[index]),
+                selectedMuamSubject: selectedMuamSubject,
               ),
             ),
     );
@@ -219,6 +226,7 @@ class LessonCard extends StatelessWidget {
     required this.lesson,
     required this.isNow,
     this.groupLabel,
+    this.selectedMuamSubject,
   });
 
   final Lesson lesson;
@@ -227,6 +235,8 @@ class LessonCard extends StatelessWidget {
   /// Имя группы вместо преподавателя (режим преподавателя): у преподавателя
   /// групп много, и полезна именно группа, а не собственное имя в каждой паре.
   final String? groupLabel;
+
+  final String? selectedMuamSubject;
 
   String _hhmm(String hhmmss) => hhmmss.substring(0, 5);
 
@@ -280,7 +290,10 @@ class LessonCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              lesson.subject,
+              scheduleSubjectLabel(
+                lesson.subject,
+                selectedMuamSubject: selectedMuamSubject,
+              ),
               style: Theme.of(context).textTheme.titleMedium,
             ),
             if (details.isNotEmpty) ...[

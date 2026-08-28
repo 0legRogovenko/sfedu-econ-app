@@ -12,6 +12,7 @@ import 'schedule_providers.dart';
 import 'schedule_repository.dart';
 import 'schedule_widgets.dart';
 import 'semester.dart';
+import 'muam_filter.dart';
 import 'subgroup_filter.dart';
 import 'week_logic.dart';
 
@@ -39,9 +40,11 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     // SharedPreferences с живым справочником до показа переключателя.
     ref.listenManual(groupsProvider, (_, next) {
       next.whenData((groups) {
-        unawaited(ref
-            .read(favoriteGroupIdsProvider.notifier)
-            .reconcile([for (final group in groups) group.id]));
+        unawaited(
+          ref.read(favoriteGroupIdsProvider.notifier).reconcile([
+            for (final group in groups) group.id,
+          ]),
+        );
       });
     }, fireImmediately: true);
     // фоновая синхронизация при открытии экрана
@@ -105,7 +108,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     // Первый офлайн-запуск: кэш пуст И первый синк упал (syncedAt == null).
     // Отличаем «данные не загружены» от «пар правда нет» — иначе показали бы
     // «Пар нет — отдыхаем», и студент решит, что занятий нет.
-    final noData = syncStatus.lastResult == SyncResult.failed &&
+    final noData =
+        syncStatus.lastResult == SyncResult.failed &&
         syncStatus.syncedAt == null &&
         scheduleAsync.maybeWhen(
           data: (data) => data.lessons.isEmpty,
@@ -113,9 +117,12 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         );
     // Фильтр «моя подгруппа» активной группы; null — показывать все пары.
     final subgroup = ref.watch(activeSubgroupProvider);
+    final muamSubject = ref.watch(activeMuamSubjectProvider);
     final nowWeekType = scheduleAsync.maybeWhen(
       data: (data) => weekTypeForDate(
-          data.weekCalendar, DateTime(now.year, now.month, now.day)),
+        data.weekCalendar,
+        DateTime(now.year, now.month, now.day),
+      ),
       orElse: () => null,
     );
 
@@ -170,8 +177,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () =>
-                      ref.read(syncStatusProvider.notifier).sync(),
+                  onPressed: () => ref.read(syncStatusProvider.notifier).sync(),
                   child: const Text('Обновить'),
                 ),
               ],
@@ -201,22 +207,24 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           ),
           Expanded(
             child: scheduleAsync.when(
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
+              loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) =>
                   const Center(child: Text('Не удалось открыть расписание')),
               data: (data) => PageView.builder(
                 controller: _pageController,
                 itemCount: 6,
-                onPageChanged: (index) =>
-                    setState(() => _dayIndex = index),
+                onPageChanged: (index) => setState(() => _dayIndex = index),
                 itemBuilder: (context, index) => DayPage(
-                  lessons: lessonsForDay(data, _dateForIndex(index),
-                      subgroup: subgroup),
+                  lessons: lessonsForDay(
+                    data,
+                    _dateForIndex(index),
+                    subgroup: subgroup,
+                    muamSubject: muamSubject,
+                  ),
                   nowWeekType: nowWeekType,
                   noData: noData,
-                  onRefresh: () =>
-                      ref.read(syncStatusProvider.notifier).sync(),
+                  onRefresh: () => ref.read(syncStatusProvider.notifier).sync(),
+                  selectedMuamSubject: muamSubject,
                 ),
               ),
             ),
@@ -238,10 +246,9 @@ class _GroupSwitcherTitle extends ConsumerWidget {
     final groupId = ref.watch(selectedGroupIdProvider);
     final storedFavorites = ref.watch(favoriteGroupIdsProvider);
     // Справочник имён; при устаревшем id не показываем внутренний ключ БД.
-    final groups = ref.watch(groupsProvider).maybeWhen(
-          data: (list) => list,
-          orElse: () => const <Group>[],
-        );
+    final groups = ref
+        .watch(groupsProvider)
+        .maybeWhen(data: (list) => list, orElse: () => const <Group>[]);
     final validIds = groups.map((group) => group.id).toSet();
     final favorites = storedFavorites.where(validIds.contains).toList();
     if (groupId == null) return const Text('Расписание');
@@ -249,8 +256,10 @@ class _GroupSwitcherTitle extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Flexible(
-          child: Text(groupNameOf(groups, groupId),
-              overflow: TextOverflow.ellipsis),
+          child: Text(
+            groupNameOf(groups, groupId),
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
         if (favorites.isNotEmpty) const Icon(Icons.arrow_drop_down),
       ],
@@ -258,8 +267,7 @@ class _GroupSwitcherTitle extends ConsumerWidget {
     if (favorites.isEmpty) return title;
     return PopupMenuButton<int>(
       tooltip: 'Избранные группы',
-      onSelected: (id) =>
-          ref.read(selectedGroupIdProvider.notifier).select(id),
+      onSelected: (id) => ref.read(selectedGroupIdProvider.notifier).select(id),
       itemBuilder: (context) => [
         for (final id in favorites)
           PopupMenuItem(

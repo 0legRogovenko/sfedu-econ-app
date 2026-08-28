@@ -277,6 +277,49 @@ def test_no_label_means_no_subgroup_from_text():
     assert lesson.subgroup is None
 
 
+def test_clear_lesson_without_kind_marker_is_kept_with_unknown_kind():
+    """14175 p6: факультет забыл ``(л)/(с)``, но пара однозначна.
+
+    Название, преподаватель с инициалами и аудитория присутствуют. Терять всю
+    пару из-за отсутствующего вида нельзя; сам вид при этом не угадываем.
+    """
+    lesson = only(
+        parse_cell(
+            "История экономики и экономических учений Грищенко И.В. ауд.405"
+        )
+    )
+
+    assert lesson.subject == "История экономики и экономических учений"
+    assert lesson.teachers == ("Грищенко И.В.",)
+    assert lesson.room == "405"
+    assert lesson.kind_raw is None
+    assert lesson.lesson_kind is None
+
+
+def test_clear_lesson_without_kind_keeps_its_date_constraint():
+    lesson = only(
+        parse_cell(
+            "До 19.12 История экономики и экономических учений "
+            "Грищенко И.В. ауд.401"
+        )
+    )
+
+    assert lesson.subject == "История экономики и экономических учений"
+    assert lesson.date_constraint_raw == "До 19.12"
+
+
+def test_clear_lesson_without_kind_keeps_all_comma_separated_teachers():
+    lesson = only(
+        parse_cell(
+            "Управление персоналом: продвинутый уровень "
+            "Костенко Е.П., Кузнецова С.Ю. ауд.306"
+        )
+    )
+
+    assert lesson.subject == "Управление персоналом: продвинутый уровень"
+    assert lesson.teachers == ("Костенко Е.П.", "Кузнецова С.Ю.")
+
+
 # --- виды занятий, которых нет в модели ------------------------------------
 
 
@@ -329,10 +372,9 @@ def test_placeholder_means_no_lessons_not_a_failure(text):
     assert parse.reason is None
 
 
-def test_cell_without_kind_marker_goes_to_the_queue():
-    """Дыра источника: вида занятия нет вообще → разбирать нечего, но и терять
-    нельзя. Причина обязана быть внятной для админа."""
-    parse = parse_cell("История экономики и экономических учений Грищенко И.В. ауд.217")
+def test_ambiguous_cell_without_kind_marker_goes_to_the_queue():
+    """Без вида и без аудитории недостаточно доказательств, что это пара."""
+    parse = parse_cell("История экономики и экономических учений Грищенко И.В.")
     assert parse.lessons == ()
     assert parse.reason is not None
     assert "вид" in parse.reason
@@ -424,6 +466,31 @@ def test_muam_electives_without_rooms_are_split_by_kind_markers():
         "МУАМ — Цифровые системы интеграции и управления бизнесом",
     ]
     assert all(lesson.teachers == () and lesson.room is None for lesson in parse.lessons)
+
+
+def test_muam_electives_with_teachers_and_rooms_use_room_boundaries():
+    """14160: заголовок МУАМ не отменяет обычные доказанные границы пар.
+
+    В master-файле у каждого варианта есть преподаватель и ``онлайн``. Старое
+    специальное правило МУАМ ожидало пустой хвост после маркеров и возвращало
+    всю ячейку в UnparsedCell, хотя две границы однозначно видны по аудиториям.
+    """
+    parse = parse_cell(
+        "МУАМ Теория игр и стратегии бизнеса (л) Алехин В.В. онлайн "
+        "Права на результаты интеллектуальной деятельности и их защита (л) "
+        "Юхнова Ю.И. онлайн"
+    )
+
+    assert parse.reason is None
+    assert [lesson.subject for lesson in parse.lessons] == [
+        "МУАМ Теория игр и стратегии бизнеса",
+        "Права на результаты интеллектуальной деятельности и их защита",
+    ]
+    assert [lesson.teachers for lesson in parse.lessons] == [
+        ("Алехин В.В.",),
+        ("Юхнова Ю.И.",),
+    ]
+    assert [lesson.room for lesson in parse.lessons] == ["онлайн", "онлайн"]
 
 
 def test_split_lessons_returns_none_when_boundary_is_unknown():

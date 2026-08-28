@@ -30,6 +30,49 @@ def _lesson(group_id, subject, **kw):
 
 
 class TestSubjectRenames:
+    def test_curated_ict_alias_is_available_without_admin_seed(
+        self, client, db_session
+    ):
+        """Очевидная аббревиатура не должна дробить один предмет в UI.
+
+        Источник в БД остаётся дословным; каноническое имя подставляет слой
+        чтения даже в свежей beta-БД, где администратор ещё не создавал
+        SubjectRename вручную.
+        """
+        g = _group(db_session)
+        db_session.add(_lesson(g.id, "ИКТ"))
+        db_session.flush()
+
+        payload = client.get(f"/api/schedule?group_id={g.id}").json()
+
+        assert [lesson["subject"] for lesson in payload["lessons"]] == [
+            "Информационно-коммуникационные технологии"
+        ]
+        assert db_session.query(Lesson).one().subject == "ИКТ"
+
+    def test_curated_business_process_aliases_share_one_display_name(
+        self, client, db_session
+    ):
+        """Сокращения одного предмета не выглядят разными дисциплинами."""
+        g = _group(db_session)
+        source_names = (
+            "Анализ и мод. БП",
+            "Анализ и моделирование БП",
+            "Анализ и модел. бизнес-процессов",
+        )
+        for pair_number, subject in enumerate(source_names, start=1):
+            db_session.add(_lesson(g.id, subject, pair_number=pair_number))
+        db_session.flush()
+
+        payload = client.get(f"/api/schedule?group_id={g.id}").json()
+
+        assert {lesson["subject"] for lesson in payload["lessons"]} == {
+            "Анализ и моделирование бизнес-процессов"
+        }
+        assert {lesson.subject for lesson in db_session.query(Lesson).all()} == set(
+            source_names
+        )
+
     def test_schedule_returns_display_subject(self, client, db_session):
         g = _group(db_session)
         db_session.add(_lesson(g.id, "Институциональна я экономика"))

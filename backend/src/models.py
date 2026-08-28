@@ -5,6 +5,7 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Index,
+    JSON,
     String,
     Text,
     UniqueConstraint,
@@ -202,6 +203,14 @@ class Lesson(Base):
     cell_key: Mapped[str | None] = mapped_column(String(50))
     valid_from: Mapped[date | None]
     valid_to: Mapped[date | None]
+    # A sparse list such as '08.11, 15.11' cannot be represented faithfully
+    # by one continuous window. ISO strings keep SQLite and PostgreSQL aligned.
+    specific_dates: Mapped[list[str]] = mapped_column(
+        JSON,
+        nullable=False,
+        default=list,
+        server_default=text("'[]'"),
+    )
 
     group: Mapped["Group"] = relationship()
     module: Mapped["Module | None"] = relationship()
@@ -228,6 +237,8 @@ class Lesson(Base):
             # Две пары в одной ячейке различаются ТОЛЬКО датами ('До 17.12' и
             # '24.12' в 13469): без этого поля вторая молча не сохранилась бы.
             text("coalesce(date_constraint_raw, '')"),
+            text("coalesce(valid_from, '0001-01-01')"),
+            text("coalesce(valid_to, '9999-12-31')"),
             # …а параллельные занятия — только предметом ('Иностранный язык (с)
             # Онлайн' + 'Русский язык для иностранных студентов (с)' в одной
             # ячейке, 13472 p3). Слот у них общий, и это не дубль.
