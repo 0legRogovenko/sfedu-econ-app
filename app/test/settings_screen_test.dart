@@ -14,6 +14,7 @@ import 'package:sfedu_econ/features/onboarding/favorite_groups.dart';
 import 'package:sfedu_econ/features/onboarding/group_repository.dart';
 import 'package:sfedu_econ/features/onboarding/selected_group.dart';
 import 'package:sfedu_econ/features/schedule/lesson.dart';
+import 'package:sfedu_econ/features/schedule/muam_filter.dart';
 import 'package:sfedu_econ/features/schedule/schedule_data.dart';
 import 'package:sfedu_econ/features/schedule/schedule_providers.dart';
 import 'package:sfedu_econ/features/schedule/subgroup_filter.dart';
@@ -96,6 +97,20 @@ Lesson _lesson(int subgroup) => Lesson(
       subgroup: subgroup,
       teacherName: null,
     );
+
+Lesson _muamLesson(int id, String subject) => Lesson(
+  id: id,
+  groupId: 3,
+  weekday: 0,
+  pairNumber: 2,
+  startsAt: '09:50:00',
+  endsAt: '11:25:00',
+  subject: subject,
+  room: null,
+  weekType: null,
+  subgroup: 0,
+  teacherName: null,
+);
 
 class _RecordingApi implements AssistantApi {
   final List<String> forgotDevices = [];
@@ -398,6 +413,37 @@ void main() {
           container.read(sharedPreferencesProvider).containsKey('subgroup_of_3'),
           isFalse);
     });
+  });
+
+  testWidgets('МУАМ: выбор и сброс синхронизируют dropdown с prefs', (
+    tester,
+  ) async {
+    const first = 'МУАМ — Современные платформы';
+    const second = 'МУАМ — Цифровые системы';
+    final container = await _container(
+      lessons: [_muamLesson(10, first), _muamLesson(11, second)],
+    );
+    addTearDown(container.dispose);
+    await _pumpSettings(tester, container);
+
+    final dropdown = find.byType(DropdownButtonFormField<String>);
+    await _scrollTo(tester, dropdown);
+    await tester.tap(dropdown);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Цифровые системы').last);
+    await tester.pumpAndSettle();
+
+    expect(container.read(activeMuamSubjectProvider), second);
+    expect(
+      container.read(sharedPreferencesProvider).getString('muam_of_3'),
+      second,
+    );
+
+    await tester.tap(find.text('Сбросить выбор'));
+    await tester.pumpAndSettle();
+
+    expect(container.read(activeMuamSubjectProvider), isNull);
+    expect(find.text('Автоматически'), findsOneWidget);
   });
 
   testWidgets('«О приложении» указывает неофициальный статус', (tester) async {

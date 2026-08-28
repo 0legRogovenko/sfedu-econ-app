@@ -13,24 +13,26 @@ Lesson _lesson({
   int subgroup = 0,
   DateTime? validFrom,
   DateTime? validTo,
+  List<DateTime> specificDates = const [],
   int? moduleId,
-}) =>
-    Lesson(
-      id: id,
-      groupId: 3,
-      weekday: weekday,
-      pairNumber: pairNumber,
-      startsAt: startsAt,
-      endsAt: endsAt,
-      subject: 'Макроэкономика',
-      room: '220',
-      weekType: weekType,
-      subgroup: subgroup,
-      teacherName: 'Иванова Е. П.',
-      moduleId: moduleId,
-      validFrom: validFrom,
-      validTo: validTo,
-    );
+  String subject = 'Макроэкономика',
+}) => Lesson(
+  id: id,
+  groupId: 3,
+  weekday: weekday,
+  pairNumber: pairNumber,
+  startsAt: startsAt,
+  endsAt: endsAt,
+  subject: subject,
+  room: '220',
+  weekType: weekType,
+  subgroup: subgroup,
+  teacherName: 'Иванова Е. П.',
+  moduleId: moduleId,
+  validFrom: validFrom,
+  validTo: validTo,
+  specificDates: specificDates,
+);
 
 // Календарь: 01–07.09 верхняя, 08–14.09 нижняя. Дальше — пусто (тип неизвестен).
 final _calendar = [
@@ -107,26 +109,32 @@ void main() {
     final lessons = [
       _lesson(id: 1, pairNumber: 1, validFrom: m1From, validTo: m1To), // каждую
       _lesson(
-          id: 2,
-          pairNumber: 2,
-          weekType: WeekType.upper,
-          validFrom: m1From,
-          validTo: m1To),
+        id: 2,
+        pairNumber: 2,
+        weekType: WeekType.upper,
+        validFrom: m1From,
+        validTo: m1To,
+      ),
       _lesson(
-          id: 3,
-          pairNumber: 2,
-          weekType: WeekType.lower,
-          validFrom: m1From,
-          validTo: m1To),
+        id: 3,
+        pairNumber: 2,
+        weekType: WeekType.lower,
+        validFrom: m1From,
+        validTo: m1To,
+      ),
       // Пара 2-го модуля.
       _lesson(
-          id: 4,
-          pairNumber: 1,
-          validFrom: DateTime(2025, 10, 27),
-          validTo: DateTime(2025, 12, 31)),
+        id: 4,
+        pairNumber: 1,
+        validFrom: DateTime(2025, 10, 27),
+        validTo: DateTime(2025, 12, 31),
+      ),
     ];
     final data = ScheduleData(
-        lessons: lessons, modules: _modules, weekCalendar: _calendar);
+      lessons: lessons,
+      modules: _modules,
+      weekCalendar: _calendar,
+    );
 
     test('пара без чередования видна всегда, верхняя — только на верхней', () {
       // 01.09.2025 — понедельник, верхняя неделя.
@@ -153,30 +161,49 @@ void main() {
       expect(day.every((l) => l.weekType == null), isTrue);
     });
 
-    test('пустое окно (validFrom/validTo null) — в пределах учебного периода',
-        () {
-      final always = ScheduleData(
-        lessons: [_lesson(id: 9, pairNumber: 1)],
-        modules: _modules, // до 31.12.2025
-        weekCalendar: _calendar,
-      );
-      // Внутри известного периода (календарь ∪ модули) — видна…
-      expect(lessonsForDay(always, DateTime(2025, 9, 1)).map((l) => l.id), [9]);
-      expect(
-          lessonsForDay(always, DateTime(2025, 11, 3)).map((l) => l.id), [9]);
-      // …а в межсезонье (март за пределами данных) — НЕТ: раньше пара без
-      // окна маячила круглый год, даже летом (отложка шага 8 закрыта).
-      expect(lessonsForDay(always, DateTime(2026, 3, 2)), isEmpty);
-    });
+    test(
+      'пустое окно (validFrom/validTo null) — в пределах учебного периода',
+      () {
+        final always = ScheduleData(
+          lessons: [_lesson(id: 9, pairNumber: 1)],
+          modules: _modules, // до 31.12.2025
+          weekCalendar: _calendar,
+        );
+        // Внутри известного периода (календарь ∪ модули) — видна…
+        expect(lessonsForDay(always, DateTime(2025, 9, 1)).map((l) => l.id), [
+          9,
+        ]);
+        expect(lessonsForDay(always, DateTime(2025, 11, 3)).map((l) => l.id), [
+          9,
+        ]);
+        // …а в межсезонье (март за пределами данных) — НЕТ: раньше пара без
+        // окна маячила круглый год, даже летом (отложка шага 8 закрыта).
+        expect(lessonsForDay(always, DateTime(2026, 3, 2)), isEmpty);
+      },
+    );
 
-    test('без календаря и модулей пара без окна видна всегда (демо/ручные)',
-        () {
-      final demo = ScheduleData(
-        lessons: [_lesson(id: 9, pairNumber: 1)],
-        modules: const [],
-        weekCalendar: const [],
+    test(
+      'без календаря и модулей пара без окна видна всегда (демо/ручные)',
+      () {
+        final demo = ScheduleData(
+          lessons: [_lesson(id: 9, pairNumber: 1)],
+          modules: const [],
+          weekCalendar: const [],
+        );
+        expect(lessonsForDay(demo, DateTime(2026, 3, 2)).map((l) => l.id), [9]);
+      },
+    );
+
+    test('разреженный список дат не превращается в непрерывный диапазон', () {
+      final lesson = _lesson(
+        validFrom: DateTime(2025, 9, 1),
+        validTo: DateTime(2025, 9, 15),
+        specificDates: [DateTime(2025, 9, 1), DateTime(2025, 9, 15)],
       );
-      expect(lessonsForDay(demo, DateTime(2026, 3, 2)).map((l) => l.id), [9]);
+
+      expect(lessonVisibleOn(lesson, DateTime(2025, 9, 1), null), isTrue);
+      expect(lessonVisibleOn(lesson, DateTime(2025, 9, 8), null), isFalse);
+      expect(lessonVisibleOn(lesson, DateTime(2025, 9, 15), null), isTrue);
     });
   });
 
@@ -209,8 +236,10 @@ void main() {
       // Ради этого фильтр и проверяет subgroup != 0 отдельно: иначе студент
       // с фильтром потерял бы все общие лекции.
       for (final sg in [1, 2]) {
-        expect(lessonsForDay(data, monday, subgroup: sg).map((l) => l.id),
-            contains(1));
+        expect(
+          lessonsForDay(data, monday, subgroup: sg).map((l) => l.id),
+          contains(1),
+        );
       }
     });
 
@@ -222,8 +251,37 @@ void main() {
         weekCalendar: _calendar,
       );
       expect(lessonsForDay(alt, monday, subgroup: 1), isEmpty);
-      expect(lessonsForDay(alt, DateTime(2025, 9, 8), subgroup: 1).map((l) => l.id),
-          [5]);
+      expect(
+        lessonsForDay(alt, DateTime(2025, 9, 8), subgroup: 1).map((l) => l.id),
+        [5],
+      );
+    });
+  });
+
+  group('lessonsForDay — выбор МУАМ', () {
+    final muamA =
+        'МУАМ — Современные платформы для построения корп. инф. систем';
+    final muamB = 'МУАМ — Цифровые системы интеграции и управления бизнесом';
+    final data = ScheduleData(
+      lessons: [
+        _lesson(id: 1, subject: muamA),
+        _lesson(id: 2, subject: muamB),
+        _lesson(id: 3, pairNumber: 2, subject: 'Экономика'),
+      ],
+      modules: _modules,
+      weekCalendar: _calendar,
+    );
+    final monday = DateTime(2025, 9, 1);
+
+    test('до выбора один слот МУАМ не размножается карточками', () {
+      expect(lessonsForDay(data, monday).map((l) => l.id), [1, 3]);
+    });
+
+    test('выбранная дисциплина МУАМ заменяет вариант по умолчанию', () {
+      expect(lessonsForDay(data, monday, muamSubject: muamB).map((l) => l.id), [
+        2,
+        3,
+      ]);
     });
   });
 
@@ -231,29 +289,41 @@ void main() {
     final lesson = _lesson(); // пн, 09:00–10:35, каждую неделю
 
     test('во время пары — true', () {
-      expect(isLessonNow(lesson, WeekType.upper, DateTime(2025, 9, 1, 9, 30)),
-          isTrue);
+      expect(
+        isLessonNow(lesson, WeekType.upper, DateTime(2025, 9, 1, 9, 30)),
+        isTrue,
+      );
     });
     test('до начала — false', () {
-      expect(isLessonNow(lesson, WeekType.upper, DateTime(2025, 9, 1, 8, 59)),
-          isFalse);
+      expect(
+        isLessonNow(lesson, WeekType.upper, DateTime(2025, 9, 1, 8, 59)),
+        isFalse,
+      );
     });
     test('после конца — false', () {
-      expect(isLessonNow(lesson, WeekType.upper, DateTime(2025, 9, 1, 10, 36)),
-          isFalse);
+      expect(
+        isLessonNow(lesson, WeekType.upper, DateTime(2025, 9, 1, 10, 36)),
+        isFalse,
+      );
     });
     test('ровно в конце — уже не идёт', () {
-      expect(isLessonNow(lesson, WeekType.upper, DateTime(2025, 9, 1, 10, 35)),
-          isFalse);
+      expect(
+        isLessonNow(lesson, WeekType.upper, DateTime(2025, 9, 1, 10, 35)),
+        isFalse,
+      );
     });
     test('в другой день — false', () {
-      expect(isLessonNow(lesson, WeekType.upper, DateTime(2025, 9, 2, 9, 30)),
-          isFalse);
+      expect(
+        isLessonNow(lesson, WeekType.upper, DateTime(2025, 9, 2, 9, 30)),
+        isFalse,
+      );
     });
     test('пара верхней на нижней неделе — false', () {
       final upper = _lesson(weekType: WeekType.upper);
-      expect(isLessonNow(upper, WeekType.lower, DateTime(2025, 9, 8, 9, 30)),
-          isFalse);
+      expect(
+        isLessonNow(upper, WeekType.lower, DateTime(2025, 9, 8, 9, 30)),
+        isFalse,
+      );
     });
   });
 
@@ -326,7 +396,7 @@ void main() {
             'module_id': 2,
             'valid_from': '2025-09-01',
             'valid_to': '2025-10-26',
-          }
+          },
         ],
         'modules': [
           {
@@ -334,14 +404,14 @@ void main() {
             'name': '1 модуль',
             'date_from': '2025-09-01',
             'date_to': '2025-10-26',
-          }
+          },
         ],
         'week_calendar': [
           {
             'date_from': '2025-09-01',
             'date_to': '2025-09-07',
             'week_type': 'upper',
-          }
+          },
         ],
       });
       expect(data.lessons.single.subject, 'История России');

@@ -52,6 +52,8 @@ class LessonOut(BaseModel):
     module_id: int | None
     valid_from: date | None
     valid_to: date | None
+    # Non-empty only for a single date or a sparse list of dates.
+    specific_dates: list[date]
 
 
 class ModuleOut(BaseModel):

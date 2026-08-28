@@ -20,6 +20,7 @@ Map<String, dynamic> _lessonJson(int id) => {
       'module_id': 2,
       'valid_from': '2025-09-01',
       'valid_to': '2025-10-26',
+      'specific_dates': ['2025-09-08', '2025-09-22'],
     };
 
 Map<String, dynamic> _schedule(List<Map<String, dynamic>> lessons) => {
@@ -178,6 +179,10 @@ void main() {
     expect(data.lessons.single.subject, 'Предмет 1');
     expect(data.lessons.single.moduleId, 2);
     expect(data.lessons.single.validFrom, DateTime(2025, 9, 1));
+    expect(data.lessons.single.specificDates, [
+      DateTime(2025, 9, 8),
+      DateTime(2025, 9, 22),
+    ]);
     expect(data.modules.single.name, '1 модуль');
     expect(data.weekCalendar.single.dateFrom, DateTime(2025, 9, 1));
   });

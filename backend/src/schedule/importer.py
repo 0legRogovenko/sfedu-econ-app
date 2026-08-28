@@ -54,7 +54,8 @@ from src.models import (
 )
 from src.schedule import classify as classify_module
 from src.schedule import exams as exams_module
-from src.schedule.cells import is_placeholder, parse_cell
+from src.schedule.cells import REASON_NO_BOUNDARY, is_placeholder, parse_cell
+from src.schedule.date_constraints import resolve_date_constraint
 from src.schedule.extract_docx import extract_docx
 from src.schedule.extract_pdf import extract_pdf
 from src.schedule.fetch import Fetcher
@@ -90,6 +91,7 @@ CELL_SKIPPED = "skipped"
 REASON_UNKNOWN_TABLE = "таблица неизвестной схемы"
 REASON_NO_GROUP_COLUMN = "ячейка не попала ни в одну колонку группы"
 REASON_SLOT_TAKEN = "слот уже занят другой парой этого документа"
+REASON_DATE_CONSTRAINT = "датовое ограничение не пересекается с периодом расписания"
 REASON_EXAM_ROW = "строка сессии вне разбора"
 REASON_NO_WEEKDAY = "занятие без дня недели"
 REASON_NO_PAIR = "занятие без времени пары"
@@ -212,6 +214,10 @@ class Ledger:
     # ключи, чья структурность/пропуск/сессия доказаны ПОЗИЦИЕЙ из доверенного
     # места, а не одним лишь вызовом mark().
     _positional: set[tuple] = field(default_factory=set)
+    # Контекст для ячеек-продолжений МУАМ: во второй строке PDF заголовок
+    # «МУАМ» не повторён, поэтому независимый prove() должен знать канонические
+    # предметы, доказанные предыдущей парой той же группы.
+    _muam_subjects: dict[tuple, tuple[str, ...]] = field(default_factory=dict)
     _total: int = 0
     _proven: int | None = None
 
@@ -237,6 +243,17 @@ class Ledger:
     def mark_skipped(self, grid_index: int, cell) -> None:
         """Ячейка распознанной пропускаемой таблицы (учебный план)."""
         self._record(grid_index, cell, CELL_SKIPPED, positional=True)
+
+    def mark_muam_lesson(
+        self,
+        grid_index: int,
+        cell,
+        subjects: tuple[str, ...],
+    ) -> None:
+        """Пара из строки-продолжения МУАМ без повторного заголовка."""
+        key = (grid_index, cell.row, cell.col_start)
+        self._record(grid_index, cell, CELL_LESSON, positional=False)
+        self._muam_subjects[key] = subjects
 
     def _record(self, grid_index: int, cell, category: str, *, positional: bool) -> None:
         key = (grid_index, cell.row, cell.col_start)
@@ -284,6 +301,7 @@ class Ledger:
                 cell,
                 lessons_by_key.get(key_str, []),
                 unparsed_by_key.get(key_str, []),
+                muam_subjects=self._muam_subjects.get(key),
             )
         if category == CELL_UNPARSED:
             return any(
@@ -310,7 +328,13 @@ class Ledger:
         return self.counts[category]
 
 
-def _lesson_proven(cell, rows, unparsed_rows) -> bool:
+def _lesson_proven(
+    cell,
+    rows,
+    unparsed_rows,
+    *,
+    muam_subjects: tuple[str, ...] | None = None,
+) -> bool:
     """Ячейка категории lesson породила РОВНО свои пары — доказано перепарсом.
 
     Независимо зовём parse_cell(cell.text) и сверяем строки Lesson с cell_key
@@ -332,7 +356,13 @@ def _lesson_proven(cell, rows, unparsed_rows) -> bool:
     Проверяются строки ИМЕННО ЭТОЙ ячейки: близнец с тем же текстом в другой
     клетке сетки имеет другой cell_key и доказывает только себя.
     """
-    parsed = parse_cell(cell.text)
+    parsed = (
+        _parse_muam_continuation(cell.text, muam_subjects)
+        if muam_subjects is not None
+        else parse_cell(cell.text)
+    )
+    if parsed is None:
+        return False
     if parsed.reason is not None or parsed.is_placeholder or not parsed.lessons:
         return False
     rejected = sum(1 for row in unparsed_rows if row.raw_text == cell.text)
@@ -603,12 +633,18 @@ def _import_grid_document(session, document, content: bytes, link, report) -> No
     resolver = _GroupResolver(session, link)
 
     weeks = _load_calendar(session, document, grids, report)
+    semester_window = (
+        (min(week.date_from for week in weeks), max(week.date_to for week in weeks))
+        if weeks
+        else (None, None)
+    )
     slot_keys: set[tuple] = set()
 
     header: GridHeader | None = None
     prev_shape: tuple | None = None
     carry_day: int | None = None
     carry_module: Module | None = None
+    muam_choices: dict[tuple, tuple[str, ...]] = {}
 
     for index, grid in enumerate(grids):
         if is_week_calendar(grid):
@@ -670,7 +706,8 @@ def _import_grid_document(session, document, content: bytes, link, report) -> No
         for slot in slots:
             _import_row(
                 session, document, report, resolver, grid, index, header,
-                slot, module, page_week, slot_keys,
+                slot, module, page_week, slot_keys, muam_choices,
+                semester_window,
             )
         carry_day = slots[-1].weekday if slots else carry_day
 
@@ -738,9 +775,96 @@ def _correct_known_group_header(header: GridHeader, link) -> GridHeader:
     return header
 
 
+def _muam_slot_key(header, placement, slot, module, *, pair_number=None) -> tuple:
+    """Идентичность слота МУАМ без координат PDF, которые меняются по строкам."""
+    group = placement.group
+    return (
+        header.level,
+        header.course,
+        group.number,
+        group.program,
+        slot.weekday,
+        module.id if module else None,
+        slot.pair_number if pair_number is None else pair_number,
+    )
+
+
+def _previous_muam_choices(header, placements, slot, module, choices_by_slot):
+    """Канонические предметы МУАМ из непосредственно предыдущей пары.
+
+    Ячейка может покрывать несколько групп. Контекст допустим только когда у
+    КАЖДОЙ из них предыдущий слот содержит один и тот же список вариантов —
+    иначе неоднозначную строку оставляем в очереди админу.
+    """
+    if slot.weekday is None or slot.pair_number is None or slot.pair_number <= 1:
+        return None
+    choices = []
+    for placement in placements:
+        previous = choices_by_slot.get(
+            _muam_slot_key(
+                header,
+                placement,
+                slot,
+                module,
+                pair_number=slot.pair_number - 1,
+            )
+        )
+        if previous is None:
+            return None
+        choices.append(previous)
+    if not choices or any(value != choices[0] for value in choices[1:]):
+        return None
+    return choices[0]
+
+
+def _muam_tokens(subject: str) -> tuple[str, ...]:
+    label = subject.removeprefix("МУАМ — ").casefold().replace("ё", "е")
+    return tuple(re.findall(r"[0-9a-zа-я]+", label))
+
+
+def _same_muam_subject(raw: str, canonical: str) -> bool:
+    """Равенство с точечным допуском сокращения «Совр.» → «Современные».
+
+    Это не общий fuzzy-match предметов: сравнение разрешено только между
+    соседними строками одного блока МУАМ, число и порядок слов обязаны
+    совпасть, а сокращённый токен содержит минимум четыре символа.
+    """
+    raw_tokens = _muam_tokens(raw)
+    canonical_tokens = _muam_tokens(canonical)
+    if len(raw_tokens) != len(canonical_tokens):
+        return False
+    return all(
+        left == right
+        or (
+            min(len(left), len(right)) >= 4
+            and (left.startswith(right) or right.startswith(left))
+        )
+        for left, right in zip(raw_tokens, canonical_tokens)
+    )
+
+
+def _parse_muam_continuation(text: str, subjects: tuple[str, ...]):
+    """Разбирает строку МУАМ без заголовка и возвращает прежние имена курсов."""
+    parsed = parse_cell(f"МУАМ {text}")
+    if parsed.reason is not None or len(parsed.lessons) != len(subjects):
+        return None
+    if any(
+        not _same_muam_subject(lesson.subject, subject)
+        for lesson, subject in zip(parsed.lessons, subjects)
+    ):
+        return None
+    return replace(
+        parsed,
+        lessons=tuple(
+            replace(lesson, subject=subject, cell_raw=text)
+            for lesson, subject in zip(parsed.lessons, subjects)
+        ),
+    )
+
+
 def _import_row(
     session, document, report, resolver, grid, index, header,
-    slot, module, page_week, slot_keys,
+    slot, module, page_week, slot_keys, muam_choices, semester_window,
 ) -> None:
     ledger = report.ledger
     for cell in grid.row(slot.row):
@@ -752,7 +876,8 @@ def _import_row(
     if slot.is_separator:
         return
 
-    placed = {id(p.cell): p for p in place_row(grid, slot.row, header)}
+    placements = place_row(grid, slot.row, header)
+    placed = {id(p.cell): p for p in placements}
     payload = [
         cell
         for cell in grid.row(slot.row)
@@ -769,7 +894,22 @@ def _import_row(
             )
             ledger.mark(index, cell, CELL_UNPARSED)
             continue
+        cell_placements = [p for p in placements if p.cell is cell]
         parsed = parse_cell(cell.text)
+        continuation_subjects = None
+        if parsed.reason == REASON_NO_BOUNDARY:
+            continuation_subjects = _previous_muam_choices(
+                header,
+                cell_placements,
+                slot,
+                module,
+                muam_choices,
+            )
+            if continuation_subjects is not None:
+                parsed = (
+                    _parse_muam_continuation(cell.text, continuation_subjects)
+                    or parsed
+                )
         if parsed.is_placeholder:
             # '…………….' = «занятий нет». Проверяется РАНЬШЕ причин строки:
             # заглушка в строке с кривым временем — всё равно заглушка, а не
@@ -792,27 +932,58 @@ def _import_row(
             ledger.mark(index, cell, CELL_UNPARSED)
             continue
 
+        if parsed.lessons and all(
+            lesson.subject.startswith("МУАМ — ") for lesson in parsed.lessons
+        ):
+            current_choices = tuple(lesson.subject for lesson in parsed.lessons)
+            for placement in cell_placements:
+                muam_choices[
+                    _muam_slot_key(header, placement, slot, module)
+                ] = current_choices
+
         made = False
-        for placement in place_row(grid, slot.row, header):
-            if placement.cell is not cell:
-                continue
+        for placement in cell_placements:
             for lesson in parsed.lessons:
                 made |= _add_lesson(
                     session, document, report, resolver, header, placement,
                     slot, lesson, module, page_week, slot_keys, grid, key,
+                    semester_window,
                 )
-        ledger.mark(index, cell, CELL_LESSON if made else CELL_UNPARSED)
+        if made and continuation_subjects is not None:
+            ledger.mark_muam_lesson(index, cell, continuation_subjects)
+        else:
+            ledger.mark(index, cell, CELL_LESSON if made else CELL_UNPARSED)
 
 
 def _add_lesson(
     session, document, report, resolver, header, placement,
-    slot, parsed, module, page_week, slot_keys, grid, cell_key,
+    slot, parsed, module, page_week, slot_keys, grid, cell_key, semester_window,
 ) -> bool:
     group = resolver.resolve(header, placement.group)
     # Текстовая метка '1п/г' побеждает геометрию: она однозначна, а нарезка
     # кусков — догадка по колонкам.
     subgroup = parsed.subgroup if parsed.subgroup is not None else placement.subgroup
     week_type = parsed.week_type or page_week
+
+    base_from = module.date_from if module else None
+    base_to = module.date_to if module else None
+    if parsed.date_constraint_raw is not None:
+        # A prefix has no year, so a lesson without a module uses the imported
+        # week calendar as its bounded semester.  Never guess a year.
+        base_from = base_from or semester_window[0]
+        base_to = base_to or semester_window[1]
+    dates = resolve_date_constraint(parsed.date_constraint_raw, base_from, base_to)
+    if dates is None:
+        _unparsed(
+            session,
+            document,
+            report,
+            grid,
+            placement.cell,
+            REASON_DATE_CONSTRAINT,
+            cell_key=cell_key,
+        )
+        return False
 
     # Ключ слота = ключ уникального индекса Lesson. Дата и предмет в нём не
     # украшение: 13469 кладёт в одну ячейку 'До 17.12 …' и '24.12 …' (разные
@@ -821,6 +992,7 @@ def _add_lesson(
     key = (
         group.id, slot.weekday, slot.pair_number, week_type, subgroup,
         module.id if module else None, parsed.date_constraint_raw,
+        dates.valid_from, dates.valid_to,
         parsed.subject[:200],
     )
     if key in slot_keys:
@@ -859,8 +1031,9 @@ def _add_lesson(
             date_constraint_raw=parsed.date_constraint_raw,
             cell_raw=parsed.cell_raw,
             cell_key=cell_key,
-            valid_from=module.date_from if module else None,
-            valid_to=module.date_to if module else None,
+            valid_from=dates.valid_from,
+            valid_to=dates.valid_to,
+            specific_dates=[value.isoformat() for value in dates.specific_dates],
         )
     )
     report.lessons += 1

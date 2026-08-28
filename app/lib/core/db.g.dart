@@ -166,6 +166,18 @@ class $CachedLessonsTable extends CachedLessons
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _specificDatesMeta = const VerificationMeta(
+    'specificDates',
+  );
+  @override
+  late final GeneratedColumn<String> specificDates = GeneratedColumn<String>(
+    'specific_dates',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -183,6 +195,7 @@ class $CachedLessonsTable extends CachedLessons
     moduleId,
     validFrom,
     validTo,
+    specificDates,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -304,6 +317,15 @@ class $CachedLessonsTable extends CachedLessons
         validTo.isAcceptableOrUnknown(data['valid_to']!, _validToMeta),
       );
     }
+    if (data.containsKey('specific_dates')) {
+      context.handle(
+        _specificDatesMeta,
+        specificDates.isAcceptableOrUnknown(
+          data['specific_dates']!,
+          _specificDatesMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -373,6 +395,10 @@ class $CachedLessonsTable extends CachedLessons
         DriftSqlType.string,
         data['${effectivePrefix}valid_to'],
       ),
+      specificDates: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}specific_dates'],
+      )!,
     );
   }
 
@@ -402,6 +428,7 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
   final int? moduleId;
   final String? validFrom;
   final String? validTo;
+  final String specificDates;
   const CachedLesson({
     required this.id,
     required this.scope,
@@ -418,6 +445,7 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
     this.moduleId,
     this.validFrom,
     this.validTo,
+    required this.specificDates,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -449,6 +477,7 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
     if (!nullToAbsent || validTo != null) {
       map['valid_to'] = Variable<String>(validTo);
     }
+    map['specific_dates'] = Variable<String>(specificDates);
     return map;
   }
 
@@ -479,6 +508,7 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
       validTo: validTo == null && nullToAbsent
           ? const Value.absent()
           : Value(validTo),
+      specificDates: Value(specificDates),
     );
   }
 
@@ -503,6 +533,7 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
       moduleId: serializer.fromJson<int?>(json['moduleId']),
       validFrom: serializer.fromJson<String?>(json['validFrom']),
       validTo: serializer.fromJson<String?>(json['validTo']),
+      specificDates: serializer.fromJson<String>(json['specificDates']),
     );
   }
   @override
@@ -524,6 +555,7 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
       'moduleId': serializer.toJson<int?>(moduleId),
       'validFrom': serializer.toJson<String?>(validFrom),
       'validTo': serializer.toJson<String?>(validTo),
+      'specificDates': serializer.toJson<String>(specificDates),
     };
   }
 
@@ -543,6 +575,7 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
     Value<int?> moduleId = const Value.absent(),
     Value<String?> validFrom = const Value.absent(),
     Value<String?> validTo = const Value.absent(),
+    String? specificDates,
   }) => CachedLesson(
     id: id ?? this.id,
     scope: scope ?? this.scope,
@@ -559,6 +592,7 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
     moduleId: moduleId.present ? moduleId.value : this.moduleId,
     validFrom: validFrom.present ? validFrom.value : this.validFrom,
     validTo: validTo.present ? validTo.value : this.validTo,
+    specificDates: specificDates ?? this.specificDates,
   );
   CachedLesson copyWithCompanion(CachedLessonsCompanion data) {
     return CachedLesson(
@@ -581,6 +615,9 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
       moduleId: data.moduleId.present ? data.moduleId.value : this.moduleId,
       validFrom: data.validFrom.present ? data.validFrom.value : this.validFrom,
       validTo: data.validTo.present ? data.validTo.value : this.validTo,
+      specificDates: data.specificDates.present
+          ? data.specificDates.value
+          : this.specificDates,
     );
   }
 
@@ -601,7 +638,8 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
           ..write('teacherName: $teacherName, ')
           ..write('moduleId: $moduleId, ')
           ..write('validFrom: $validFrom, ')
-          ..write('validTo: $validTo')
+          ..write('validTo: $validTo, ')
+          ..write('specificDates: $specificDates')
           ..write(')'))
         .toString();
   }
@@ -623,6 +661,7 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
     moduleId,
     validFrom,
     validTo,
+    specificDates,
   );
   @override
   bool operator ==(Object other) =>
@@ -642,7 +681,8 @@ class CachedLesson extends DataClass implements Insertable<CachedLesson> {
           other.teacherName == this.teacherName &&
           other.moduleId == this.moduleId &&
           other.validFrom == this.validFrom &&
-          other.validTo == this.validTo);
+          other.validTo == this.validTo &&
+          other.specificDates == this.specificDates);
 }
 
 class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
@@ -661,6 +701,7 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
   final Value<int?> moduleId;
   final Value<String?> validFrom;
   final Value<String?> validTo;
+  final Value<String> specificDates;
   final Value<int> rowid;
   const CachedLessonsCompanion({
     this.id = const Value.absent(),
@@ -678,6 +719,7 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
     this.moduleId = const Value.absent(),
     this.validFrom = const Value.absent(),
     this.validTo = const Value.absent(),
+    this.specificDates = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   CachedLessonsCompanion.insert({
@@ -696,6 +738,7 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
     this.moduleId = const Value.absent(),
     this.validFrom = const Value.absent(),
     this.validTo = const Value.absent(),
+    this.specificDates = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        scope = Value(scope),
@@ -722,6 +765,7 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
     Expression<int>? moduleId,
     Expression<String>? validFrom,
     Expression<String>? validTo,
+    Expression<String>? specificDates,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -740,6 +784,7 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
       if (moduleId != null) 'module_id': moduleId,
       if (validFrom != null) 'valid_from': validFrom,
       if (validTo != null) 'valid_to': validTo,
+      if (specificDates != null) 'specific_dates': specificDates,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -760,6 +805,7 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
     Value<int?>? moduleId,
     Value<String?>? validFrom,
     Value<String?>? validTo,
+    Value<String>? specificDates,
     Value<int>? rowid,
   }) {
     return CachedLessonsCompanion(
@@ -778,6 +824,7 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
       moduleId: moduleId ?? this.moduleId,
       validFrom: validFrom ?? this.validFrom,
       validTo: validTo ?? this.validTo,
+      specificDates: specificDates ?? this.specificDates,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -830,6 +877,9 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
     if (validTo.present) {
       map['valid_to'] = Variable<String>(validTo.value);
     }
+    if (specificDates.present) {
+      map['specific_dates'] = Variable<String>(specificDates.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -854,6 +904,7 @@ class CachedLessonsCompanion extends UpdateCompanion<CachedLesson> {
           ..write('moduleId: $moduleId, ')
           ..write('validFrom: $validFrom, ')
           ..write('validTo: $validTo, ')
+          ..write('specificDates: $specificDates, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3590,6 +3641,7 @@ typedef $$CachedLessonsTableCreateCompanionBuilder =
       Value<int?> moduleId,
       Value<String?> validFrom,
       Value<String?> validTo,
+      Value<String> specificDates,
       Value<int> rowid,
     });
 typedef $$CachedLessonsTableUpdateCompanionBuilder =
@@ -3609,6 +3661,7 @@ typedef $$CachedLessonsTableUpdateCompanionBuilder =
       Value<int?> moduleId,
       Value<String?> validFrom,
       Value<String?> validTo,
+      Value<String> specificDates,
       Value<int> rowid,
     });
 
@@ -3693,6 +3746,11 @@ class $$CachedLessonsTableFilterComposer
 
   ColumnFilters<String> get validTo => $composableBuilder(
     column: $table.validTo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get specificDates => $composableBuilder(
+    column: $table.specificDates,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3780,6 +3838,11 @@ class $$CachedLessonsTableOrderingComposer
     column: $table.validTo,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get specificDates => $composableBuilder(
+    column: $table.specificDates,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CachedLessonsTableAnnotationComposer
@@ -3839,6 +3902,11 @@ class $$CachedLessonsTableAnnotationComposer
 
   GeneratedColumn<String> get validTo =>
       $composableBuilder(column: $table.validTo, builder: (column) => column);
+
+  GeneratedColumn<String> get specificDates => $composableBuilder(
+    column: $table.specificDates,
+    builder: (column) => column,
+  );
 }
 
 class $$CachedLessonsTableTableManager
@@ -3887,6 +3955,7 @@ class $$CachedLessonsTableTableManager
                 Value<int?> moduleId = const Value.absent(),
                 Value<String?> validFrom = const Value.absent(),
                 Value<String?> validTo = const Value.absent(),
+                Value<String> specificDates = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CachedLessonsCompanion(
                 id: id,
@@ -3904,6 +3973,7 @@ class $$CachedLessonsTableTableManager
                 moduleId: moduleId,
                 validFrom: validFrom,
                 validTo: validTo,
+                specificDates: specificDates,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3923,6 +3993,7 @@ class $$CachedLessonsTableTableManager
                 Value<int?> moduleId = const Value.absent(),
                 Value<String?> validFrom = const Value.absent(),
                 Value<String?> validTo = const Value.absent(),
+                Value<String> specificDates = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CachedLessonsCompanion.insert(
                 id: id,
@@ -3940,6 +4011,7 @@ class $$CachedLessonsTableTableManager
                 moduleId: moduleId,
                 validFrom: validFrom,
                 validTo: validTo,
+                specificDates: specificDates,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

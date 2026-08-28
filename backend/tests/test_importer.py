@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 from collections import Counter
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -28,6 +29,7 @@ from src.models import (
     Group,
     ImportDiff,
     Lesson,
+    LessonKind,
     Module,
     ScheduleDocument,
     UnparsedCell,
@@ -239,6 +241,55 @@ class TestCorpus:
         )
         assert master_exams == 49, master_exams
 
+
+    def test_muam_seminar_continuation_uses_previous_lecture_options(self):
+        """13471: строка семинара продолжает МУАМ, но не повторяет заголовок.
+
+        В официальном PDF у 3.1 в субботу две пары: лекция 08:00 и семинар
+        09:50. Во второй ячейке написаны только два предмета с маркерами ``(с)``;
+        без контекста предыдущей строки она уходила в UnparsedCell целиком.
+        """
+        session = make_session()
+        fetcher = FakeFetcher()
+        links = [
+            link
+            for link in parse_index(fetcher.fetch_index())
+            if link.p_doc_id == "13471"
+        ]
+        importer.import_all(session, fetcher, links=links)
+
+        group = session.scalar(select(Group).where(Group.number == "3.1"))
+        document = session.scalar(
+            select(ScheduleDocument).where(ScheduleDocument.p_doc_id == 13471)
+        )
+        muam = session.scalars(
+            select(Lesson).where(
+                Lesson.document_id == document.id,
+                Lesson.group_id == group.id,
+                Lesson.subject.like("МУАМ — %"),
+            )
+        ).all()
+
+        subjects = {
+            "МУАМ — Современные платформы для построения корпоративных инф. систем",
+            "МУАМ — Цифровые системы интеграции и управления бизнесом",
+        }
+        assert {(lesson.subject, lesson.pair_number) for lesson in muam} == {
+            (subject, pair) for subject in subjects for pair in (1, 2)
+        }
+        assert Counter(lesson.lesson_kind for lesson in muam) == Counter(
+            {LessonKind.LECTURE: 4, LessonKind.SEMINAR: 4}
+        )
+
+        lost_seminars = session.scalars(
+            select(UnparsedCell).where(
+                UnparsedCell.document_id == document.id,
+                UnparsedCell.raw_text.like("%Современные платформы%"),
+            )
+        ).all()
+        assert lost_seminars == []
+        session.close()
+
     def test_no_cell_is_lost_silently(self, corpus):
         """ГЛАВНЫЙ ТЕСТ ПЛАНА.
 
@@ -373,6 +424,63 @@ def test_current_fourth_course_pdf_corrects_mislabeled_group_37_to_47():
             .order_by(Lesson.pair_number)
         ).all() == ["Цифровая экономика", "Цифровая экономика"]
         assert session.scalar(select(Group).where(Group.number == "3.7")) is None
+    finally:
+        session.close()
+
+
+def test_current_master_schedule_respects_since_date_for_all_evening_slots():
+    """14159: ``С 09.09`` applies to every row of the three-pair block.
+
+    Recognising the previously lost 20:05 slot must not widen the same source
+    cell to the whole module.  Otherwise the app shows this class a week early.
+    """
+    content = (FIXTURES / "14159.pdf").read_bytes()
+    session = make_session()
+    try:
+        report = importer.import_all(
+            session,
+            FakeFetcher(overrides={"14159": content}),
+            links=[ScheduleLink("Осенний семестр", "маг.1 курс", "14159")],
+        )
+        group = session.scalar(
+            select(Group).where(Group.program == "Учетные технологии и аудит")
+        )
+        assert group is not None
+        lessons = session.scalars(
+            select(Lesson)
+            .where(
+                Lesson.group_id == group.id,
+                Lesson.subject == "Оценка инвестиционных проектов",
+            )
+            .order_by(Lesson.pair_number)
+        ).all()
+
+        assert report.failed == 0
+        assert [lesson.pair_number for lesson in lessons] == [5, 6, 7]
+        assert {lesson.valid_from for lesson in lessons} == {date(2026, 9, 9)}
+        assert {lesson.valid_to for lesson in lessons} == {date(2026, 11, 1)}
+    finally:
+        session.close()
+
+
+def test_single_schedule_date_is_kept_exact_instead_of_becoming_a_span():
+    """A one-day lesson must not be visible on every same weekday in between."""
+    session = make_session()
+    try:
+        importer.import_all(
+            session,
+            FakeFetcher(),
+            links=[ScheduleLink("Осенний семестр", "1 курс", "13469")],
+        )
+        lessons = session.scalars(
+            select(Lesson).where(Lesson.date_constraint_raw == "24.12")
+        ).all()
+
+        assert lessons
+        assert {
+            (lesson.valid_from, lesson.valid_to, tuple(lesson.specific_dates))
+            for lesson in lessons
+        } == {(date(2025, 12, 24), date(2025, 12, 24), ("2025-12-24",))}
     finally:
         session.close()
 
@@ -1031,7 +1139,8 @@ class TestScheduleParseFixes:
         """БАГ 2. Заголовок модуля стоит только на ПЕРВОЙ странице модуля;
         страницы-продолжения (Ср/Чт/Пт) получали module_id=NULL → пары шли
         круглый год и три модуля сваливались в один слот. Теперь у пар Ср/Чт/Пт
-        есть окно действия, совпадающее с их модулем."""
+        есть окно действия внутри их модуля. Текстовые ограничения «с/до/по»
+        вправе сужать окно, но не выходить за границы модуля."""
         session, _ = corpus
         lessons, _doc = self._lessons_13470(session)
 
@@ -1044,11 +1153,23 @@ class TestScheduleParseFixes:
             f"{len(without_window)} пар Ср/Чт/Пт без окна действия — модуль не "
             "перенесён на страницу-продолжение"
         )
-        # окно совпадает с модулем пары, а не выдумано
+        # Продолжение обязано сохранить модуль, а датовая пометка в самой
+        # ячейке может только сузить его период.
+        assert all(
+            lesson.module is not None
+            and lesson.module.date_from <= lesson.valid_from <= lesson.valid_to
+            and lesson.valid_to <= lesson.module.date_to
+            for lesson in continuation
+        )
+        unconstrained = [
+            lesson for lesson in continuation
+            if lesson.date_constraint_raw is None
+        ]
+        assert unconstrained, "нет пар без датовых ограничений для проверки"
         assert all(
             lesson.valid_from == lesson.module.date_from
             and lesson.valid_to == lesson.module.date_to
-            for lesson in continuation
+            for lesson in unconstrained
         )
 
     def test_bug2_three_modules_do_not_collapse_into_one_slot(self, corpus):

@@ -11,10 +11,22 @@ from sqlalchemy.orm import Session
 
 from src.models import SubjectRename
 
+DEFAULT_SUBJECT_RENAMES = {
+    "ИКТ": "Информационно-коммуникационные технологии",
+    "Анализ и мод. БП": "Анализ и моделирование бизнес-процессов",
+    "Анализ и моделирование БП": "Анализ и моделирование бизнес-процессов",
+    "Анализ и модел. бизнес-процессов": (
+        "Анализ и моделирование бизнес-процессов"
+    ),
+}
+
 
 def rename_map(db: Session) -> dict[str, str]:
     rows = db.scalars(select(SubjectRename)).all()
-    return {r.match_subject: r.display_subject for r in rows}
+    # Ручная запись имеет приоритет над встроенным бесспорным синонимом.
+    return DEFAULT_SUBJECT_RENAMES | {
+        r.match_subject: r.display_subject for r in rows
+    }
 
 
 def apply_renames(db: Session, items: list[dict]) -> None:

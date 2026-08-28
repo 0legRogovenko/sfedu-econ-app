@@ -154,6 +154,7 @@ def test_schedule_lesson_context_fields(client, db_session):
                 subgroup=0,
                 valid_from=date(2025, 9, 1),
                 valid_to=date(2025, 10, 26),
+                specific_dates=["2025-09-08", "2025-09-22"],
             ),
         ]
     )
@@ -165,6 +166,7 @@ def test_schedule_lesson_context_fields(client, db_session):
     assert lesson["module_id"] == module1.id
     assert lesson["valid_from"] == "2025-09-01"
     assert lesson["valid_to"] == "2025-10-26"
+    assert lesson["specific_dates"] == ["2025-09-08", "2025-09-22"]
 
     # ВСЕ модули документа, а не только те, где у группы есть пары:
     # клиенту нужны границы, чтобы сказать «в этом модуле занятий нет»

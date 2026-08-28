@@ -66,7 +66,9 @@ class _ExamsList extends StatelessWidget {
       // Пусто И синк не удался — это «не загрузилось», а не «экзаменов нет».
       // Кэш был бы непустым, если бы хоть раз загрузился, поэтому пустота
       // вместе с offline однозначно означает отсутствие данных.
-      final message = feed.offline ? noDataText : 'Экзамены не назначены';
+      final message = feed.offline
+          ? noDataText
+          : 'Расписание экзаменов ещё не опубликовано';
       listBody = ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         children: [

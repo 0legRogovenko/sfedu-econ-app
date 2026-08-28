@@ -18,17 +18,16 @@ ExamEvent _exam({
   DateTime? examAt,
   String? room = '214',
   String? kind = 'устный',
-}) =>
-    ExamEvent(
-      id: id,
-      groupId: 3,
-      subject: subject,
-      teacher: teacher,
-      consultationAt: consultationAt,
-      examAt: examAt,
-      room: room,
-      kind: kind,
-    );
+}) => ExamEvent(
+  id: id,
+  groupId: 3,
+  subject: subject,
+  teacher: teacher,
+  consultationAt: consultationAt,
+  examAt: examAt,
+  room: room,
+  kind: kind,
+);
 
 /// Фейковый нотифаер: сразу отдаёт готовый feed, refresh — no-op.
 class _FakeFeed extends ExamsFeedNotifier {
@@ -43,67 +42,79 @@ class _FakeFeed extends ExamsFeedNotifier {
 }
 
 Widget _screen(ExamsFeed feed) => ProviderScope(
-      overrides: [
-        clockProvider.overrideWithValue(() => _now),
-        examsFeedProvider.overrideWith(() => _FakeFeed(feed)),
-      ],
-      child: const MaterialApp(home: ExamsScreen()),
-    );
+  overrides: [
+    clockProvider.overrideWithValue(() => _now),
+    examsFeedProvider.overrideWith(() => _FakeFeed(feed)),
+  ],
+  child: const MaterialApp(home: ExamsScreen()),
+);
 
 void main() {
-  testWidgets('карточка экзамена: предмет, преподаватель, дата, аудитория, форма',
-      (tester) async {
-    await tester.pumpWidget(_screen(ExamsFeed(
-      items: [
-        _exam(
-          consultationAt: DateTime(2026, 4, 20, 11),
-          examAt: DateTime(2026, 4, 21, 9),
+  testWidgets(
+    'карточка экзамена: предмет, преподаватель, дата, аудитория, форма',
+    (tester) async {
+      await tester.pumpWidget(
+        _screen(
+          ExamsFeed(
+            items: [
+              _exam(
+                consultationAt: DateTime(2026, 4, 20, 11),
+                examAt: DateTime(2026, 4, 21, 9),
+              ),
+            ],
+            offline: false,
+          ),
         ),
-      ],
-      offline: false,
-    )));
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('Экосистема организации'), findsOneWidget);
-    expect(find.text('Чернова О.А.'), findsOneWidget);
-    expect(find.textContaining('21.04.2026, 09:00'), findsOneWidget);
-    // номер аудитории — с префиксом, и ровно одним (регрессия «ауд. ауд.118»)
-    expect(find.textContaining('ауд. 214'), findsOneWidget);
-    expect(find.textContaining('ауд. ауд.'), findsNothing);
-    expect(find.textContaining('устный'), findsOneWidget);
-  });
+      expect(find.text('Экосистема организации'), findsOneWidget);
+      expect(find.text('Чернова О.А.'), findsOneWidget);
+      expect(find.textContaining('21.04.2026, 09:00'), findsOneWidget);
+      // номер аудитории — с префиксом, и ровно одним (регрессия «ауд. ауд.118»)
+      expect(find.textContaining('ауд. 214'), findsOneWidget);
+      expect(find.textContaining('ауд. ауд.'), findsNothing);
+      expect(find.textContaining('устный'), findsOneWidget);
+    },
+  );
 
   testWidgets('площадка вместо номера — без префикса «ауд.»', (tester) async {
-    await tester.pumpWidget(_screen(ExamsFeed(
-      items: [
-        _exam(
-          examAt: DateTime(2026, 4, 21, 9),
-          room: 'Microsoft Teams',
+    await tester.pumpWidget(
+      _screen(
+        ExamsFeed(
+          items: [
+            _exam(examAt: DateTime(2026, 4, 21, 9), room: 'Microsoft Teams'),
+          ],
+          offline: false,
         ),
-      ],
-      offline: false,
-    )));
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.textContaining('Microsoft Teams'), findsOneWidget);
     expect(find.textContaining('ауд. Microsoft Teams'), findsNothing);
   });
 
-  testWidgets('null-поля показываются как «уточняется», запись не прячется',
-      (tester) async {
-    await tester.pumpWidget(_screen(ExamsFeed(
-      items: [
-        _exam(
-          subject: 'Матанализ',
-          teacher: null,
-          examAt: null,
-          consultationAt: null,
-          room: null,
-          kind: null,
+  testWidgets('null-поля показываются как «уточняется», запись не прячется', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _screen(
+        ExamsFeed(
+          items: [
+            _exam(
+              subject: 'Матанализ',
+              teacher: null,
+              examAt: null,
+              consultationAt: null,
+              room: null,
+              kind: null,
+            ),
+          ],
+          offline: false,
         ),
-      ],
-      offline: false,
-    )));
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Матанализ'), findsOneWidget); // запись видна
@@ -111,15 +122,20 @@ void main() {
     expect(find.text('Преподаватель уточняется'), findsOneWidget);
   });
 
-  testWidgets('прошедшие экзамены — под заголовком «Прошедшие»',
-      (tester) async {
-    await tester.pumpWidget(_screen(ExamsFeed(
-      items: [
-        _exam(id: 1, subject: 'Прошедший', examAt: DateTime(2026, 4, 1, 9)),
-        _exam(id: 2, subject: 'Будущий', examAt: DateTime(2026, 4, 20, 9)),
-      ],
-      offline: false,
-    )));
+  testWidgets('прошедшие экзамены — под заголовком «Прошедшие»', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _screen(
+        ExamsFeed(
+          items: [
+            _exam(id: 1, subject: 'Прошедший', examAt: DateTime(2026, 4, 1, 9)),
+            _exam(id: 2, subject: 'Будущий', examAt: DateTime(2026, 4, 20, 9)),
+          ],
+          offline: false,
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Прошедшие'), findsOneWidget);
@@ -127,29 +143,37 @@ void main() {
     expect(find.text('Прошедший'), findsOneWidget);
   });
 
-  testWidgets('пустой список — дружелюбная заглушка', (tester) async {
+  testWidgets('пустой список — расписание ещё не опубликовано', (tester) async {
     await tester.pumpWidget(
-        _screen(const ExamsFeed(items: [], offline: false)));
+      _screen(const ExamsFeed(items: [], offline: false)),
+    );
     await tester.pumpAndSettle();
 
-    expect(find.text('Экзамены не назначены'), findsOneWidget);
+    expect(
+      find.text('Расписание экзаменов ещё не опубликовано'),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('офлайн без кэша — «нужна сеть», а не «экзаменов нет»',
-      (tester) async {
+  testWidgets('офлайн без кэша — «нужна сеть», а не «экзаменов нет»', (
+    tester,
+  ) async {
     // Пустой список при неудачном синке значит «не загрузилось», а не
     // «экзаменов не назначено»: студент прочитал бы сбой сети как хорошую
     // новость и не стал бы обновлять.
     await tester.pumpWidget(_screen(const ExamsFeed(items: [], offline: true)));
     await tester.pumpAndSettle();
 
-    expect(find.text('Нет данных. Для первой загрузки нужна сеть'),
-        findsOneWidget);
-    expect(find.text('Экзамены не назначены'), findsNothing);
+    expect(
+      find.text('Нет данных. Для первой загрузки нужна сеть'),
+      findsOneWidget,
+    );
+    expect(find.text('Расписание экзаменов ещё не опубликовано'), findsNothing);
   });
 
-  testWidgets('офлайн без кэша не обещает сохранённых экзаменов',
-      (tester) async {
+  testWidgets('офлайн без кэша не обещает сохранённых экзаменов', (
+    tester,
+  ) async {
     // Плашка «Показаны сохранённые экзамены» над пустым экраном — прямая ложь.
     await tester.pumpWidget(_screen(const ExamsFeed(items: [], offline: true)));
     await tester.pumpAndSettle();
@@ -158,13 +182,19 @@ void main() {
   });
 
   testWidgets('офлайн-плашка при недоступной сети', (tester) async {
-    await tester.pumpWidget(_screen(ExamsFeed(
-      items: [_exam(examAt: DateTime(2026, 4, 21, 9))],
-      offline: true,
-    )));
+    await tester.pumpWidget(
+      _screen(
+        ExamsFeed(
+          items: [_exam(examAt: DateTime(2026, 4, 21, 9))],
+          offline: true,
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(
-        find.text('Нет сети. Показаны сохранённые экзамены'), findsOneWidget);
+      find.text('Нет сети. Показаны сохранённые экзамены'),
+      findsOneWidget,
+    );
   });
 }

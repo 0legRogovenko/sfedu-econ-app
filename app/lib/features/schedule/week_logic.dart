@@ -9,6 +9,9 @@ import 'schedule_data.dart';
 bool _inRange(DateTime date, DateTime from, DateTime to) =>
     !date.isBefore(from) && !date.isAfter(to);
 
+bool _sameDay(DateTime one, DateTime other) =>
+    one.year == other.year && one.month == other.month && one.day == other.day;
+
 /// Тип недели для даты по календарю. null — дата вне всех диапазонов
 /// (тип недели неизвестен → показываем только пары без чередования).
 WeekType? weekTypeForDate(List<WeekCalendarEntry> calendar, DateTime date) {
@@ -32,11 +35,21 @@ Module? activeModule(List<Module> modules, DateTime date) {
 ///
 /// [subgroup] — пользовательский фильтр «моя подгруппа» (null = показывать
 /// все). Он НЕ часть правила резолвинга, а настройка поверх него.
-bool lessonVisibleOn(Lesson lesson, DateTime date, WeekType? weekType,
-    {int? subgroup}) {
+bool lessonVisibleOn(
+  Lesson lesson,
+  DateTime date,
+  WeekType? weekType, {
+  int? subgroup,
+}) {
   if (lesson.weekday != date.weekday - 1) return false;
-  if (lesson.validFrom != null && date.isBefore(lesson.validFrom!)) return false;
+  if (lesson.validFrom != null && date.isBefore(lesson.validFrom!)) {
+    return false;
+  }
   if (lesson.validTo != null && date.isAfter(lesson.validTo!)) return false;
+  if (lesson.specificDates.isNotEmpty &&
+      !lesson.specificDates.any((value) => _sameDay(value, date))) {
+    return false;
+  }
   // Пара с чередованием видна только на своей неделе. Если тип недели на дату
   // неизвестен (null), такая пара не показывается — только пары без чередования.
   if (lesson.weekType != null && lesson.weekType != weekType) return false;
@@ -67,7 +80,12 @@ bool lessonVisibleOn(Lesson lesson, DateTime date, WeekType? weekType,
 
 /// Пары на конкретную дату: фильтр по правилу резолвинга,
 /// сортировка по номеру пары и подгруппе.
-List<Lesson> lessonsForDay(ScheduleData data, DateTime date, {int? subgroup}) {
+List<Lesson> lessonsForDay(
+  ScheduleData data,
+  DateTime date, {
+  int? subgroup,
+  String? muamSubject,
+}) {
   final weekType = weekTypeForDate(data.weekCalendar, date);
   // Пара без окна действия (validFrom и validTo == null — файл без модулей)
   // подходит под любой matching-день, в том числе летом и в каникулы. Бьём по
@@ -75,18 +93,43 @@ List<Lesson> lessonsForDay(ScheduleData data, DateTime date, {int? subgroup}) {
   // пары не показываем. Ни календаря, ни модулей нет — фильтр не применяем
   // (демо/ручные пары).
   final coverage = _dataCoverage(data);
-  final result = data.lessons.where((l) {
+  final visible = data.lessons.where((l) {
     if (!lessonVisibleOn(l, date, weekType, subgroup: subgroup)) return false;
     if (coverage != null && l.validFrom == null && l.validTo == null) {
       final day = DateTime(date.year, date.month, date.day);
       if (day.isBefore(coverage.$1) || day.isAfter(coverage.$2)) return false;
     }
     return true;
-  }).toList()
-    ..sort((a, b) {
-      final byPair = a.pairNumber.compareTo(b.pairNumber);
-      return byPair != 0 ? byPair : a.subgroup.compareTo(b.subgroup);
-    });
+  }).toList();
+
+  // ЮФУ перечисляет в одной ячейке все варианты курса по выбору МУАМ.
+  // Это один временной слот, а не несколько обязательных пар: до выбора
+  // показываем один общий блок, после выбора — выбранный вариант.
+  final result = <Lesson>[];
+  final muamSlots = <String, List<Lesson>>{};
+  for (final lesson in visible) {
+    if (scheduleSubjectLabel(lesson.subject) != 'МУАМ') {
+      result.add(lesson);
+      continue;
+    }
+    final key =
+        '${lesson.weekday}|${lesson.pairNumber}|${lesson.startsAt}|'
+        '${lesson.endsAt}|${lesson.subgroup}';
+    muamSlots.putIfAbsent(key, () => []).add(lesson);
+  }
+  for (final candidates in muamSlots.values) {
+    result.add(
+      candidates.firstWhere(
+        (lesson) => lesson.subject == muamSubject,
+        orElse: () => candidates.first,
+      ),
+    );
+  }
+
+  result.sort((a, b) {
+    final byPair = a.pairNumber.compareTo(b.pairNumber);
+    return byPair != 0 ? byPair : a.subgroup.compareTo(b.subgroup);
+  });
   return result;
 }
 

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 
 import '../../core/db.dart';
@@ -16,6 +18,13 @@ String? _dateStr(DateTime? d) => d == null
           '${d.day.toString().padLeft(2, '0')}';
 
 DateTime? _dateOf(String? s) => s == null ? null : DateTime.parse(s);
+
+String _datesStr(List<DateTime> dates) =>
+    jsonEncode(dates.map(_dateStr).toList(growable: false));
+
+List<DateTime> _datesOf(String raw) => (jsonDecode(raw) as List<dynamic>)
+    .map((value) => DateTime.parse(value as String))
+    .toList(growable: false);
 
 class ScheduleRepository {
   ScheduleRepository(this._api, this._db);
@@ -69,6 +78,7 @@ class ScheduleRepository {
             moduleId: Value(l.moduleId),
             validFrom: Value(_dateStr(l.validFrom)),
             validTo: Value(_dateStr(l.validTo)),
+            specificDates: Value(_datesStr(l.specificDates)),
           ),
         )
         .toList();
@@ -118,6 +128,7 @@ class ScheduleRepository {
     moduleId: r.moduleId,
     validFrom: _dateOf(r.validFrom),
     validTo: _dateOf(r.validTo),
+    specificDates: _datesOf(r.specificDates),
   );
 
   /// Расписание скоупа из кэша (реактивно). Модули и календарь читаются вместе
