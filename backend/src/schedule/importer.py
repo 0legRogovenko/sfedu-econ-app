@@ -467,8 +467,14 @@ class ImportReport:
         )
 
 
-def import_all(session, fetcher, links=None) -> ImportReport:
-    """Полный цикл импорта. `fetcher` — Fetcher или его тестовый двойник."""
+def import_all(session, fetcher, links=None, *, atomic: bool = False) -> ImportReport:
+    """Полный цикл импорта. `fetcher` — Fetcher или его тестовый двойник.
+
+    Суточный live-импорт по умолчанию фиксирует каждый файл отдельно: обрыв
+    одного ответа ЮФУ не должен отменять уже скачанные документы. Явный
+    ``atomic=True`` предназначен для заранее проверенного локального набора:
+    любое исключение выходит вызывающему коду, который откатывает всю пачку.
+    """
     links = list(links) if links is not None else parse_index(fetcher.fetch_index())
     report = ImportReport()
 
@@ -485,6 +491,10 @@ def import_all(session, fetcher, links=None) -> ImportReport:
         )
 
     for link in links:
+        if atomic:
+            report.documents.append(_import_link(session, fetcher, link))
+            session.flush()
+            continue
         try:
             report.documents.append(_import_link(session, fetcher, link))
             session.commit()
