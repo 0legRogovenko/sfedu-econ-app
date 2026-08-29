@@ -24,6 +24,7 @@ from src.directory_seed import seed_directory_overrides
 from src.models import Contact, ContactSource
 from src.parsers import econ_staff, sfedu_staff
 from src.parsers.econ_staff import Person
+from src.sfedu_tls import make_sfedu_ssl_context
 
 logger = logging.getLogger(__name__)
 
@@ -59,16 +60,12 @@ SFEDU_CRAWL_DELAY_SECONDS = 30
 
 def _default_fetch(url: str) -> str:
     # Импорт внутри функции: тесты подменяют fetch и не должны тянуть сеть.
-    import ssl
-
     import httpx
-    import truststore
 
-    # Системное хранилище, а не certifi: цепочку GlobalSign у sfedu.ru certifi
-    # не достраивает, и без этого КАЖДЫЙ запрос к личным страницам падал на
-    # проверке сертификата — молча, потому что ошибку глотал общий except.
-    # Тот же приём уже используют парсер новостей и импорт расписания.
-    context = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    # sfedu.ru не отдаёт промежуточный сертификат своей цепочки GlobalSign.
+    # Общий контекст добавляет только этот публичный intermediate и сохраняет
+    # обычную проверку сертификата и имени хоста.
+    context = make_sfedu_ssl_context()
 
     response = httpx.get(
         url,
@@ -282,6 +279,10 @@ def sync(
                 )
             ).all()
         }
+        # SELECT открыл транзакцию и занял соединение пула. Дальше может быть
+        # до 75 HTTPS-запросов с Crawl-delay: 30; не держим Neon-соединение
+        # десятки минут, иначе сервер закрывает его до последующей записи.
+        session.rollback()
         filled = fill_emails(rows, people, fetch, known=known, sleep=sleep)
         logger.info("Почт проставлено: %s из %s", filled, len(rows))
         if filled == 0 and people:

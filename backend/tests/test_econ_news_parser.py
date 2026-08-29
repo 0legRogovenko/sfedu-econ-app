@@ -3,6 +3,7 @@ import time as time_module
 
 from src.parsers import econ_news, sfedu_news
 from src.parsers.econ_news import parse_sitemap
+from src.sfedu_tls import SfeduTLSAdapter
 
 
 def _sitemap(*urls: str) -> str:
@@ -70,3 +71,9 @@ def test_default_fetch_retries_a_transient_timeout(monkeypatch):
 
     assert econ_news.default_fetch(econ_news.SITEMAP_URL) == "<urlset/>"
     assert session.calls == 2
+
+
+def test_sfedu_news_session_uses_shared_verified_tls_adapter():
+    session = sfedu_news._make_session()
+
+    assert isinstance(session.adapters["https://"], SfeduTLSAdapter)

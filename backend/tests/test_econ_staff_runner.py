@@ -1,7 +1,9 @@
 """Автозабор справочника: изоляция ошибок и защита записей админа."""
 
+import ssl
 from pathlib import Path
 
+import httpx
 import pytest
 from sqlalchemy import select
 
@@ -225,6 +227,80 @@ class TestEmails:
             db_session, fetch=flaky, sleep=lambda _: None
         )
         assert count > 20  # справочник на месте, просто без почт
+
+
+def test_default_person_fetch_uses_shared_verified_tls_context(monkeypatch):
+    expected_context = ssl.create_default_context()
+    captured: dict[str, object] = {}
+
+    class Response:
+        text = "<html></html>"
+
+        @staticmethod
+        def raise_for_status():
+            return None
+
+    def fake_get(url, **kwargs):
+        captured["url"] = url
+        captured.update(kwargs)
+        return Response()
+
+    monkeypatch.setattr(
+        econ_staff_runner, "make_sfedu_ssl_context", lambda: expected_context
+    )
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    assert econ_staff_runner._default_fetch("https://sfedu.ru/s7/person/ru/test")
+    assert captured["verify"] is expected_context
+
+
+def test_known_email_query_releases_connection_before_slow_fetch(monkeypatch):
+    events: list[str] = []
+
+    class Result:
+        @staticmethod
+        def all():
+            return []
+
+    class Session:
+        def execute(self, _statement):
+            events.append("execute")
+            return Result()
+
+        def rollback(self):
+            events.append("rollback")
+
+        def add_all(self, _rows):
+            events.append("add_all")
+
+        def flush(self):
+            events.append("flush")
+
+    rows = [
+        Contact(
+            section="Преподаватели",
+            name="Иванов Иван Иванович",
+            source=ContactSource.ECON_SITE,
+        )
+    ]
+    people = [
+        econ_staff.Person(
+            name="Иванов Иван Иванович",
+            role="Доцент",
+            profile_url="https://sfedu.ru/s7/person/ru/test",
+        )
+    ]
+    monkeypatch.setattr(econ_staff_runner, "collect", lambda _fetch: (rows, people))
+
+    def slow_network_phase(*_args, **_kwargs):
+        assert "rollback" in events
+        events.append("network")
+        return 1
+
+    monkeypatch.setattr(econ_staff_runner, "fill_emails", slow_network_phase)
+
+    assert econ_staff_runner.sync(Session(), fetch=lambda _url: "") == 1
+    assert events.index("rollback") < events.index("network")
 
 
 def test_zero_emails_alerts_admin(db_session, monkeypatch):

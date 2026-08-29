@@ -5,13 +5,12 @@
 """
 
 import hashlib
-import ssl
 
 import pytest
 import requests
-import truststore
 
-from src.schedule.fetch import CRAWL_DELAY_SECONDS, Fetcher, _TruststoreAdapter
+from src.schedule.fetch import CRAWL_DELAY_SECONDS, Fetcher
+from src.sfedu_tls import SfeduTLSAdapter
 
 
 class FakeTransport:
@@ -171,26 +170,7 @@ class TestFetchIndex:
 
 
 class TestTls:
-    def test_adapter_passes_truststore_context_to_poolmanager(self, monkeypatch):
-        """certifi не достраивает цепочку GlobalSign у sfedu.ru — только truststore.
-
-        Проверено на парсере новостей; тот же адаптер, та же причина.
-        Перехватываем базовый HTTPAdapter, чтобы увидеть настоящий ssl_context.
-        """
-        captured: dict = {}
-
-        def fake_init_poolmanager(self, *args, **kwargs):
-            captured.update(kwargs)
-
-        monkeypatch.setattr(
-            requests.adapters.HTTPAdapter, "init_poolmanager", fake_init_poolmanager
-        )
-        _TruststoreAdapter().init_poolmanager(1, block=False)
-
-        assert isinstance(captured.get("ssl_context"), truststore.SSLContext)
-        assert captured["ssl_context"].protocol == ssl.PROTOCOL_TLS_CLIENT
-
-    def test_real_session_mounts_truststore_adapter(self):
+    def test_real_session_mounts_shared_sfedu_tls_adapter(self):
         session = Fetcher()._make_session()
-        assert isinstance(session.adapters["https://"], _TruststoreAdapter)
+        assert isinstance(session.adapters["https://"], SfeduTLSAdapter)
         assert "sfedu-econ-app" in session.headers["User-Agent"]

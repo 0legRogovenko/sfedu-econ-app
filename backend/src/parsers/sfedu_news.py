@@ -8,17 +8,16 @@
 from __future__ import annotations
 
 import re
-import ssl
 import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from urllib.parse import urljoin
 
 import requests
-import truststore
 from bs4 import BeautifulSoup
 
 from src.schedule.fetch import CRAWL_DELAY_SECONDS
+from src.sfedu_tls import SfeduTLSAdapter
 
 BASE_URL = "https://sfedu.ru"
 LISTING_URL = f"{BASE_URL}/press-center/mainpage"
@@ -160,21 +159,9 @@ def parse_article(html: str) -> str:
     return "\n\n".join(p for p in parts if p)
 
 
-class _TruststoreAdapter(requests.adapters.HTTPAdapter):
-    """Requests-адаптер, проверяющий сертификаты через нативный trust store ОС.
-
-    sfedu.ru отдаёт цепочку GlobalSign, которую статический bundle certifi не
-    достраивает; системный верификатор (macOS/Linux ca-certificates) — достраивает.
-    """
-
-    def init_poolmanager(self, *args, **kwargs):
-        kwargs["ssl_context"] = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-        super().init_poolmanager(*args, **kwargs)
-
-
 def _make_session() -> requests.Session:
     session = requests.Session()
-    session.mount("https://", _TruststoreAdapter())
+    session.mount("https://", SfeduTLSAdapter())
     session.headers["User-Agent"] = "sfedu-econ-app/1.0 (news aggregator)"
     return session
 

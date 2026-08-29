@@ -14,15 +14,14 @@ Last-Modified, ни ETag, а If-Modified-Since отдаёт 200 с полным 
 from __future__ import annotations
 
 import hashlib
-import ssl
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
 
 import requests
-import truststore
 
 from src.schedule.source import INDEX_URL, download_url
+from src.sfedu_tls import SfeduTLSAdapter
 
 # robots.txt ЮФУ. Полный цикл 29 файлов ≈ 15 минут — нормально для суточной задачи.
 CRAWL_DELAY_SECONDS = 30
@@ -36,18 +35,6 @@ class FetchedDocument:
     content: bytes
     sha256: str
     source_url: str
-
-
-class _TruststoreAdapter(requests.adapters.HTTPAdapter):
-    """Requests-адаптер, проверяющий сертификаты через нативный trust store ОС.
-
-    sfedu.ru отдаёт цепочку GlobalSign, которую статический bundle certifi не
-    достраивает; системный верификатор (macOS/Linux ca-certificates) — достраивает.
-    """
-
-    def init_poolmanager(self, *args, **kwargs):
-        kwargs["ssl_context"] = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-        super().init_poolmanager(*args, **kwargs)
 
 
 class Fetcher:
@@ -98,7 +85,7 @@ class Fetcher:
 
     def _make_session(self) -> requests.Session:
         session = requests.Session()
-        session.mount("https://", _TruststoreAdapter())
+        session.mount("https://", SfeduTLSAdapter())
         session.headers["User-Agent"] = "sfedu-econ-app/1.0 (schedule importer)"
         return session
 
