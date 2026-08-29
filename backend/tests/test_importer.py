@@ -81,6 +81,15 @@ class FakeFetcher:
         )
 
 
+class FailingSecondFetcher(FakeFetcher):
+    """Первый файл отдаёт, второй имитирует обрыв официального сервера."""
+
+    def fetch_document(self, p_doc_id: str | int) -> FetchedDocument:
+        if str(p_doc_id) == "99999":
+            raise ConnectionError("official source closed the response early")
+        return super().fetch_document(p_doc_id)
+
+
 def _real_cell_count(p_doc_id: str) -> int:
     """Сколько ячеек слой extract отдал по этому файлу — считаем сами, из фикстуры.
 
@@ -140,6 +149,28 @@ class TestCorpus:
         _, report = corpus
         unknown = [d.p_doc_id for d in report.documents if d.doc_type == DocType.UNKNOWN]
         assert unknown == []
+
+    def test_atomic_import_rolls_back_every_document_when_one_fails(self):
+        session = make_session()
+        links = [
+            ScheduleLink("Осенний семестр", "4 курс", "14178"),
+            ScheduleLink("Осенний семестр", "сломанный файл", "99999"),
+        ]
+
+        with pytest.raises(ConnectionError, match="closed the response early"):
+            importer.import_all(
+                session,
+                FailingSecondFetcher(
+                    overrides={"14178": (FIXTURES / "14178.pdf").read_bytes()}
+                ),
+                links=links,
+                atomic=True,
+            )
+        session.rollback()
+
+        assert session.scalar(select(func.count()).select_from(ScheduleDocument)) == 0
+        assert session.scalar(select(func.count()).select_from(Lesson)) == 0
+        session.close()
 
     def test_nothing_failed(self, corpus):
         _, report = corpus

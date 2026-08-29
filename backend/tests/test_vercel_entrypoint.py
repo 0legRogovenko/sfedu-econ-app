@@ -29,6 +29,13 @@ def test_vercel_bundle_excludes_the_real_schedule_test_corpus():
     assert "tests/**" in excluded
 
 
+def test_vercel_bundle_excludes_the_workflow_only_schedule_snapshot():
+    config = json.loads((BACKEND_ROOT / "vercel.json").read_text())
+
+    excluded = config["functions"]["app.py"]["excludeFiles"]
+    assert "data/schedule_snapshot/**" in excluded
+
+
 def test_vercel_uses_the_same_python_version_as_the_backend_container():
     assert (BACKEND_ROOT / ".python-version").read_text().strip() == "3.12"
 

@@ -1,0 +1,59 @@
+name: Import validated schedule snapshot
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-beta-data-sync
+  cancel-in-progress: false
+
+jobs:
+  import-snapshot:
+    name: import reviewed official schedule snapshot
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: backend-beta
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      ADMIN_PASSWORD: not-used-by-sync
+      SECRET_KEY: not-used-by-sync
+      ADMIN_ENABLED: "0"
+      ENABLE_SCHEDULER: "0"
+      PYTHONUNBUFFERED: "1"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install backend dependencies
+        run: pip install -r requirements.txt
+
+      - name: Require the Neon connection secret
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [[ -z "$DATABASE_URL" ]]; then
+            echo "::error::DATABASE_URL is not configured in backend-beta"
+            exit 1
+          fi
+
+      - name: Apply database migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: alembic upgrade head
+
+      - name: Import reviewed official schedule snapshot
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: python -m src.schedule.validated_snapshot
