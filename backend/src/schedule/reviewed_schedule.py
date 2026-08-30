@@ -4,6 +4,23 @@ from datetime import date, time
 from src.models import Lesson
 
 
+_EMPTY_TEXT = r"\0"
+
+
+def _encode_text(value: str | None) -> str:
+    if value is None:
+        return ""
+    if value == "":
+        return _EMPTY_TEXT
+    return (
+        value.replace("\\", "\\\\")
+        .replace("|", "\\|")
+        .replace("/", "\\/")
+        .replace("\n", "\\n")
+        .replace("\r", "\\r")
+    )
+
+
 @dataclass(frozen=True)
 class GroupIdentity:
     level: str
@@ -85,16 +102,16 @@ def state_signature(state: LessonState) -> str:
     return "|".join(
         (
             f"документ={state.p_doc_id}",
-            f"группа={group.level}/{group.course}/{group.number or ''}/"
-            f"{group.program or ''}",
+            f"группа={group.level}/{group.course}/{_encode_text(group.number)}/"
+            f"{_encode_text(group.program)}",
             f"день={state.weekday}",
             f"пара={state.pair_number}",
             f"начало={state.starts_at}",
             f"конец={state.ends_at}",
-            f"предмет={state.subject}",
+            f"предмет={_encode_text(state.subject)}",
             f"вид={state.lesson_kind or ''}",
-            f"препод={state.teacher or ''}",
-            f"ауд={state.room or ''}",
+            f"препод={_encode_text(state.teacher)}",
+            f"ауд={_encode_text(state.room)}",
             f"неделя={state.week_type or ''}",
             f"п/г={state.subgroup}",
             (
@@ -102,7 +119,7 @@ def state_signature(state: LessonState) -> str:
                 if module
                 else "модуль="
             ),
-            f"даты={state.date_constraint_raw or ''}",
+            f"даты={_encode_text(state.date_constraint_raw)}",
             f"с={state.valid_from or ''}",
             f"по={state.valid_to or ''}",
             f"конкретные={specific_dates}",

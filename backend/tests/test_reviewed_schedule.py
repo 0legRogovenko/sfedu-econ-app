@@ -1,4 +1,4 @@
-from dataclasses import FrozenInstanceError
+from dataclasses import FrozenInstanceError, replace
 from datetime import date, time
 
 import pytest
@@ -210,3 +210,90 @@ def test_lesson_state_is_immutable():
 
     with pytest.raises(FrozenInstanceError):
         state.subject = "Изменённый предмет"
+
+
+def test_signature_distinguishes_delimiters_in_teacher_and_room():
+    group = Group(
+        course=2,
+        number="2.1",
+        level=EducationLevel.BACHELOR,
+        program=None,
+    )
+    base = lesson_state(_lesson(group=group), p_doc_id="14160")
+    teacher_contains_field = replace(base, teacher="A|ауд=B", room="C")
+    room_contains_field = replace(base, teacher="A", room="B|ауд=C")
+
+    assert teacher_contains_field != room_contains_field
+    assert state_signature(teacher_contains_field) != state_signature(
+        room_contains_field
+    )
+
+
+def test_signature_distinguishes_none_empty_and_literal_empty_token():
+    group = Group(
+        course=2,
+        number="2.1",
+        level=EducationLevel.BACHELOR,
+        program=None,
+    )
+    base = lesson_state(_lesson(group=group), p_doc_id="14160")
+    none_signature = state_signature(replace(base, teacher=None))
+    empty_signature = state_signature(replace(base, teacher=""))
+    literal_token_signature = state_signature(replace(base, teacher=r"\0"))
+
+    assert len({none_signature, empty_signature, literal_token_signature}) == 3
+    assert "|препод=|" in none_signature
+    assert r"|препод=\0|" in empty_signature
+    assert r"|препод=\\0|" in literal_token_signature
+
+
+def test_signature_distinguishes_delimiters_in_group_components():
+    group = Group(
+        course=2,
+        number="2.1",
+        level=EducationLevel.BACHELOR,
+        program=None,
+    )
+    base = lesson_state(_lesson(group=group), p_doc_id="14160")
+    number_contains_separator = replace(
+        base,
+        group=GroupIdentity(
+            level="bachelor", course=2, number="A/B", program="C"
+        ),
+    )
+    program_contains_separator = replace(
+        base,
+        group=GroupIdentity(
+            level="bachelor", course=2, number="A", program="B/C"
+        ),
+    )
+
+    assert state_signature(number_contains_separator) != state_signature(
+        program_contains_separator
+    )
+    assert r"|группа=bachelor/2/A\/B/C|" in state_signature(
+        number_contains_separator
+    )
+    assert r"|группа=bachelor/2/A/B\/C|" in state_signature(
+        program_contains_separator
+    )
+
+
+def test_signature_escapes_subject_and_date_constraint_control_characters():
+    group = Group(
+        course=2,
+        number="2.1",
+        level=EducationLevel.BACHELOR,
+        program=None,
+    )
+    base = lesson_state(_lesson(group=group), p_doc_id="14160")
+    state = replace(
+        base,
+        subject="A\\B|C/D\nE\rF",
+        date_constraint_raw="G\\H|I/J\nK\rL",
+    )
+
+    signature = state_signature(state)
+
+    assert r"|предмет=A\\B\|C\/D\nE\rF|вид=" in signature
+    assert r"|даты=G\\H\|I\/J\nK\rL|с=" in signature
