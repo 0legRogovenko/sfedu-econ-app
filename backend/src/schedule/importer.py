@@ -670,6 +670,13 @@ def import_all(
     return report
 
 
+def _default_review_bundle() -> ReviewBundle | None:
+    """Authenticate the committed bundle lazily to avoid an import cycle."""
+    from src.schedule.validated_snapshot import validate_snapshot
+
+    return validate_snapshot().review_bundle
+
+
 def run_schedule_import(
     session_factory: Callable = SessionLocal,
     fetcher=None,
@@ -677,7 +684,14 @@ def run_schedule_import(
     """Точка входа для планировщика и CLI. Ошибки — в Telegram, как у новостей."""
     session = session_factory()
     try:
-        report = import_all(session, fetcher or Fetcher())
+        review_bundle = _default_review_bundle()
+        report = import_all(
+            session,
+            fetcher or Fetcher(),
+            review_bundle=review_bundle,
+            atomic=review_bundle is not None,
+        )
+        session.commit()
         logger.info("Импорт расписания завершён: %s", report.summary())
         return {
             "summary": report.summary(),

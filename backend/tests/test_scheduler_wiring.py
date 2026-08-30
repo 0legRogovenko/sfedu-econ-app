@@ -46,9 +46,25 @@ def test_create_scheduler_has_schedule_import_job():
 
 
 class _FakeSession:
-    def rollback(self) -> None: ...
+    def __init__(self) -> None:
+        self.commits = 0
+        self.rollbacks = 0
+        self.closed = False
 
-    def close(self) -> None: ...
+    def commit(self) -> None:
+        self.commits += 1
+
+    def rollback(self) -> None:
+        self.rollbacks += 1
+
+    def close(self) -> None:
+        self.closed = True
+
+
+def test_default_v1_snapshot_keeps_scheduler_in_legacy_mode():
+    from src.schedule import importer
+
+    assert importer._default_review_bundle() is None
 
 
 def test_schedule_import_failure_alerts_admin_and_does_not_raise(monkeypatch):
@@ -65,6 +81,59 @@ def test_schedule_import_failure_alerts_admin_and_does_not_raise(monkeypatch):
     result = importer.run_schedule_import(session_factory=_FakeSession)
     assert "сеть недоступна" in result["error"]
     assert alerts and "сеть недоступна" in alerts[0]
+
+
+def test_invalid_default_review_bundle_never_calls_parser_only_import(monkeypatch):
+    from src.schedule import importer
+
+    called = False
+
+    def invalid_bundle():
+        raise RuntimeError("invalid reviewed snapshot")
+
+    def forbidden_import(*args, **kwargs):
+        nonlocal called
+        called = True
+
+    session = _FakeSession()
+    monkeypatch.setattr(importer, "_default_review_bundle", invalid_bundle)
+    monkeypatch.setattr(importer, "import_all", forbidden_import)
+    monkeypatch.setattr(importer, "notify_admin", lambda message: None)
+
+    result = importer.run_schedule_import(session_factory=lambda: session)
+
+    assert "invalid reviewed snapshot" in result["error"]
+    assert called is False
+    assert session.commits == 0
+    assert session.rollbacks == 1
+    assert session.closed is True
+
+
+def test_valid_default_review_bundle_is_passed_atomically_and_committed(monkeypatch):
+    from src.schedule import importer
+
+    bundle = object()
+    captured = {}
+    report = importer.ImportReport()
+
+    def fake_import(session, fetcher, **kwargs):
+        captured.update(kwargs)
+        return report
+
+    session = _FakeSession()
+    monkeypatch.setattr(importer, "_default_review_bundle", lambda: bundle)
+    monkeypatch.setattr(importer, "import_all", fake_import)
+
+    result = importer.run_schedule_import(
+        session_factory=lambda: session,
+        fetcher=object(),
+    )
+
+    assert "summary" in result
+    assert captured == {"review_bundle": bundle, "atomic": True}
+    assert session.commits == 1
+    assert session.rollbacks == 0
+    assert session.closed is True
 
 
 def test_schedule_import_reports_partial_document_failures(monkeypatch):

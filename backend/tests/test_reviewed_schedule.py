@@ -31,6 +31,8 @@ from src.schedule.reviewed_schedule import (
     apply_document_corrections,
     lesson_state,
     load_correction_registry,
+    parse_correction_registry,
+    parse_reviewed_documents,
     reviewed_document_output,
     state_signature,
     validate_reviewed_document,
@@ -1192,6 +1194,107 @@ def test_registry_rejects_missing_version_and_wrong_top_level_types(
 
     with pytest.raises(ReviewValidationError, match=message):
         load_correction_registry(path)
+
+
+def test_correction_registry_parses_authenticated_bytes_without_a_path():
+    payload = json.dumps(
+        {"version": 1, "documents": []},
+        ensure_ascii=False,
+    ).encode("utf-8")
+
+    registry = parse_correction_registry(payload)
+
+    assert dict(registry.documents) == {}
+
+
+def test_reviewed_documents_parse_strict_authenticated_bytes():
+    signatures = ("signature-b", "signature-a")
+    payload = json.dumps(
+        {
+            "version": 1,
+            "documents": {
+                "14159": {
+                    "sha256": "a" * 64,
+                    "lesson_hash": _lesson_hash(signatures),
+                    "signatures": list(signatures),
+                }
+            },
+        },
+        ensure_ascii=False,
+    ).encode("utf-8")
+
+    documents = parse_reviewed_documents(payload)
+
+    assert documents["14159"] == ReviewedDocument(
+        p_doc_id="14159",
+        sha256="a" * 64,
+        lesson_hash=_lesson_hash(signatures),
+        signatures=signatures,
+    )
+    with pytest.raises(TypeError):
+        documents["14160"] = documents["14159"]
+
+
+@pytest.mark.parametrize(
+    ("payload", "message"),
+    [
+        (
+            b'{"version":1,"documents":{},"documents":{}}',
+            "duplicate JSON key documents",
+        ),
+        (
+            b'{"version":1,"documents":{"14159":{"sha256":"'
+            + b"a" * 64
+            + b'","lesson_hash":"'
+            + b"b" * 64
+            + b'","signatures":[],"extra":1}}}',
+            "unknown keys: extra",
+        ),
+        (
+            b'{"version":1,"documents":{"014159":{"sha256":"'
+            + b"a" * 64
+            + b'","lesson_hash":"'
+            + b"b" * 64
+            + b'","signatures":[]}}}',
+            "invalid document id",
+        ),
+        (
+            b'{"version":1,"documents":{"14159":{"sha256":"bad",'
+            b'"lesson_hash":"'
+            + b"b" * 64
+            + b'","signatures":[]}}}',
+            "invalid SHA-256",
+        ),
+        (
+            b'{"version":1,"documents":{"14159":{"sha256":"'
+            + b"a" * 64
+            + b'","lesson_hash":"'
+            + b"b" * 64
+            + b'","signatures":[1]}}}',
+            "signatures must be a list of strings",
+        ),
+        (b'{"version":true,"documents":{}}', "version must be an integer"),
+        (b'{"version":2,"documents":{}}', "unsupported reviewed version 2"),
+    ],
+)
+def test_reviewed_documents_reject_ambiguous_or_invalid_json(payload, message):
+    with pytest.raises(ReviewValidationError, match=message):
+        parse_reviewed_documents(payload)
+
+
+def test_reviewed_documents_reject_duplicate_document_ids():
+    sha = "a" * 64
+    lesson_hash = _lesson_hash(())
+    payload = (
+        '{"version":1,"documents":{'
+        f'"14159":{{"sha256":"{sha}","lesson_hash":"{lesson_hash}",'
+        '"signatures":[]},'
+        f'"14159":{{"sha256":"{sha}","lesson_hash":"{lesson_hash}",'
+        '"signatures":[]}}}'
+    ).encode("utf-8")
+
+    with pytest.raises(ReviewValidationError, match="duplicate JSON key 14159"):
+        parse_reviewed_documents(payload)
 
 
 def _seed_correction_document(db_session):

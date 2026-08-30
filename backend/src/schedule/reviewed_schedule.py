@@ -877,15 +877,23 @@ def _json_object(pairs):
     return result
 
 
-def load_correction_registry(path: str | Path) -> CorrectionRegistry:
-    """Load a correction registry without accepting ambiguous or stale shapes."""
+def _json_from_bytes(content: bytes, *, context: str):
+    if not isinstance(content, bytes):
+        raise ReviewValidationError(f"{context} must be bytes")
     try:
-        payload = json.loads(
-            Path(path).read_text(encoding="utf-8"),
+        return json.loads(
+            content.decode("utf-8"),
             object_pairs_hook=_json_object,
         )
+    except UnicodeDecodeError as exc:
+        raise ReviewValidationError(f"invalid {context} JSON: not UTF-8") from exc
     except json.JSONDecodeError as exc:
-        raise ReviewValidationError(f"invalid corrections JSON: {exc.msg}") from exc
+        raise ReviewValidationError(f"invalid {context} JSON: {exc.msg}") from exc
+
+
+def parse_correction_registry(content: bytes) -> CorrectionRegistry:
+    """Parse correction bytes that the caller has already authenticated."""
+    payload = _json_from_bytes(content, context="corrections")
     root = _object(payload, context="registry")
     _check_keys(root, context="registry", allowed=_REGISTRY_KEYS)
     version = root["version"]
@@ -913,6 +921,11 @@ def load_correction_registry(path: str | Path) -> CorrectionRegistry:
             correction_ids.add(operation.id)
         documents[document.p_doc_id] = document
     return CorrectionRegistry(documents=MappingProxyType(documents.copy()))
+
+
+def load_correction_registry(path: str | Path) -> CorrectionRegistry:
+    """Load a correction registry without accepting ambiguous or stale shapes."""
+    return parse_correction_registry(Path(path).read_bytes())
 
 
 _MAX_MISMATCH_LINES = 42
@@ -973,6 +986,74 @@ def _validate_reviewed_metadata(reviewed: ReviewedDocument) -> str:
             f"document {key}: reviewed lesson hash does not match signatures"
         )
     return key
+
+
+_REVIEWED_ROOT_KEYS = frozenset({"version", "documents"})
+_REVIEWED_DOCUMENT_KEYS = frozenset(
+    {"sha256", "lesson_hash", "signatures"}
+)
+
+
+def parse_reviewed_documents(content: bytes) -> Mapping[str, ReviewedDocument]:
+    """Parse exact reviewed-output bytes after manifest authentication."""
+    root = _object(
+        _json_from_bytes(content, context="reviewed schedule"),
+        context="reviewed schedule",
+    )
+    _check_keys(
+        root,
+        context="reviewed schedule",
+        allowed=_REVIEWED_ROOT_KEYS,
+    )
+    version = root["version"]
+    if isinstance(version, bool) or not isinstance(version, int):
+        raise ReviewValidationError("reviewed version must be an integer")
+    if version != 1:
+        raise ReviewValidationError(f"unsupported reviewed version {version}")
+    raw_documents = root["documents"]
+    if not isinstance(raw_documents, dict):
+        raise ReviewValidationError("reviewed documents must be an object")
+
+    documents: dict[str, ReviewedDocument] = {}
+    for raw_id, raw_document in raw_documents.items():
+        p_doc_id = _canonical_document_id(raw_id)
+        if raw_id != p_doc_id:
+            raise ReviewValidationError(
+                f"reviewed document id {raw_id!r} is not canonical"
+            )
+        payload = _object(
+            raw_document,
+            context=f"reviewed document {p_doc_id}",
+        )
+        _check_keys(
+            payload,
+            context=f"reviewed document {p_doc_id}",
+            allowed=_REVIEWED_DOCUMENT_KEYS,
+        )
+        sha256 = _require_sha256(
+            payload["sha256"],
+            context=f"document {p_doc_id} source",
+        )
+        lesson_hash = _require_sha256(
+            payload["lesson_hash"],
+            context=f"document {p_doc_id} lesson hash",
+        )
+        raw_signatures = payload["signatures"]
+        if not isinstance(raw_signatures, list) or not all(
+            isinstance(item, str) for item in raw_signatures
+        ):
+            raise ReviewValidationError(
+                f"document {p_doc_id}: signatures must be a list of strings"
+            )
+        reviewed = ReviewedDocument(
+            p_doc_id=p_doc_id,
+            sha256=sha256,
+            lesson_hash=lesson_hash,
+            signatures=tuple(raw_signatures),
+        )
+        _validate_reviewed_metadata(reviewed)
+        documents[p_doc_id] = reviewed
+    return MappingProxyType(documents.copy())
 
 
 def reviewed_document_output(
