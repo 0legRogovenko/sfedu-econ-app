@@ -1869,3 +1869,161 @@ def test_reapplying_same_add_fails_closed_without_duplicate(db_session):
         apply_document_corrections(db_session, document, corrections)
 
     assert len(_persisted_lessons(db_session, document)) == 2
+
+
+def test_pending_caller_state_is_rejected_before_savepoint_flush(db_session):
+    document, _, _, _, lesson = _seed_correction_document(db_session)
+    before = lesson_state(lesson, p_doc_id="14159")
+    pending_duplicate = Group(
+        course=1,
+        number=None,
+        level=EducationLevel.MASTER,
+        program="Корпоративные финансы",
+    )
+    db_session.add(pending_duplicate)
+
+    with pytest.raises(ReviewValidationError, match="clean session"):
+        apply_document_corrections(
+            db_session,
+            document,
+            _corrections(
+                document,
+                _correction(
+                    "replace",
+                    expected_before=before,
+                    after=replace(before, room="209"),
+                ),
+            ),
+        )
+
+    assert db_session.is_active
+    assert pending_duplicate in db_session.new
+    assert pending_duplicate.id is None
+    assert lesson.room == "118"
+    assert lesson.cell_key == "1:2:3"
+
+    db_session.expunge(pending_duplicate)
+    persisted = db_session.scalar(select(Lesson).where(Lesson.id == lesson.id))
+    assert persisted is lesson
+    assert persisted.room == "118"
+    assert db_session.is_active
+
+
+def test_empty_corrections_do_not_flush_pending_caller_state(db_session):
+    document, _, _, _, lesson = _seed_correction_document(db_session)
+    pending_duplicate = Group(
+        course=1,
+        number=None,
+        level=EducationLevel.MASTER,
+        program="Корпоративные финансы",
+    )
+    db_session.add(pending_duplicate)
+
+    result = apply_document_corrections(
+        db_session,
+        document,
+        _corrections(document),
+    )
+
+    assert result == CorrectionResult()
+    assert db_session.is_active
+    assert pending_duplicate in db_session.new
+    assert pending_duplicate.id is None
+    assert lesson.room == "118"
+
+    db_session.expunge(pending_duplicate)
+    assert db_session.get(Lesson, lesson.id) is lesson
+
+
+def test_teacher_comma_variant_cannot_create_duplicate_person(db_session):
+    document, _, _, teacher, lesson = _seed_correction_document(db_session)
+    after = replace(
+        lesson_state(lesson, p_doc_id="14159"),
+        weekday=2,
+        pair_number=3,
+        subject="Финансы",
+        teacher="Иванова, И.И.",
+    )
+
+    with pytest.raises(ReviewValidationError, match="teacher spelling"):
+        apply_document_corrections(
+            db_session,
+            document,
+            _corrections(document, _correction("add", after=after)),
+        )
+
+    assert list(db_session.scalars(select(Teacher))) == [teacher]
+    assert len(_persisted_lessons(db_session, document)) == 1
+
+
+@pytest.mark.parametrize("teacher", ["", "   ", "\n\t"])
+def test_registry_rejects_blank_teacher(tmp_path, teacher):
+    operation = _operation_json(
+        "remove",
+        expected_before=_state_json(teacher=teacher),
+    )
+
+    with pytest.raises(ReviewValidationError, match="teacher"):
+        load_correction_registry(
+            _write_registry(
+                tmp_path,
+                documents=[_document_json(operations=[operation])],
+            )
+        )
+
+
+@pytest.mark.parametrize("teacher", ["...", " , — "])
+def test_registry_rejects_teacher_without_alphanumeric_identity(
+    tmp_path, teacher
+):
+    operation = _operation_json(
+        "remove",
+        expected_before=_state_json(teacher=teacher),
+    )
+
+    with pytest.raises(ReviewValidationError, match="teacher"):
+        load_correction_registry(
+            _write_registry(
+                tmp_path,
+                documents=[_document_json(operations=[operation])],
+            )
+        )
+
+
+def test_late_failure_rolls_back_teacher_created_by_earlier_operation(
+    db_session,
+):
+    document, _, _, existing_teacher, lesson = _seed_correction_document(db_session)
+    before = lesson_state(lesson, p_doc_id="14159")
+    add_with_new_teacher = replace(
+        before,
+        weekday=2,
+        pair_number=3,
+        subject="Финансы",
+        teacher="Новая Н.Н.",
+        cell_raw="Финансы (л) Новая Н.Н.",
+    )
+    stale = replace(before, room="999")
+
+    with pytest.raises(ReviewValidationError, match="matched 0 lessons"):
+        apply_document_corrections(
+            db_session,
+            document,
+            _corrections(
+                document,
+                _correction(
+                    "add",
+                    operation_id="add-new-teacher",
+                    after=add_with_new_teacher,
+                ),
+                _correction(
+                    "remove",
+                    operation_id="late-stale-remove",
+                    expected_before=stale,
+                ),
+            ),
+        )
+
+    assert db_session.is_active
+    assert list(db_session.scalars(select(Teacher))) == [existing_teacher]
+    assert _persisted_lessons(db_session, document) == [lesson]

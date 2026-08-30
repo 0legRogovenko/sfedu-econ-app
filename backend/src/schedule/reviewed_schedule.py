@@ -300,12 +300,18 @@ def _resolve_module(
 
 
 def _teacher_spelling_key(name: str) -> str:
-    return re.sub(r"[\s.\-‐‑‒–—−]+", "", name.casefold().replace("ё", "е"))
+    folded = name.casefold().replace("ё", "е")
+    return "".join(character for character in folded if character.isalnum())
 
 
 def _resolve_teacher(session: Session, name: str | None) -> Teacher | None:
     if name is None:
         return None
+    spelling_key = _teacher_spelling_key(name)
+    if not spelling_key:
+        raise ReviewValidationError(
+            "teacher spelling must contain letters or digits"
+        )
     exact = session.scalars(
         select(Teacher).where(Teacher.full_name == name)
     ).all()
@@ -314,7 +320,6 @@ def _resolve_teacher(session: Session, name: str | None) -> Teacher | None:
     if len(exact) > 1:
         raise ReviewValidationError(f"teacher {name!r} is ambiguous")
 
-    spelling_key = _teacher_spelling_key(name)
     variant = [
         teacher
         for teacher in session.scalars(select(Teacher)).all()
@@ -406,6 +411,12 @@ def apply_document_corrections(
         )
 
     result = CorrectionResult()
+    if not corrections.operations:
+        return result
+    if session.new or session.dirty or session.deleted:
+        raise ReviewValidationError(
+            "manual corrections require a clean session boundary"
+        )
     current_operation: CorrectionOperation | None = None
     try:
         with session.begin_nested():
@@ -703,6 +714,11 @@ def _parse_state(value, *, p_doc_id: str) -> LessonState:
                 f"specific date {specific_date} is after valid_to {valid_to}"
             )
     subject = _string(payload["subject"], context="subject", blank=False)
+    teacher = _optional_string(payload["teacher"], context="teacher")
+    if teacher is not None and not _teacher_spelling_key(teacher):
+        raise ReviewValidationError(
+            "teacher spelling must contain letters or digits"
+        )
     return LessonState(
         p_doc_id=state_document,
         group=_parse_group(payload["group"]),
@@ -722,7 +738,7 @@ def _parse_state(value, *, p_doc_id: str) -> LessonState:
             context="lesson kind",
             optional=True,
         ),
-        teacher=_optional_string(payload["teacher"], context="teacher"),
+        teacher=teacher,
         room=_optional_string(payload["room"], context="room"),
         week_type=_enum_value(
             payload["week_type"],
