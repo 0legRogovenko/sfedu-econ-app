@@ -1,4 +1,3 @@
-import hashlib
 import json
 from dataclasses import FrozenInstanceError, replace
 from datetime import date, time
@@ -28,6 +27,7 @@ from src.schedule.reviewed_schedule import (
     ReviewBundle,
     ReviewValidationError,
     ReviewedDocument,
+    _lesson_hash,
     apply_document_corrections,
     lesson_state,
     load_correction_registry,
@@ -2043,9 +2043,7 @@ def _reviewed(
     data = {
         "p_doc_id": str(document.p_doc_id),
         "sha256": document.sha256,
-        "lesson_hash": hashlib.sha256(
-            "\n".join(signatures).encode("utf-8")
-        ).hexdigest(),
+        "lesson_hash": _lesson_hash(signatures),
         "signatures": signatures,
     }
     data.update(overrides)
@@ -2094,13 +2092,17 @@ def test_reviewed_document_output_is_frozen_sorted_and_hashed(db_session):
     assert output == ReviewedDocument(
         p_doc_id="14159",
         sha256="a" * 64,
-        lesson_hash=hashlib.sha256(
-            "\n".join(expected_signatures).encode("utf-8")
-        ).hexdigest(),
+        lesson_hash=_lesson_hash(expected_signatures),
         signatures=expected_signatures,
     )
     with pytest.raises(FrozenInstanceError):
         output.lesson_hash = "b" * 64
+
+
+def test_lesson_hash_preserves_tuple_boundaries_duplicates_and_order():
+    assert _lesson_hash(("a\nb",)) != _lesson_hash(("a", "b"))
+    assert _lesson_hash(("a",)) != _lesson_hash(("a", "a"))
+    assert _lesson_hash(("a", "b")) != _lesson_hash(("b", "a"))
 
 
 def test_reviewed_document_output_preserves_duplicate_signatures():
@@ -2126,6 +2128,10 @@ def test_reviewed_document_output_preserves_duplicate_signatures():
             return [lesson, lesson]
 
     class _DuplicateSession:
+        new = frozenset()
+        dirty = frozenset()
+        deleted = frozenset()
+
         def scalar(self, statement):
             return None
 
@@ -2136,9 +2142,7 @@ def test_reviewed_document_output_preserves_duplicate_signatures():
     signature = state_signature(lesson_state(lesson, p_doc_id="14159"))
 
     assert output.signatures == (signature, signature)
-    assert output.lesson_hash == hashlib.sha256(
-        f"{signature}\n{signature}".encode("utf-8")
-    ).hexdigest()
+    assert output.lesson_hash == _lesson_hash((signature, signature))
 
 
 def test_reviewed_document_output_rejects_any_exam_event(db_session):
@@ -2154,6 +2158,57 @@ def test_reviewed_document_output_rejects_any_exam_event(db_session):
 
     with pytest.raises(ReviewValidationError, match="exams must remain empty"):
         reviewed_document_output(db_session, document)
+
+
+def test_reviewed_output_rejects_pending_lesson_before_query_with_autoflush_off(
+    db_session,
+):
+    document, group, module, teacher, _ = _seed_correction_document(db_session)
+    expected = reviewed_document_output(db_session, document)
+    db_session.autoflush = False
+    pending = _lesson(
+        group=group,
+        document_id=document.id,
+        module=module,
+        teacher=teacher,
+        weekday=2,
+        pair_number=3,
+        subject="Невидимая pending-пара",
+        cell_key="pending:lesson",
+    )
+    db_session.add(pending)
+
+    with pytest.raises(ReviewValidationError, match="clean session boundary"):
+        reviewed_document_output(db_session, document)
+
+    assert pending in db_session.new
+    assert pending.id is None
+    assert db_session.is_active
+    db_session.expunge(pending)
+    assert reviewed_document_output(db_session, document) == expected
+
+
+def test_reviewed_validation_rejects_pending_exam_before_query_with_autoflush_off(
+    db_session,
+):
+    document, group, _, _, _ = _seed_correction_document(db_session)
+    expected = reviewed_document_output(db_session, document)
+    db_session.autoflush = False
+    pending = ExamEvent(
+        group_id=group.id,
+        document_id=document.id,
+        subject="Невидимый pending-экзамен",
+    )
+    db_session.add(pending)
+
+    with pytest.raises(ReviewValidationError, match="clean session boundary"):
+        validate_reviewed_document(db_session, document, expected)
+
+    assert pending in db_session.new
+    assert pending.id is None
+    assert db_session.is_active
+    db_session.expunge(pending)
+    validate_reviewed_document(db_session, document, expected)
 
 
 def test_reviewed_output_rejects_content_drift_with_unchanged_count(db_session):
@@ -2218,6 +2273,22 @@ def test_reviewed_validation_diff_is_deterministically_bounded(db_session):
     assert "document 14159: reviewed schedule mismatch" in message
     assert "diff truncated" in message
     assert len(message) <= 9_000
+
+
+def test_reviewed_validation_diff_is_bounded_by_utf8_bytes_and_lines(db_session):
+    document, _, _, _, _ = _seed_correction_document(db_session)
+    signatures = tuple(
+        f"ожидание-{index:04d}-" + "Ж😀" * 1_000 for index in range(500)
+    )
+    expected = _reviewed(document, signatures)
+
+    with pytest.raises(ReviewValidationError) as caught:
+        validate_reviewed_document(db_session, document, expected)
+
+    message = str(caught.value)
+    assert "diff truncated" in message
+    assert len(message.encode("utf-8")) <= 8 * 1024
+    assert len(message.splitlines()) <= 42
 
 
 def test_review_bundle_freezes_mappings_and_delegates_source_guard(db_session):
@@ -2307,6 +2378,7 @@ def test_managed_document_with_zero_operations_is_still_validated(db_session):
     expected = reviewed_document_output(db_session, document)
     bundle = _bundle(document, _corrections(document), expected)
     lesson.room = "999"
+    db_session.flush()
 
     with pytest.raises(ReviewValidationError, match="reviewed schedule mismatch"):
         bundle.apply_and_validate(db_session, document)
@@ -2326,30 +2398,71 @@ def test_unmanaged_document_returns_zero_without_mutation(db_session):
     assert lesson_state(lesson, p_doc_id="14159") == before
 
 
-def test_apply_and_validate_never_reports_success_after_validation_mismatch(
-    db_session, monkeypatch
+def test_apply_and_validate_rolls_back_correction_and_teacher_on_final_mismatch(
+    db_session,
 ):
-    document, _, _, _, lesson = _seed_correction_document(db_session)
+    document, _, _, existing_teacher, lesson = _seed_correction_document(db_session)
     before = lesson_state(lesson, p_doc_id="14159")
     corrections = _corrections(
         document,
         _correction(
-            "replace",
-            operation_id="replace-room-before-review",
-            expected_before=before,
-            after=replace(before, room="209"),
+            "add",
+            operation_id="add-before-final-review",
+            after=replace(
+                before,
+                weekday=2,
+                pair_number=3,
+                subject="Финансы",
+                teacher="Новая Н.Н.",
+                cell_raw="Финансы (л) Новая Н.Н.",
+            ),
         ),
     )
     expected = reviewed_document_output(db_session, document)
     bundle = _bundle(document, corrections, expected)
 
-    def fail_if_committed():
-        pytest.fail("apply_and_validate must not commit the caller transaction")
-
-    monkeypatch.setattr(db_session, "commit", fail_if_committed)
-
     with pytest.raises(ReviewValidationError, match="reviewed schedule mismatch"):
         bundle.apply_and_validate(db_session, document)
 
-    assert lesson.room == "209"
     assert db_session.is_active
+    assert _persisted_lessons(db_session, document) == [lesson]
+    assert list(db_session.scalars(select(Teacher))) == [existing_teacher]
+
+    db_session.commit()
+    assert _persisted_lessons(db_session, document) == [lesson]
+    assert list(db_session.scalars(select(Teacher))) == [existing_teacher]
+
+
+def test_apply_and_validate_rolls_back_correction_on_final_exam_error(db_session):
+    document, group, _, _, lesson = _seed_correction_document(db_session)
+    before = lesson_state(lesson, p_doc_id="14159")
+    expected = reviewed_document_output(db_session, document)
+    bundle = _bundle(
+        document,
+        _corrections(
+            document,
+            _correction(
+                "replace",
+                operation_id="replace-before-exam-check",
+                expected_before=before,
+                after=replace(before, room="209"),
+            ),
+        ),
+        expected,
+    )
+    db_session.add(
+        ExamEvent(
+            group_id=group.id,
+            document_id=document.id,
+            subject="Официальный экзамен пока не разрешён этим snapshot",
+        )
+    )
+    db_session.flush()
+
+    with pytest.raises(ReviewValidationError, match="exams must remain empty"):
+        bundle.apply_and_validate(db_session, document)
+
+    assert db_session.is_active
+    assert lesson.room == "118"
+    db_session.commit()
+    assert db_session.get(Lesson, lesson.id).room == "118"

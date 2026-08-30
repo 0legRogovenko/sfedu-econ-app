@@ -151,6 +151,13 @@ class ReviewedDocument:
     signatures: tuple[str, ...]
 
 
+def _require_clean_session(session: Session, *, context: str) -> None:
+    if session.new or session.dirty or session.deleted:
+        raise ReviewValidationError(
+            f"{context} requires a clean session boundary"
+        )
+
+
 def lesson_state(lesson: Lesson, *, p_doc_id: str) -> LessonState:
     return LessonState(
         p_doc_id=p_doc_id,
@@ -424,10 +431,7 @@ def apply_document_corrections(
     result = CorrectionResult()
     if not corrections.operations:
         return result
-    if session.new or session.dirty or session.deleted:
-        raise ReviewValidationError(
-            "manual corrections require a clean session boundary"
-        )
+    _require_clean_session(session, context="manual corrections")
     current_operation: CorrectionOperation | None = None
     try:
         with session.begin_nested():
@@ -912,8 +916,8 @@ def load_correction_registry(path: str | Path) -> CorrectionRegistry:
 
 
 _MAX_DIFF_LINES = 40
-_MAX_DIFF_LINE_LENGTH = 500
-_MAX_DIFF_CHARACTERS = 8_000
+_MAX_DIFF_LINE_BYTES = 500
+_MAX_MISMATCH_BYTES = 8 * 1024
 
 
 def _require_sha256(value: str, *, context: str) -> str:
@@ -923,7 +927,12 @@ def _require_sha256(value: str, *, context: str) -> str:
 
 
 def _lesson_hash(signatures: tuple[str, ...]) -> str:
-    return hashlib.sha256("\n".join(signatures).encode("utf-8")).hexdigest()
+    payload = json.dumps(
+        list(signatures),
+        ensure_ascii=False,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
 
 
 def _validate_reviewed_metadata(reviewed: ReviewedDocument) -> str:
@@ -954,6 +963,7 @@ def reviewed_document_output(
     document: ScheduleDocument,
 ) -> ReviewedDocument:
     """Build the complete, deterministic lesson output for one source document."""
+    _require_clean_session(session, context="reviewed schedule validation")
     key = _canonical_document_id(document.p_doc_id)
     sha256 = _require_sha256(
         document.sha256,
@@ -990,10 +1000,13 @@ def _bounded_unified_diff(
     actual: tuple[str, ...],
     *,
     p_doc_id: str,
+    max_bytes: int,
 ) -> str:
     lines: list[str] = []
-    characters = 0
+    byte_count = 0
     truncated = False
+    marker = "... diff truncated ..."
+    marker_bytes = len(marker.encode("utf-8"))
     diff = difflib.unified_diff(
         expected,
         actual,
@@ -1005,21 +1018,36 @@ def _bounded_unified_diff(
         if index >= _MAX_DIFF_LINES:
             truncated = True
             break
-        line = raw_line
-        if len(line) > _MAX_DIFF_LINE_LENGTH:
-            line = f"{line[: _MAX_DIFF_LINE_LENGTH - 3]}..."
-            truncated = True
-        required = len(line) + (1 if lines else 0)
-        if characters + required > _MAX_DIFF_CHARACTERS:
+        separator_bytes = 1 if lines else 0
+        available = max_bytes - byte_count - separator_bytes - marker_bytes - 1
+        if available <= 0:
             truncated = True
             break
+        line, line_truncated = _truncate_utf8(
+            raw_line,
+            min(_MAX_DIFF_LINE_BYTES, available),
+        )
+        truncated = truncated or line_truncated
+        required = len(line.encode("utf-8")) + separator_bytes
         lines.append(line)
-        characters += required
+        byte_count += required
     if truncated:
-        marker = "... diff truncated ..."
-        if characters + len(marker) + 1 <= _MAX_DIFF_CHARACTERS:
+        separator_bytes = 1 if lines else 0
+        if byte_count + separator_bytes + marker_bytes <= max_bytes:
             lines.append(marker)
     return "\n".join(lines)
+
+
+def _truncate_utf8(value: str, max_bytes: int) -> tuple[str, bool]:
+    encoded = value.encode("utf-8")
+    if len(encoded) <= max_bytes:
+        return value, False
+    suffix = "..."
+    suffix_bytes = len(suffix.encode("utf-8"))
+    if max_bytes <= suffix_bytes:
+        return "." * max_bytes, True
+    prefix = encoded[: max_bytes - suffix_bytes].decode("utf-8", errors="ignore")
+    return f"{prefix}{suffix}", True
 
 
 def validate_reviewed_document(
@@ -1027,7 +1055,12 @@ def validate_reviewed_document(
     document: ScheduleDocument,
     expected: ReviewedDocument,
 ) -> None:
-    """Fail closed unless the whole imported document equals reviewed output."""
+    """Fail closed unless the whole imported document equals reviewed output.
+
+    Authentication of the file that supplied ``expected`` belongs to Task 6;
+    this boundary validates its internal consistency and the database result.
+    """
+    _require_clean_session(session, context="reviewed schedule validation")
     document_key = _canonical_document_id(document.p_doc_id)
     expected_key = _validate_reviewed_metadata(expected)
     if expected_key != document_key:
@@ -1049,15 +1082,16 @@ def validate_reviewed_document(
         and actual.signatures == expected.signatures
     ):
         return
+    mismatch = f"document {document_key}: reviewed schedule mismatch"
+    diff_budget = _MAX_MISMATCH_BYTES - len(mismatch.encode("utf-8")) - 1
     diff = _bounded_unified_diff(
         expected.signatures,
         actual.signatures,
         p_doc_id=document_key,
+        max_bytes=diff_budget,
     )
     suffix = f"\n{diff}" if diff else ""
-    raise ReviewValidationError(
-        f"document {document_key}: reviewed schedule mismatch{suffix}"
-    )
+    raise ReviewValidationError(f"{mismatch}{suffix}")
 
 
 def _canonical_bundle_mapping(
@@ -1158,11 +1192,11 @@ class ReviewBundle:
         session: Session,
         document: ScheduleDocument,
     ) -> CorrectionResult:
-        """Apply and validate without committing the caller-owned transaction.
+        """Atomically apply and validate inside the caller-owned transaction.
 
-        If final validation fails, changes already flushed into the outer
-        transaction remain the caller's responsibility to roll back. Task 5's
-        importer integration owns that outer atomic boundary.
+        This method never commits or rolls back the caller's outer transaction.
+        Its savepoint does roll back every correction when final validation
+        fails, leaving the surrounding session active for the caller.
         """
         key = _canonical_document_id(document.p_doc_id)
         corrections = self.corrections.documents.get(key)
@@ -1174,6 +1208,8 @@ class ReviewBundle:
                 f"document {key} has no reviewed output"
             )
         self.guard_source(key, document.sha256)
-        result = apply_document_corrections(session, document, corrections)
-        validate_reviewed_document(session, document, expected)
+        _require_clean_session(session, context="review bundle")
+        with session.begin_nested():
+            result = apply_document_corrections(session, document, corrections)
+            validate_reviewed_document(session, document, expected)
         return result
