@@ -1156,6 +1156,86 @@ def _document_report(report, p_doc_id: str = _REVIEWED_DOCUMENT_ID):
 
 class TestReviewedImporterIntegration:
     @pytest.mark.parametrize(
+        ("links", "review_bundle"),
+        (
+            ((_REVIEWED_LINK, _REVIEWED_LINK), _empty_review_bundle("14159")),
+            (
+                (
+                    ScheduleLink("Осенний семестр", "1 курс", "13469"),
+                    ScheduleLink("Осенний семестр", "1 курс", "13469"),
+                ),
+                None,
+            ),
+            (
+                (
+                    ScheduleLink("Осенний семестр", "1 курс", "13469"),
+                    ScheduleLink("Весенний семестр", "другая подпись", "13469"),
+                ),
+                None,
+            ),
+        ),
+    )
+    def test_duplicate_document_links_are_rejected_before_database_query(
+        self,
+        monkeypatch,
+        links,
+        review_bundle,
+    ):
+        session = make_session(autoflush=False)
+        fetcher = FakeFetcher()
+        original_scalars = session.scalars
+
+        def database_query_is_too_late(*_args, **_kwargs):
+            raise AssertionError("database queried before duplicate-link preflight")
+
+        monkeypatch.setattr(session, "scalars", database_query_is_too_late)
+        try:
+            with pytest.raises(
+                ReviewValidationError,
+                match="duplicate schedule document id",
+            ):
+                importer.import_all(
+                    session,
+                    fetcher,
+                    links=links,
+                    review_bundle=review_bundle,
+                )
+        finally:
+            monkeypatch.setattr(session, "scalars", original_scalars)
+
+        assert fetcher.requested == []
+        assert session.scalar(select(func.count()).select_from(ScheduleDocument)) == 0
+        session.close()
+
+    @pytest.mark.parametrize("p_doc_id", ("001", "0", "-1", "not-an-id", 0, True))
+    def test_malformed_document_link_is_rejected_deterministically_before_query(
+        self,
+        monkeypatch,
+        p_doc_id,
+    ):
+        session = make_session(autoflush=False)
+        fetcher = FakeFetcher()
+        original_scalars = session.scalars
+
+        def database_query_is_too_late(*_args, **_kwargs):
+            raise AssertionError("database queried before link-id preflight")
+
+        monkeypatch.setattr(session, "scalars", database_query_is_too_late)
+        try:
+            with pytest.raises(ReviewValidationError, match="invalid link document id"):
+                importer.import_all(
+                    session,
+                    fetcher,
+                    links=[ScheduleLink("Семестр", "курс", p_doc_id)],
+                )
+        finally:
+            monkeypatch.setattr(session, "scalars", original_scalars)
+
+        assert fetcher.requested == []
+        assert session.scalar(select(func.count()).select_from(ScheduleDocument)) == 0
+        session.close()
+
+    @pytest.mark.parametrize(
         ("links", "managed_ids", "missing_id"),
         (
             ((), ("14159",), "14159"),
@@ -1222,6 +1302,103 @@ class TestReviewedImporterIntegration:
         finally:
             session.close()
 
+    def test_reviewed_import_rejects_flushed_external_transaction_before_fetch(
+        self,
+        monkeypatch,
+    ):
+        session = make_session(autoflush=False)
+        group = Group(
+            course=9,
+            number="9.8",
+            program=None,
+            level=EducationLevel.BACHELOR,
+        )
+        external = Lesson(
+            group=group,
+            weekday=0,
+            pair_number=1,
+            starts_at=datetime(2027, 9, 1, 8, 0).time(),
+            ends_at=datetime(2027, 9, 1, 9, 35).time(),
+            subject="External caller lesson",
+            lesson_kind=LessonKind.LECTURE,
+            teacher_id=None,
+            room=None,
+            week_type=None,
+            subgroup=0,
+            date_constraint_raw=None,
+            cell_raw=None,
+            cell_key=None,
+            valid_from=None,
+            valid_to=None,
+            specific_dates=[],
+        )
+        session.add(external)
+        session.flush()
+        external_id = external.id
+        fetcher = FakeFetcher()
+
+        def fetch_is_too_late():
+            raise AssertionError("fetch started inside caller transaction")
+
+        monkeypatch.setattr(fetcher, "fetch_index", fetch_is_too_late)
+        try:
+            with pytest.raises(ReviewValidationError, match="active transaction"):
+                importer.import_all(
+                    session,
+                    fetcher,
+                    review_bundle=_empty_review_bundle(),
+                )
+
+            assert session.is_active
+            assert session.in_transaction()
+            assert session.get(Lesson, external_id) is external
+            session.rollback()
+            assert session.get(Lesson, external_id) is None
+        finally:
+            session.close()
+
+    def test_reviewed_import_rejects_read_only_autobegin_before_fetch(
+        self,
+        monkeypatch,
+    ):
+        session = make_session()
+        assert session.scalar(select(func.count()).select_from(Lesson)) == 0
+        assert session.in_transaction()
+        fetcher = FakeFetcher()
+
+        def fetch_is_too_late():
+            raise AssertionError("fetch started inside caller read transaction")
+
+        monkeypatch.setattr(fetcher, "fetch_index", fetch_is_too_late)
+        try:
+            with pytest.raises(ReviewValidationError, match="active transaction"):
+                importer.import_all(
+                    session,
+                    fetcher,
+                    review_bundle=_empty_review_bundle(),
+                )
+
+            assert session.is_active
+            assert session.in_transaction()
+        finally:
+            session.rollback()
+            session.close()
+
+    def test_reviewed_import_accepts_a_fresh_session_boundary(self):
+        session = make_session()
+        try:
+            report = importer.import_all(
+                session,
+                FakeFetcher(),
+                links=[],
+                review_bundle=_empty_review_bundle(),
+            )
+
+            assert report.documents == []
+        finally:
+            session.rollback()
+            session.close()
+
     def test_legacy_import_keeps_its_existing_session_boundary_behavior(self):
         session = make_session(autoflush=True)
         pending = Group(
@@ -1250,6 +1427,7 @@ class TestReviewedImporterIntegration:
         try:
             first = _import_reviewed_master(session, review_bundle=empty_bundle)
             before = _snapshot(session)
+            session.rollback()
             second = _import_reviewed_master(session, review_bundle=empty_bundle)
 
             assert _document_report(first).status == importer.STATUS_IMPORTED
@@ -1316,6 +1494,7 @@ class TestReviewedImporterIntegration:
                     after=None,
                 )
             bundle = _review_bundle(document, expected_states, operation)
+            session.rollback()
 
             report = _import_reviewed_master(session, review_bundle=bundle)
             document_report = _document_report(report)
@@ -1344,10 +1523,12 @@ class TestReviewedImporterIntegration:
                 after=after,
             )
             bundle = _review_bundle(document, expected_states, operation)
+            session.rollback()
 
             first = _import_reviewed_master(session, review_bundle=bundle)
             first_report = _document_report(first)
             first_output = reviewed_document_output(session, document)
+            session.rollback()
             second = _import_reviewed_master(session, review_bundle=bundle)
             second_report = _document_report(second)
 
@@ -1383,6 +1564,7 @@ class TestReviewedImporterIntegration:
                 after=after,
             )
             bundle = _review_bundle(document, (after, *states[1:]), operation)
+            session.rollback()
 
             report = _import_reviewed_master(session, review_bundle=bundle)
             diff = _document_report(report).diff
@@ -1410,6 +1592,7 @@ class TestReviewedImporterIntegration:
                 raise RuntimeError("classification ran before source guard")
 
             monkeypatch.setattr(importer, "_classify", classification_must_not_run)
+            session.rollback()
             report = _import_reviewed_master(
                 session,
                 review_bundle=bundle,
@@ -1436,6 +1619,7 @@ class TestReviewedImporterIntegration:
                 },
                 claimed_hashes={_REVIEWED_DOCUMENT_ID: document.sha256},
             )
+            session.rollback()
 
             report = importer.import_all(
                 session,
@@ -1465,6 +1649,7 @@ class TestReviewedImporterIntegration:
                 },
                 claimed_hashes={_REVIEWED_DOCUMENT_ID: document.sha256},
             )
+            session.rollback()
 
             with pytest.raises(
                 ReviewValidationError,
@@ -1499,6 +1684,7 @@ class TestReviewedImporterIntegration:
                     _REVIEWED_DOCUMENT_ID: b"%PDF-1.4\nchanged-reviewed-source"
                 }
             )
+            session.rollback()
 
             with pytest.raises(ReviewValidationError, match="requires review"):
                 importer.import_all(
@@ -1541,6 +1727,7 @@ class TestReviewedImporterIntegration:
                 ),
                 reviewed_documents={_REVIEWED_DOCUMENT_ID: bad_expected},
             )
+            session.rollback()
 
             report = _import_reviewed_master(session, review_bundle=bundle)
             failed = _document_report(report)
@@ -1550,6 +1737,48 @@ class TestReviewedImporterIntegration:
             assert "reviewed schedule mismatch" in (failed.error or "")
             assert reviewed_document_output(session, document) == expected
             assert len(states) == len(expected.signatures)
+        finally:
+            session.close()
+
+    def test_fresh_review_mismatch_reports_the_classified_document_type(self):
+        session = make_session(autoflush=False)
+        source = (FIXTURES / "14159.pdf").read_bytes()
+        source_sha256 = hashlib.sha256(source).hexdigest()
+        signatures = ("not the reviewed schedule",)
+        payload = json.dumps(
+            list(signatures),
+            ensure_ascii=False,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        bundle = ReviewBundle(
+            corrections=CorrectionRegistry(
+                documents={
+                    _REVIEWED_DOCUMENT_ID: DocumentCorrections(
+                        p_doc_id=_REVIEWED_DOCUMENT_ID,
+                        sha256=source_sha256,
+                        operations=(),
+                    )
+                }
+            ),
+            reviewed_documents={
+                _REVIEWED_DOCUMENT_ID: ReviewedDocument(
+                    p_doc_id=_REVIEWED_DOCUMENT_ID,
+                    sha256=source_sha256,
+                    lesson_hash=hashlib.sha256(payload).hexdigest(),
+                    signatures=signatures,
+                )
+            },
+        )
+        try:
+            report = _import_reviewed_master(session, review_bundle=bundle)
+            failed = _document_report(report)
+
+            assert failed.status == importer.STATUS_FAILED
+            assert failed.doc_type == DocType.SEMESTER_GRID_MASTER
+            assert "reviewed schedule mismatch" in (failed.error or "")
+            assert session.scalar(
+                select(func.count()).select_from(ScheduleDocument)
+            ) == 0
         finally:
             session.close()
 
@@ -1569,6 +1798,7 @@ class TestReviewedImporterIntegration:
                 after=replace(before, room="MUST-ROLL-BACK"),
             )
             bundle = _review_bundle(document, states, operation)
+            session.rollback()
 
             report = _import_reviewed_master(session, review_bundle=bundle)
             failed = _document_report(report)
@@ -1593,6 +1823,32 @@ def test_import_diff_preserves_duplicate_multiplicity():
 
     assert diff.added == ()
     assert diff.removed == (signature,)
+
+
+def test_import_diff_details_are_bounded_without_losing_complete_counts():
+    signature = "same\nreviewed row"
+    diff = importer.DocumentDiff(
+        added=(signature,) * 100_000,
+        removed=("removed reviewed row",) * 7,
+    )
+
+    details = diff.details()
+    lines = details.splitlines()
+    emitted = sum(
+        line.startswith(("+ стало: ", "− было: ")) for line in lines
+    )
+    summary = next(
+        line for line in lines if line.startswith("… пропущено изменений: ")
+    )
+    omitted = int(summary.rsplit(" ", 1)[-1])
+
+    assert len(lines) <= 42
+    assert len(details.encode("utf-8")) <= 8 * 1024
+    assert omitted == len(diff.added) + len(diff.removed) - emitted
+    assert len(diff.added) == 100_000
+    assert len(diff.removed) == 7
+    assert not diff.is_empty
+    assert importer.DocumentDiff(added=(), removed=()).is_empty
 
 
 def test_exam_snapshot_is_complete_stable_and_preserves_duplicate_count():

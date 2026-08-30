@@ -412,6 +412,10 @@ def _row_signature(row) -> tuple:
     return (row.subject, row.lesson_kind, row.date_constraint_raw, row.room)
 
 
+_MAX_IMPORT_DIFF_DETAIL_LINES = 42
+_MAX_IMPORT_DIFF_DETAIL_BYTES = 8 * 1024
+
+
 @dataclass
 class DocumentDiff:
     added: tuple[str, ...]
@@ -422,8 +426,46 @@ class DocumentDiff:
         return not self.added and not self.removed
 
     def details(self) -> str:
-        lines = [f"− было: {item}" for item in self.removed]
-        lines += [f"+ стало: {item}" for item in self.added]
+        total = len(self.removed) + len(self.added)
+        if total == 0:
+            return ""
+
+        lines: list[str] = []
+        bytes_used = 0
+        emitted = 0
+
+        def omission_line(omitted: int) -> str:
+            return f"… пропущено изменений: {omitted}"
+
+        def append_entry(line: str, *, emitted_after: int) -> bool:
+            nonlocal bytes_used
+            remaining = total - emitted_after
+            reserved = omission_line(remaining) if remaining else None
+            line_bytes = len(line.encode("utf-8"))
+            candidate_bytes = bytes_used + (1 if lines else 0) + line_bytes
+            candidate_lines = len(lines) + 1
+            if reserved is not None:
+                candidate_bytes += 1 + len(reserved.encode("utf-8"))
+                candidate_lines += 1
+            if (
+                candidate_lines > _MAX_IMPORT_DIFF_DETAIL_LINES
+                or candidate_bytes > _MAX_IMPORT_DIFF_DETAIL_BYTES
+            ):
+                return False
+            lines.append(line)
+            bytes_used += (1 if len(lines) > 1 else 0) + line_bytes
+            return True
+
+        for prefix, items in (("− было: ", self.removed), ("+ стало: ", self.added)):
+            for item in items:
+                display = item.replace("\r", r"\r").replace("\n", r"\n")
+                if not append_entry(
+                    f"{prefix}{display}",
+                    emitted_after=emitted + 1,
+                ):
+                    lines.append(omission_line(total - emitted))
+                    return "\n".join(lines)
+                emitted += 1
         return "\n".join(lines)
 
 
@@ -440,6 +482,11 @@ class DocumentReport:
     ledger: Ledger = field(default_factory=Ledger)
     diff: DocumentDiff | None = None
     error: str | None = None
+
+
+@dataclass
+class _ImportLinkContext:
+    doc_type: DocType = DocType.UNKNOWN
 
 
 @dataclass
@@ -486,6 +533,22 @@ def _canonical_link_document_id(p_doc_id: str | int) -> str:
     raise ReviewValidationError(f"invalid link document id {p_doc_id!r}")
 
 
+def _preflight_links(links) -> list:
+    normalized = []
+    seen: set[str] = set()
+    for link in links:
+        p_doc_id = _canonical_link_document_id(link.p_doc_id)
+        if p_doc_id in seen:
+            raise ReviewValidationError(
+                f"duplicate schedule document id {p_doc_id}"
+            )
+        seen.add(p_doc_id)
+        normalized.append(
+            link if link.p_doc_id == p_doc_id else replace(link, p_doc_id=p_doc_id)
+        )
+    return normalized
+
+
 def _require_complete_review_input(review_bundle: ReviewBundle, links) -> None:
     linked = {_canonical_link_document_id(link.p_doc_id) for link in links}
     managed = set(review_bundle.corrections.documents)
@@ -500,6 +563,10 @@ def _require_clean_review_import_session(session) -> None:
     if session.new or session.dirty or session.deleted:
         raise ReviewValidationError(
             "reviewed import requires a clean session boundary"
+        )
+    if session.in_transaction():
+        raise ReviewValidationError(
+            "reviewed import requires no active transaction"
         )
 
 
@@ -519,10 +586,15 @@ def import_all(
     любое исключение выходит вызывающему коду, который откатывает всю пачку.
     ``review_bundle`` опционален: управляемые им документы всегда заново
     разбираются и проходят точную проверку перед snapshot/diff и commit.
+    Reviewed-импорт владеет входной границей транзакции: вызывающий код обязан
+    передать свежую Session без pending-состояния и без active transaction.
+    SQLAlchemy начинает транзакцию даже после простого SELECT, поэтому такую
+    read-only транзакцию вызывающий код тоже должен завершить заранее.
     """
     if review_bundle is not None:
         _require_clean_review_import_session(session)
     links = list(links) if links is not None else parse_index(fetcher.fetch_index())
+    links = _preflight_links(links)
     if review_bundle is not None:
         _require_complete_review_input(review_bundle, links)
     report = ImportReport()
@@ -552,12 +624,14 @@ def import_all(
             session.flush()
             continue
         try:
+            context = _ImportLinkContext()
             report.documents.append(
                 _import_link(
                     session,
                     fetcher,
                     link,
                     review_bundle=review_bundle,
+                    _context=context,
                 )
             )
             session.commit()
@@ -574,7 +648,7 @@ def import_all(
                     p_doc_id=link.p_doc_id,
                     section=link.section,
                     label=link.label,
-                    doc_type=previous_doc_type or DocType.UNKNOWN,
+                    doc_type=previous_doc_type or context.doc_type,
                     status=STATUS_FAILED,
                     error=str(exc),
                 )
@@ -611,6 +685,7 @@ def _import_link(
     link,
     *,
     review_bundle: ReviewBundle | None = None,
+    _context: _ImportLinkContext | None = None,
 ) -> DocumentReport:
     fetched = fetcher.fetch_document(link.p_doc_id)
     actual_sha256 = hashlib.sha256(fetched.content).hexdigest()
@@ -622,6 +697,8 @@ def _import_link(
         review_bundle.guard_source(link.p_doc_id, actual_sha256)
     managed = review_bundle is not None and review_bundle.manages(link.p_doc_id)
     doc_type = _DOC_TYPE[_classify(fetched.content)]
+    if _context is not None:
+        _context.doc_type = doc_type
 
     document = session.scalar(
         select(ScheduleDocument).where(ScheduleDocument.p_doc_id == int(link.p_doc_id))
