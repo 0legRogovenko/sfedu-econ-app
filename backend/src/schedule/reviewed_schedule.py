@@ -1,8 +1,10 @@
 import json
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import date, time
 from pathlib import Path
+from types import MappingProxyType
 from typing import Literal
 
 from src.models import EducationLevel, Lesson, LessonKind, WeekType
@@ -10,6 +12,7 @@ from src.models import EducationLevel, Lesson, LessonKind, WeekType
 
 _EMPTY_TEXT = r"\0"
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+_DOCUMENT_ID_RE = re.compile(r"^[1-9][0-9]*$")
 _CORRECTION_ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 _MAX_CORRECTION_ID_LENGTH = 43  # len("manual:") + id must fit Lesson.cell_key(50)
 _MAX_SOURCE_PAGE = 10_000
@@ -91,7 +94,7 @@ class DocumentCorrections:
 
 @dataclass(frozen=True)
 class CorrectionRegistry:
-    documents: dict[str, DocumentCorrections]
+    documents: Mapping[str, DocumentCorrections]
 
     def manages(self, p_doc_id: str | int) -> bool:
         return str(p_doc_id) in self.documents
@@ -274,7 +277,13 @@ def _iso_time(value, *, context: str) -> time:
     except ValueError as exc:
         raise ReviewValidationError(f"{context}: invalid ISO time") from exc
     if parsed.utcoffset() is not None:
-        raise ReviewValidationError(f"{context}: invalid ISO time")
+        raise ReviewValidationError(
+            f"{context}: ISO time must not contain a timezone offset"
+        )
+    if parsed.microsecond != 0:
+        raise ReviewValidationError(
+            f"{context}: ISO time must not contain microseconds"
+        )
     return parsed
 
 
@@ -356,13 +365,46 @@ def _parse_state(value, *, p_doc_id: str) -> LessonState:
     )
     if len(set(specific_dates)) != len(specific_dates):
         raise ReviewValidationError("specific_dates must not contain duplicates")
+    weekday = _integer(
+        payload["weekday"], context="weekday", minimum=0, maximum=5
+    )
+    module = _parse_module(payload["module"])
+    for specific_date in specific_dates:
+        assert specific_date is not None
+        if specific_date.weekday() != weekday:
+            raise ReviewValidationError(
+                f"specific date {specific_date} does not match weekday {weekday}"
+            )
+        if valid_from is not None and specific_date < valid_from:
+            raise ReviewValidationError(
+                f"specific date {specific_date} is before valid_from {valid_from}"
+            )
+        if valid_to is not None and specific_date > valid_to:
+            raise ReviewValidationError(
+                f"specific date {specific_date} is after valid_to {valid_to}"
+            )
+    if module is not None:
+        if valid_from is not None and not (
+            module.date_from <= valid_from <= module.date_to
+        ):
+            raise ReviewValidationError(
+                f"valid_from {valid_from} is outside module"
+            )
+        if valid_to is not None and not (
+            module.date_from <= valid_to <= module.date_to
+        ):
+            raise ReviewValidationError(f"valid_to {valid_to} is outside module")
+        for specific_date in specific_dates:
+            assert specific_date is not None
+            if not module.date_from <= specific_date <= module.date_to:
+                raise ReviewValidationError(
+                    f"specific date {specific_date} is outside module"
+                )
     subject = _string(payload["subject"], context="subject", blank=False)
     return LessonState(
         p_doc_id=state_document,
         group=_parse_group(payload["group"]),
-        weekday=_integer(
-            payload["weekday"], context="weekday", minimum=0, maximum=5
-        ),
+        weekday=weekday,
         pair_number=_integer(
             payload["pair_number"],
             context="pair number",
@@ -392,7 +434,7 @@ def _parse_state(value, *, p_doc_id: str) -> LessonState:
             minimum=0,
             maximum=_MAX_SUBGROUP,
         ),
-        module=_parse_module(payload["module"]),
+        module=module,
         date_constraint_raw=_optional_string(
             payload["date_constraint_raw"], context="date_constraint_raw"
         ),
@@ -476,7 +518,7 @@ def _parse_document(value) -> DocumentCorrections:
     )
     _check_keys(payload, context=context, allowed=_DOCUMENT_KEYS)
     p_doc_id = _string(raw_id, context="p_doc_id", blank=False)
-    if not p_doc_id.isascii() or not p_doc_id.isdigit():
+    if _DOCUMENT_ID_RE.fullmatch(p_doc_id) is None:
         raise ReviewValidationError(f"invalid document id {p_doc_id!r}")
     sha256 = _string(payload["sha256"], context="sha256")
     if _SHA256_RE.fullmatch(sha256) is None:
@@ -538,4 +580,4 @@ def load_correction_registry(path: str | Path) -> CorrectionRegistry:
                 )
             correction_ids.add(operation.id)
         documents[document.p_doc_id] = document
-    return CorrectionRegistry(documents=documents)
+    return CorrectionRegistry(documents=MappingProxyType(documents.copy()))

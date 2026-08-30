@@ -430,6 +430,51 @@ def test_registry_guard_is_noop_for_unmanaged_document(tmp_path):
     registry.guard_source("99999", "not-even-a-hash")
 
 
+def test_registry_documents_mapping_cannot_be_mutated_or_disable_guard(tmp_path):
+    registry = load_correction_registry(
+        _write_registry(tmp_path, documents=[_document_json()])
+    )
+
+    with pytest.raises(TypeError):
+        registry.documents["14160"] = registry.documents["14159"]
+    with pytest.raises(TypeError):
+        del registry.documents["14159"]
+    with pytest.raises(AttributeError):
+        registry.documents.clear()
+
+    assert registry.manages(14159)
+    with pytest.raises(
+        ReviewValidationError,
+        match="document 14159 changed and requires review",
+    ):
+        registry.guard_source(14159, "b" * 64)
+
+
+@pytest.mark.parametrize(
+    "p_doc_id",
+    ["014159", "0", "+14159", "-14159", " 14159", "14159 "],
+)
+def test_registry_rejects_noncanonical_document_ids(tmp_path, p_doc_id):
+    path = _write_registry(
+        tmp_path,
+        documents=[_document_json(p_doc_id=p_doc_id)],
+    )
+
+    with pytest.raises(ReviewValidationError, match="invalid document id"):
+        load_correction_registry(path)
+
+
+def test_registry_keeps_canonical_document_id_compatible_with_integer_lookup(
+    tmp_path,
+):
+    registry = load_correction_registry(
+        _write_registry(tmp_path, documents=[_document_json(p_doc_id="14159")])
+    )
+
+    assert registry.manages("14159")
+    assert registry.manages(14159)
+
+
 def test_registry_rejects_duplicate_document_ids(tmp_path):
     path = _write_registry(
         tmp_path,
@@ -714,6 +759,215 @@ def test_registry_validates_iso_values_and_ranges(tmp_path, overrides, message):
 
     with pytest.raises(ReviewValidationError, match=message):
         load_correction_registry(path)
+
+
+def test_registry_rejects_specific_date_on_another_weekday(tmp_path):
+    path = _write_registry(
+        tmp_path,
+        documents=[
+            _document_json(
+                operations=[
+                    _operation_json(
+                        "remove",
+                        expected_before=_state_json(
+                            weekday=4,
+                            specific_dates=["2026-09-05"],
+                        ),
+                    )
+                ]
+            )
+        ],
+    )
+
+    with pytest.raises(
+        ReviewValidationError,
+        match="specific date 2026-09-05 does not match weekday 4",
+    ):
+        load_correction_registry(path)
+
+
+@pytest.mark.parametrize(
+    ("specific_date", "valid_from", "valid_to", "message"),
+    [
+        (
+            "2026-08-29",
+            "2026-09-01",
+            "2026-10-07",
+            "specific date 2026-08-29 is before valid_from 2026-09-01",
+        ),
+        (
+            "2026-10-10",
+            "2026-09-01",
+            "2026-10-07",
+            "specific date 2026-10-10 is after valid_to 2026-10-07",
+        ),
+    ],
+)
+def test_registry_requires_specific_dates_inside_validity_window(
+    tmp_path, specific_date, valid_from, valid_to, message
+):
+    path = _write_registry(
+        tmp_path,
+        documents=[
+            _document_json(
+                operations=[
+                    _operation_json(
+                        "remove",
+                        expected_before=_state_json(
+                            specific_dates=[specific_date],
+                            valid_from=valid_from,
+                            valid_to=valid_to,
+                        ),
+                    )
+                ]
+            )
+        ],
+    )
+
+    with pytest.raises(ReviewValidationError, match=message):
+        load_correction_registry(path)
+
+
+@pytest.mark.parametrize(
+    ("overrides", "message"),
+    [
+        (
+            {"valid_from": "2026-08-29"},
+            "valid_from 2026-08-29 is outside module",
+        ),
+        (
+            {"valid_to": "2026-11-02"},
+            "valid_to 2026-11-02 is outside module",
+        ),
+        (
+            {
+                "specific_dates": ["2026-08-29"],
+                "valid_from": None,
+                "valid_to": None,
+            },
+            "specific date 2026-08-29 is outside module",
+        ),
+    ],
+)
+def test_registry_requires_validity_and_specific_dates_inside_module(
+    tmp_path, overrides, message
+):
+    path = _write_registry(
+        tmp_path,
+        documents=[
+            _document_json(
+                operations=[
+                    _operation_json(
+                        "remove",
+                        expected_before=_state_json(**overrides),
+                    )
+                ]
+            )
+        ],
+    )
+
+    with pytest.raises(ReviewValidationError, match=message):
+        load_correction_registry(path)
+
+
+def test_registry_accepts_consistent_specific_dates_and_ranges(tmp_path):
+    state = _state_json(
+        weekday=5,
+        module={"date_from": "2026-09-01", "date_to": "2026-11-01"},
+        valid_from="2026-09-01",
+        valid_to="2026-10-31",
+        specific_dates=["2026-09-05", "2026-09-12", "2026-10-31"],
+    )
+    registry = load_correction_registry(
+        _write_registry(
+            tmp_path,
+            documents=[
+                _document_json(
+                    operations=[
+                        _operation_json("remove", expected_before=state)
+                    ]
+                )
+            ],
+        )
+    )
+
+    loaded = registry.documents["14159"].operations[0].expected_before
+    assert loaded is not None
+    assert loaded.specific_dates == (
+        date(2026, 9, 5),
+        date(2026, 9, 12),
+        date(2026, 10, 31),
+    )
+
+
+@pytest.mark.parametrize(
+    ("starts_at", "ends_at", "message"),
+    [
+        (
+            "09:50:00",
+            "09:50:00.000001",
+            "ISO time must not contain microseconds",
+        ),
+        (
+            "09:50:00+03:00",
+            "11:25:00+03:00",
+            "ISO time must not contain a timezone offset",
+        ),
+        (
+            "09:50:00",
+            "09:50:00",
+            "lesson time range is invalid",
+        ),
+    ],
+)
+def test_registry_rejects_noncanonical_or_empty_time_ranges(
+    tmp_path, starts_at, ends_at, message
+):
+    path = _write_registry(
+        tmp_path,
+        documents=[
+            _document_json(
+                operations=[
+                    _operation_json(
+                        "remove",
+                        expected_before=_state_json(
+                            starts_at=starts_at,
+                            ends_at=ends_at,
+                        ),
+                    )
+                ]
+            )
+        ],
+    )
+
+    with pytest.raises(ReviewValidationError, match=message):
+        load_correction_registry(path)
+
+
+@pytest.mark.parametrize(
+    ("starts_at", "ends_at", "expected_start", "expected_end"),
+    [
+        ("09:50", "11:25", time(9, 50), time(11, 25)),
+        ("09:50:00", "11:25:00", time(9, 50), time(11, 25)),
+    ],
+)
+def test_registry_accepts_iso_times_with_optional_seconds(
+    tmp_path, starts_at, ends_at, expected_start, expected_end
+):
+    operation = _operation_json(
+        "remove",
+        expected_before=_state_json(starts_at=starts_at, ends_at=ends_at),
+    )
+    registry = load_correction_registry(
+        _write_registry(
+            tmp_path,
+            documents=[_document_json(operations=[operation])],
+        )
+    )
+
+    state = registry.documents["14159"].operations[0].expected_before
+    assert state is not None
+    assert (state.starts_at, state.ends_at) == (expected_start, expected_end)
 
 
 @pytest.mark.parametrize("evidence", ["", "   ", "\n\t"])
