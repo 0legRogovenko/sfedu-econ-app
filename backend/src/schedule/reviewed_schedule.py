@@ -25,6 +25,18 @@ class ReviewValidationError(ValueError):
     """The reviewed schedule bundle is malformed or stale."""
 
 
+def _canonical_document_id(p_doc_id: str | int) -> str:
+    if isinstance(p_doc_id, bool):
+        raise ReviewValidationError(f"invalid document id {p_doc_id!r}")
+    if isinstance(p_doc_id, int):
+        if p_doc_id <= 0:
+            raise ReviewValidationError(f"invalid document id {p_doc_id!r}")
+        return str(p_doc_id)
+    if isinstance(p_doc_id, str) and _DOCUMENT_ID_RE.fullmatch(p_doc_id):
+        return p_doc_id
+    raise ReviewValidationError(f"invalid document id {p_doc_id!r}")
+
+
 def _encode_text(value: str | None) -> str:
     if value is None:
         return ""
@@ -97,13 +109,14 @@ class CorrectionRegistry:
     documents: Mapping[str, DocumentCorrections]
 
     def manages(self, p_doc_id: str | int) -> bool:
-        return str(p_doc_id) in self.documents
+        return _canonical_document_id(p_doc_id) in self.documents
 
     def guard_source(self, p_doc_id: str | int, sha256: str) -> None:
-        document = self.documents.get(str(p_doc_id))
+        key = _canonical_document_id(p_doc_id)
+        document = self.documents.get(key)
         if document is not None and document.sha256 != sha256:
             raise ReviewValidationError(
-                f"document {p_doc_id} changed and requires review"
+                f"document {key} changed and requires review"
             )
 
 
@@ -375,15 +388,11 @@ def _parse_state(value, *, p_doc_id: str) -> LessonState:
             raise ReviewValidationError(
                 f"specific date {specific_date} does not match weekday {weekday}"
             )
-        if valid_from is not None and specific_date < valid_from:
-            raise ReviewValidationError(
-                f"specific date {specific_date} is before valid_from {valid_from}"
-            )
-        if valid_to is not None and specific_date > valid_to:
-            raise ReviewValidationError(
-                f"specific date {specific_date} is after valid_to {valid_to}"
-            )
     if module is not None:
+        if valid_from is None or valid_to is None:
+            raise ReviewValidationError(
+                "module requires both valid_from and valid_to"
+            )
         if valid_from is not None and not (
             module.date_from <= valid_from <= module.date_to
         ):
@@ -400,6 +409,16 @@ def _parse_state(value, *, p_doc_id: str) -> LessonState:
                 raise ReviewValidationError(
                     f"specific date {specific_date} is outside module"
                 )
+    for specific_date in specific_dates:
+        assert specific_date is not None
+        if valid_from is not None and specific_date < valid_from:
+            raise ReviewValidationError(
+                f"specific date {specific_date} is before valid_from {valid_from}"
+            )
+        if valid_to is not None and specific_date > valid_to:
+            raise ReviewValidationError(
+                f"specific date {specific_date} is after valid_to {valid_to}"
+            )
     subject = _string(payload["subject"], context="subject", blank=False)
     return LessonState(
         p_doc_id=state_document,
@@ -518,8 +537,7 @@ def _parse_document(value) -> DocumentCorrections:
     )
     _check_keys(payload, context=context, allowed=_DOCUMENT_KEYS)
     p_doc_id = _string(raw_id, context="p_doc_id", blank=False)
-    if _DOCUMENT_ID_RE.fullmatch(p_doc_id) is None:
-        raise ReviewValidationError(f"invalid document id {p_doc_id!r}")
+    p_doc_id = _canonical_document_id(p_doc_id)
     sha256 = _string(payload["sha256"], context="sha256")
     if _SHA256_RE.fullmatch(sha256) is None:
         raise ReviewValidationError(f"document {p_doc_id}: invalid SHA-256")

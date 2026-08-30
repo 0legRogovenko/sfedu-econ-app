@@ -475,6 +475,44 @@ def test_registry_keeps_canonical_document_id_compatible_with_integer_lookup(
     assert registry.manages(14159)
 
 
+@pytest.mark.parametrize("p_doc_id", ["014159", "0", " 14159"])
+def test_registry_manages_rejects_noncanonical_public_document_id(
+    tmp_path, p_doc_id
+):
+    registry = load_correction_registry(
+        _write_registry(tmp_path, documents=[_document_json()])
+    )
+
+    with pytest.raises(ReviewValidationError, match="invalid document id"):
+        registry.manages(p_doc_id)
+
+
+@pytest.mark.parametrize("p_doc_id", ["014159", "0", " 14159"])
+def test_registry_guard_rejects_noncanonical_public_document_id(
+    tmp_path, p_doc_id
+):
+    registry = load_correction_registry(
+        _write_registry(tmp_path, documents=[_document_json()])
+    )
+
+    with pytest.raises(ReviewValidationError, match="invalid document id"):
+        registry.guard_source(p_doc_id, "a" * 64)
+
+
+@pytest.mark.parametrize("p_doc_id", [0, -14159])
+def test_registry_public_api_rejects_nonpositive_integer_document_id(
+    tmp_path, p_doc_id
+):
+    registry = load_correction_registry(
+        _write_registry(tmp_path, documents=[_document_json()])
+    )
+
+    with pytest.raises(ReviewValidationError, match="invalid document id"):
+        registry.manages(p_doc_id)
+    with pytest.raises(ReviewValidationError, match="invalid document id"):
+        registry.guard_source(p_doc_id, "a" * 64)
+
+
 def test_registry_rejects_duplicate_document_ids(tmp_path):
     path = _write_registry(
         tmp_path,
@@ -817,6 +855,7 @@ def test_registry_requires_specific_dates_inside_validity_window(
                             specific_dates=[specific_date],
                             valid_from=valid_from,
                             valid_to=valid_to,
+                            module=None,
                         ),
                     )
                 ]
@@ -842,8 +881,8 @@ def test_registry_requires_specific_dates_inside_validity_window(
         (
             {
                 "specific_dates": ["2026-08-29"],
-                "valid_from": None,
-                "valid_to": None,
+                "valid_from": "2026-09-01",
+                "valid_to": "2026-10-31",
             },
             "specific date 2026-08-29 is outside module",
         ),
@@ -868,6 +907,67 @@ def test_registry_requires_validity_and_specific_dates_inside_module(
 
     with pytest.raises(ReviewValidationError, match=message):
         load_correction_registry(path)
+
+
+@pytest.mark.parametrize(
+    ("valid_from", "valid_to"),
+    [
+        (None, None),
+        ("2026-09-01", None),
+        (None, "2026-10-31"),
+    ],
+)
+def test_registry_requires_complete_validity_window_for_module(
+    tmp_path, valid_from, valid_to
+):
+    state = _state_json(
+        valid_from=valid_from,
+        valid_to=valid_to,
+        specific_dates=[],
+    )
+    path = _write_registry(
+        tmp_path,
+        documents=[
+            _document_json(
+                operations=[
+                    _operation_json("remove", expected_before=state)
+                ]
+            )
+        ],
+    )
+
+    with pytest.raises(
+        ReviewValidationError,
+        match="module requires both valid_from and valid_to",
+    ):
+        load_correction_registry(path)
+
+
+def test_registry_accepts_validity_window_without_module(tmp_path):
+    state = _state_json(
+        module=None,
+        valid_from="2026-09-01",
+        valid_to="2026-10-31",
+        specific_dates=["2026-09-05"],
+    )
+    registry = load_correction_registry(
+        _write_registry(
+            tmp_path,
+            documents=[
+                _document_json(
+                    operations=[
+                        _operation_json("remove", expected_before=state)
+                    ]
+                )
+            ],
+        )
+    )
+
+    loaded = registry.documents["14159"].operations[0].expected_before
+    assert loaded is not None
+    assert loaded.module is None
+    assert loaded.valid_from == date(2026, 9, 1)
+    assert loaded.valid_to == date(2026, 10, 31)
 
 
 def test_registry_accepts_consistent_specific_dates_and_ranges(tmp_path):
