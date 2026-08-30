@@ -3,23 +3,28 @@ from dataclasses import FrozenInstanceError, replace
 from datetime import date, time
 
 import pytest
+from sqlalchemy import select, text
 
 from src.models import (
+    DocType,
     EducationLevel,
     Group,
     Lesson,
     LessonKind,
     Module,
+    ScheduleDocument,
     Teacher,
     WeekType,
 )
 from src.schedule.reviewed_schedule import (
     CorrectionOperation,
     CorrectionRegistry,
+    CorrectionResult,
     DocumentCorrections,
     GroupIdentity,
     ModuleIdentity,
     ReviewValidationError,
+    apply_document_corrections,
     lesson_state,
     load_correction_registry,
     state_signature,
@@ -1181,3 +1186,686 @@ def test_registry_rejects_missing_version_and_wrong_top_level_types(
 
     with pytest.raises(ReviewValidationError, match=message):
         load_correction_registry(path)
+
+
+def _seed_correction_document(db_session):
+    document = ScheduleDocument(
+        p_doc_id=14159,
+        section="Осенний семестр",
+        label="1 курс Маг",
+        doc_type=DocType.SEMESTER_GRID_MASTER,
+        sha256="a" * 64,
+        source_url="https://example.test/14159.pdf",
+    )
+    group = Group(
+        course=1,
+        number=None,
+        level=EducationLevel.MASTER,
+        program="Корпоративные финансы",
+        subgroup_count=2,
+    )
+    module = Module(
+        document=document,
+        name="I модуль",
+        date_from=date(2026, 9, 1),
+        date_to=date(2026, 11, 1),
+    )
+    teacher = Teacher(full_name="Иванова И.И.")
+    db_session.add_all([document, group, module, teacher])
+    db_session.flush()
+    lesson = Lesson(
+        group=group,
+        document_id=document.id,
+        module=module,
+        weekday=0,
+        pair_number=1,
+        starts_at=time(8),
+        ends_at=time(9, 35),
+        subject="Экономическая теория",
+        lesson_kind=LessonKind.LECTURE,
+        teacher=teacher,
+        room="118",
+        week_type=None,
+        subgroup=0,
+        date_constraint_raw=None,
+        cell_raw="Экономическая теория (л) Иванова И.И. ауд.118",
+        cell_key="1:2:3",
+        valid_from=date(2026, 9, 1),
+        valid_to=date(2026, 11, 1),
+        specific_dates=[],
+    )
+    db_session.add(lesson)
+    db_session.flush()
+    return document, group, module, teacher, lesson
+
+
+def _correction(
+    operation,
+    *,
+    operation_id="master-room-209",
+    expected_before=None,
+    after=None,
+):
+    return CorrectionOperation(
+        id=operation_id,
+        operation=operation,
+        page=4,
+        evidence="reviewed PDF page 4",
+        expected_before=expected_before,
+        after=after,
+    )
+
+
+def _corrections(document, *operations, p_doc_id=None, sha256=None):
+    return DocumentCorrections(
+        p_doc_id=p_doc_id or str(document.p_doc_id),
+        sha256=sha256 or document.sha256,
+        operations=tuple(operations),
+    )
+
+
+def _persisted_lessons(db_session, document):
+    return db_session.scalars(
+        select(Lesson).where(Lesson.document_id == document.id).order_by(Lesson.id)
+    ).all()
+
+
+def test_replace_writes_every_lesson_field_and_preserves_document(db_session):
+    document, old_group, old_module, old_teacher, lesson = (
+        _seed_correction_document(db_session)
+    )
+    new_group = Group(
+        course=1,
+        number=None,
+        level=EducationLevel.MASTER,
+        program="Финансовые технологии",
+        subgroup_count=2,
+    )
+    new_module = Module(
+        document=document,
+        name="II модуль",
+        date_from=date(2026, 11, 2),
+        date_to=date(2027, 1, 10),
+    )
+    new_teacher = Teacher(full_name="Петрова П.П.")
+    db_session.add_all([new_group, new_module, new_teacher])
+    db_session.flush()
+    before = lesson_state(lesson, p_doc_id=str(document.p_doc_id))
+    after = replace(
+        before,
+        group=GroupIdentity(
+            level="master",
+            course=1,
+            number=None,
+            program="Финансовые технологии",
+        ),
+        weekday=5,
+        pair_number=2,
+        starts_at=time(9, 50),
+        ends_at=time(11, 25),
+        subject="Международная экономика",
+        lesson_kind="seminar",
+        teacher="Петрова П.П.",
+        room="209",
+        week_type="upper",
+        subgroup=2,
+        module=ModuleIdentity(
+            date_from=date(2026, 11, 2),
+            date_to=date(2027, 1, 10),
+        ),
+        date_constraint_raw="07.11, 21.11",
+        valid_from=date(2026, 11, 2),
+        valid_to=date(2027, 1, 10),
+        specific_dates=(date(2026, 11, 7), date(2026, 11, 21)),
+        cell_raw="Международная экономика (с) Петрова П.П. ауд.209",
+    )
+
+    result = apply_document_corrections(
+        db_session,
+        document,
+        _corrections(
+            document,
+            _correction("replace", expected_before=before, after=after),
+        ),
+    )
+
+    db_session.refresh(lesson)
+    assert result == CorrectionResult(added=0, replaced=1, removed=0)
+    assert lesson.document_id == document.id
+    assert lesson.group_id == new_group.id
+    assert lesson.module_id == new_module.id
+    assert lesson.teacher_id == new_teacher.id
+    assert lesson.weekday == 5
+    assert lesson.pair_number == 2
+    assert lesson.starts_at == time(9, 50)
+    assert lesson.ends_at == time(11, 25)
+    assert lesson.subject == "Международная экономика"
+    assert lesson.lesson_kind is LessonKind.SEMINAR
+    assert lesson.room == "209"
+    assert lesson.week_type is WeekType.UPPER
+    assert lesson.subgroup == 2
+    assert lesson.date_constraint_raw == "07.11, 21.11"
+    assert lesson.cell_raw == after.cell_raw
+    assert lesson.cell_key == "manual:master-room-209"
+    assert lesson.valid_from == date(2026, 11, 2)
+    assert lesson.valid_to == date(2027, 1, 10)
+    assert lesson.specific_dates == ["2026-11-07", "2026-11-21"]
+
+
+def test_replace_stale_expected_state_matches_zero_and_does_not_mutate(db_session):
+    document, _, _, _, lesson = _seed_correction_document(db_session)
+    actual = lesson_state(lesson, p_doc_id=str(document.p_doc_id))
+    stale = replace(actual, room="401")
+    after = replace(actual, room="209")
+
+    with pytest.raises(ReviewValidationError, match="matched 0 lessons"):
+        apply_document_corrections(
+            db_session,
+            document,
+            _corrections(
+                document,
+                _correction("replace", expected_before=stale, after=after),
+            ),
+        )
+
+    db_session.refresh(lesson)
+    assert lesson.room == "118"
+    assert lesson.cell_key == "1:2:3"
+
+
+def test_exact_match_ambiguity_is_rejected_without_mutation(db_session):
+    document, group, module, teacher, lesson = _seed_correction_document(db_session)
+    db_session.execute(text("DROP INDEX uq_lessons_slot"))
+    duplicate = Lesson(
+        group=group,
+        document_id=document.id,
+        module=module,
+        weekday=lesson.weekday,
+        pair_number=lesson.pair_number,
+        starts_at=lesson.starts_at,
+        ends_at=lesson.ends_at,
+        subject=lesson.subject,
+        lesson_kind=lesson.lesson_kind,
+        teacher=teacher,
+        room=lesson.room,
+        week_type=lesson.week_type,
+        subgroup=lesson.subgroup,
+        date_constraint_raw=lesson.date_constraint_raw,
+        cell_raw=lesson.cell_raw,
+        cell_key="9:9:9",
+        valid_from=lesson.valid_from,
+        valid_to=lesson.valid_to,
+        specific_dates=list(lesson.specific_dates),
+    )
+    db_session.add(duplicate)
+    db_session.flush()
+    before = lesson_state(lesson, p_doc_id=str(document.p_doc_id))
+
+    with pytest.raises(ReviewValidationError, match="matched 2 lessons"):
+        apply_document_corrections(
+            db_session,
+            document,
+            _corrections(
+                document,
+                _correction("remove", expected_before=before),
+            ),
+        )
+
+    assert len(_persisted_lessons(db_session, document)) == 2
+
+
+def test_remove_deletes_only_the_exact_lesson(db_session):
+    document, _, _, teacher, lesson = _seed_correction_document(db_session)
+    other = Lesson(
+        group_id=lesson.group_id,
+        document_id=document.id,
+        module_id=lesson.module_id,
+        weekday=1,
+        pair_number=2,
+        starts_at=time(9, 50),
+        ends_at=time(11, 25),
+        subject="Финансы",
+        lesson_kind=LessonKind.SEMINAR,
+        teacher=teacher,
+        room="209",
+        week_type=None,
+        subgroup=0,
+        date_constraint_raw=None,
+        cell_raw="Финансы (с)",
+        cell_key="1:3:3",
+        valid_from=date(2026, 9, 1),
+        valid_to=date(2026, 11, 1),
+        specific_dates=[],
+    )
+    db_session.add(other)
+    db_session.flush()
+    before = lesson_state(lesson, p_doc_id=str(document.p_doc_id))
+
+    result = apply_document_corrections(
+        db_session,
+        document,
+        _corrections(
+            document,
+            _correction("remove", expected_before=before),
+        ),
+    )
+
+    assert result == CorrectionResult(added=0, replaced=0, removed=1)
+    assert _persisted_lessons(db_session, document) == [other]
+
+
+def test_add_creates_lesson_with_manual_provenance(db_session):
+    document, _, _, teacher, lesson = _seed_correction_document(db_session)
+    after = replace(
+        lesson_state(lesson, p_doc_id=str(document.p_doc_id)),
+        weekday=2,
+        pair_number=3,
+        starts_at=time(11, 55),
+        ends_at=time(13, 30),
+        subject="Финансы",
+        teacher=teacher.full_name,
+        room="401",
+        date_constraint_raw="по 30.09",
+        specific_dates=(),
+        cell_raw="Финансы (л) Иванова И.И. ауд.401",
+    )
+
+    result = apply_document_corrections(
+        db_session,
+        document,
+        _corrections(
+            document,
+            _correction(
+                "add",
+                operation_id="add-reviewed-finance",
+                after=after,
+            ),
+        ),
+    )
+
+    added = _persisted_lessons(db_session, document)[1]
+    assert result == CorrectionResult(added=1, replaced=0, removed=0)
+    assert added.document_id == document.id
+    assert added.cell_key == "manual:add-reviewed-finance"
+    assert added.cell_raw == after.cell_raw
+    assert lesson_state(added, p_doc_id="14159") == after
+
+
+def test_missing_group_fails_without_creating_group(db_session):
+    document, _, _, _, lesson = _seed_correction_document(db_session)
+    before_groups = list(db_session.scalars(select(Group).order_by(Group.id)))
+    after = replace(
+        lesson_state(lesson, p_doc_id=str(document.p_doc_id)),
+        group=GroupIdentity(
+            level="master",
+            course=2,
+            number=None,
+            program="Несуществующая программа",
+        ),
+        weekday=2,
+        pair_number=3,
+        subject="Финансы",
+    )
+
+    with pytest.raises(ReviewValidationError, match="group.*not found"):
+        apply_document_corrections(
+            db_session,
+            document,
+            _corrections(document, _correction("add", after=after)),
+        )
+
+    assert list(db_session.scalars(select(Group).order_by(Group.id))) == before_groups
+    assert len(_persisted_lessons(db_session, document)) == 1
+
+
+def test_missing_document_module_fails_without_creating_module(db_session):
+    document, _, _, _, lesson = _seed_correction_document(db_session)
+    before_modules = list(db_session.scalars(select(Module).order_by(Module.id)))
+    after = replace(
+        lesson_state(lesson, p_doc_id=str(document.p_doc_id)),
+        weekday=2,
+        pair_number=3,
+        subject="Финансы",
+        module=ModuleIdentity(
+            date_from=date(2027, 2, 1),
+            date_to=date(2027, 4, 1),
+        ),
+        valid_from=date(2027, 2, 1),
+        valid_to=date(2027, 4, 1),
+    )
+
+    with pytest.raises(ReviewValidationError, match="module.*not found"):
+        apply_document_corrections(
+            db_session,
+            document,
+            _corrections(document, _correction("add", after=after)),
+        )
+
+    assert list(db_session.scalars(select(Module).order_by(Module.id))) == before_modules
+    assert len(_persisted_lessons(db_session, document)) == 1
+
+
+def test_add_reuses_exact_canonical_teacher_without_duplicate(db_session):
+    document, _, _, teacher, lesson = _seed_correction_document(db_session)
+    after = replace(
+        lesson_state(lesson, p_doc_id=str(document.p_doc_id)),
+        weekday=2,
+        pair_number=3,
+        subject="Финансы",
+        cell_raw="Финансы (л) Иванова И.И.",
+    )
+
+    apply_document_corrections(
+        db_session,
+        document,
+        _corrections(document, _correction("add", after=after)),
+    )
+
+    teachers = list(db_session.scalars(select(Teacher).order_by(Teacher.id)))
+    assert teachers == [teacher]
+    assert _persisted_lessons(db_session, document)[1].teacher_id == teacher.id
+
+
+def test_teacher_spelling_variant_cannot_create_duplicate_person(db_session):
+    document, _, _, teacher, lesson = _seed_correction_document(db_session)
+    after = replace(
+        lesson_state(lesson, p_doc_id=str(document.p_doc_id)),
+        weekday=2,
+        pair_number=3,
+        subject="Финансы",
+        teacher="Иванова И. И.",
+    )
+
+    with pytest.raises(ReviewValidationError, match="teacher spelling"):
+        apply_document_corrections(
+            db_session,
+            document,
+            _corrections(document, _correction("add", after=after)),
+        )
+
+    assert list(db_session.scalars(select(Teacher))) == [teacher]
+    assert len(_persisted_lessons(db_session, document)) == 1
+
+
+def test_unknown_teacher_is_created_once_like_the_importer(db_session):
+    document, _, _, _, lesson = _seed_correction_document(db_session)
+    after = replace(
+        lesson_state(lesson, p_doc_id=str(document.p_doc_id)),
+        weekday=2,
+        pair_number=3,
+        subject="Финансы",
+        teacher="Новая Н.Н.",
+    )
+
+    apply_document_corrections(
+        db_session,
+        document,
+        _corrections(document, _correction("add", after=after)),
+    )
+
+    teachers = list(db_session.scalars(select(Teacher).order_by(Teacher.id)))
+    assert [row.full_name for row in teachers] == ["Иванова И.И.", "Новая Н.Н."]
+
+
+@pytest.mark.parametrize(
+    ("p_doc_id", "sha256", "message"),
+    [
+        ("99999", "a" * 64, "document id"),
+        ("14159", "b" * 64, "changed and requires review"),
+    ],
+)
+def test_corrections_require_exact_document_id_and_sha256(
+    db_session, p_doc_id, sha256, message
+):
+    document, _, _, _, lesson = _seed_correction_document(db_session)
+    before = lesson_state(lesson, p_doc_id=str(document.p_doc_id))
+
+    with pytest.raises(ReviewValidationError, match=message):
+        apply_document_corrections(
+            db_session,
+            document,
+            _corrections(
+                document,
+                _correction(
+                    "replace",
+                    expected_before=before,
+                    after=replace(before, room="209"),
+                ),
+                p_doc_id=p_doc_id,
+                sha256=sha256,
+            ),
+        )
+
+    db_session.refresh(lesson)
+    assert lesson.room == "118"
+
+
+def test_duplicate_exact_signature_is_review_error_not_integrity_error(db_session):
+    document, _, _, _, lesson = _seed_correction_document(db_session)
+    after = lesson_state(lesson, p_doc_id=str(document.p_doc_id))
+
+    with pytest.raises(ReviewValidationError, match="duplicate exact signature"):
+        apply_document_corrections(
+            db_session,
+            document,
+            _corrections(document, _correction("add", after=after)),
+        )
+
+    assert len(_persisted_lessons(db_session, document)) == 1
+
+
+def test_duplicate_database_slot_is_review_error_and_session_stays_usable(db_session):
+    document, _, _, _, lesson = _seed_correction_document(db_session)
+    after = replace(
+        lesson_state(lesson, p_doc_id=str(document.p_doc_id)),
+        room="209",
+        teacher=None,
+        cell_raw="same unique slot, different reviewed content",
+    )
+
+    with pytest.raises(ReviewValidationError, match="database constraint"):
+        apply_document_corrections(
+            db_session,
+            document,
+            _corrections(document, _correction("add", after=after)),
+        )
+
+    assert len(_persisted_lessons(db_session, document)) == 1
+    assert db_session.scalar(select(ScheduleDocument).where(
+        ScheduleDocument.id == document.id
+    )) is document
+
+
+def test_two_operation_failure_rolls_back_first_operation_inside_function(db_session):
+    document, _, _, _, lesson = _seed_correction_document(db_session)
+    before = lesson_state(lesson, p_doc_id=str(document.p_doc_id))
+    replaced = replace(before, room="209", cell_raw="reviewed room 209")
+    stale = replace(before, room="999")
+    operations = (
+        _correction(
+            "replace",
+            operation_id="first-replace",
+            expected_before=before,
+            after=replaced,
+        ),
+        _correction(
+            "remove",
+            operation_id="second-stale-remove",
+            expected_before=stale,
+        ),
+    )
+
+    with pytest.raises(ReviewValidationError, match="matched 0 lessons"):
+        apply_document_corrections(
+            db_session,
+            document,
+            _corrections(document, *operations),
+        )
+
+    persisted = db_session.scalar(select(Lesson).where(Lesson.id == lesson.id))
+    assert persisted.room == "118"
+    assert persisted.cell_raw == before.cell_raw
+    assert persisted.cell_key == "1:2:3"
+    assert db_session.scalar(select(ScheduleDocument).where(
+        ScheduleDocument.id == document.id
+    )) is document
+
+
+def test_flush_failure_rolls_back_prior_operation_and_is_review_error(db_session):
+    document, _, _, _, lesson = _seed_correction_document(db_session)
+    before = lesson_state(lesson, p_doc_id=str(document.p_doc_id))
+    first_add = replace(
+        before,
+        weekday=2,
+        pair_number=3,
+        subject="Финансы",
+        room="209",
+        cell_raw="Финансы (с)",
+    )
+    conflicting_add = replace(
+        before,
+        room="401",
+        teacher=None,
+        cell_raw="same DB slot as original",
+    )
+
+    with pytest.raises(ReviewValidationError, match="database constraint"):
+        apply_document_corrections(
+            db_session,
+            document,
+            _corrections(
+                document,
+                _correction(
+                    "add", operation_id="first-valid-add", after=first_add
+                ),
+                _correction(
+                    "add", operation_id="second-conflict", after=conflicting_add
+                ),
+            ),
+        )
+
+    assert _persisted_lessons(db_session, document) == [lesson]
+    assert db_session.scalar(select(Group).where(Group.id == lesson.group_id)) is not None
+
+
+def test_result_counts_add_replace_and_remove(db_session):
+    document, _, _, _, first = _seed_correction_document(db_session)
+    second = Lesson(
+        group_id=first.group_id,
+        document_id=document.id,
+        module_id=first.module_id,
+        weekday=1,
+        pair_number=2,
+        starts_at=time(9, 50),
+        ends_at=time(11, 25),
+        subject="Финансы",
+        lesson_kind=LessonKind.SEMINAR,
+        teacher_id=first.teacher_id,
+        room="209",
+        week_type=None,
+        subgroup=0,
+        date_constraint_raw=None,
+        cell_raw="Финансы (с)",
+        cell_key="1:3:3",
+        valid_from=date(2026, 9, 1),
+        valid_to=date(2026, 11, 1),
+        specific_dates=[],
+    )
+    db_session.add(second)
+    db_session.flush()
+    first_before = lesson_state(first, p_doc_id="14159")
+    second_before = lesson_state(second, p_doc_id="14159")
+    added = replace(
+        first_before,
+        weekday=2,
+        pair_number=3,
+        subject="Банковское дело",
+        cell_raw="Банковское дело (л)",
+    )
+
+    result = apply_document_corrections(
+        db_session,
+        document,
+        _corrections(
+            document,
+            _correction(
+                "replace",
+                operation_id="replace-first",
+                expected_before=first_before,
+                after=replace(first_before, room="401"),
+            ),
+            _correction(
+                "remove",
+                operation_id="remove-second",
+                expected_before=second_before,
+            ),
+            _correction("add", operation_id="add-third", after=added),
+        ),
+    )
+
+    assert result == CorrectionResult(added=1, replaced=1, removed=1)
+    assert len(_persisted_lessons(db_session, document)) == 2
+
+
+def test_replace_does_not_delete_now_unused_related_rows(db_session):
+    document, old_group, old_module, old_teacher, lesson = (
+        _seed_correction_document(db_session)
+    )
+    new_group = Group(
+        course=2,
+        number=None,
+        level=EducationLevel.MASTER,
+        program="Экономическая аналитика",
+    )
+    new_module = Module(
+        document=document,
+        name="II модуль",
+        date_from=date(2026, 11, 2),
+        date_to=date(2027, 1, 10),
+    )
+    new_teacher = Teacher(full_name="Петрова П.П.")
+    db_session.add_all([new_group, new_module, new_teacher])
+    db_session.flush()
+    before = lesson_state(lesson, p_doc_id="14159")
+    after = replace(
+        before,
+        group=GroupIdentity("master", 2, None, "Экономическая аналитика"),
+        module=ModuleIdentity(date(2026, 11, 2), date(2027, 1, 10)),
+        teacher="Петрова П.П.",
+        valid_from=date(2026, 11, 2),
+        valid_to=date(2027, 1, 10),
+    )
+
+    apply_document_corrections(
+        db_session,
+        document,
+        _corrections(
+            document,
+            _correction("replace", expected_before=before, after=after),
+        ),
+    )
+
+    assert db_session.get(Group, old_group.id) is old_group
+    assert db_session.get(Module, old_module.id) is old_module
+    assert db_session.get(Teacher, old_teacher.id) is old_teacher
+
+
+def test_reapplying_same_add_fails_closed_without_duplicate(db_session):
+    document, _, _, _, lesson = _seed_correction_document(db_session)
+    after = replace(
+        lesson_state(lesson, p_doc_id="14159"),
+        weekday=2,
+        pair_number=3,
+        subject="Финансы",
+        cell_raw="Финансы (л)",
+    )
+    corrections = _corrections(
+        document,
+        _correction("add", operation_id="repeat-safe-add", after=after),
+    )
+
+    apply_document_corrections(db_session, document, corrections)
+    with pytest.raises(ReviewValidationError, match="duplicate exact signature"):
+        apply_document_corrections(db_session, document, corrections)
+
+    assert len(_persisted_lessons(db_session, document)) == 2

@@ -1,13 +1,26 @@
 import json
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date, time
 from pathlib import Path
 from types import MappingProxyType
 from typing import Literal
 
-from src.models import EducationLevel, Lesson, LessonKind, WeekType
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+
+from src.models import (
+    EducationLevel,
+    Group,
+    Lesson,
+    LessonKind,
+    Module,
+    ScheduleDocument,
+    Teacher,
+    WeekType,
+)
 
 
 _EMPTY_TEXT = r"\0"
@@ -120,6 +133,13 @@ class CorrectionRegistry:
             )
 
 
+@dataclass(frozen=True)
+class CorrectionResult:
+    added: int = 0
+    replaced: int = 0
+    removed: int = 0
+
+
 def lesson_state(lesson: Lesson, *, p_doc_id: str) -> LessonState:
     return LessonState(
         p_doc_id=p_doc_id,
@@ -188,6 +208,269 @@ def state_signature(state: LessonState) -> str:
             f"конкретные={specific_dates}",
         )
     )
+
+
+def _matching_lessons(
+    session: Session,
+    document: ScheduleDocument,
+    state: LessonState,
+) -> list[Lesson]:
+    candidates = session.scalars(
+        select(Lesson).where(Lesson.document_id == document.id)
+    ).all()
+    return [
+        lesson
+        for lesson in candidates
+        if lesson_state(lesson, p_doc_id=str(document.p_doc_id)) == state
+    ]
+
+
+def _matching_signatures(
+    session: Session,
+    document: ScheduleDocument,
+    state: LessonState,
+) -> list[Lesson]:
+    expected = state_signature(state)
+    candidates = session.scalars(
+        select(Lesson).where(Lesson.document_id == document.id)
+    ).all()
+    return [
+        lesson
+        for lesson in candidates
+        if state_signature(
+            lesson_state(lesson, p_doc_id=str(document.p_doc_id))
+        )
+        == expected
+    ]
+
+
+def _resolve_group(session: Session, identity: GroupIdentity) -> Group:
+    try:
+        level = EducationLevel(identity.level)
+    except ValueError as exc:
+        raise ReviewValidationError(
+            f"invalid education level {identity.level!r}"
+        ) from exc
+    groups = session.scalars(
+        select(Group).where(
+            Group.level == level,
+            Group.course == identity.course,
+            (
+                Group.number.is_(None)
+                if identity.number is None
+                else Group.number == identity.number
+            ),
+            (
+                Group.program.is_(None)
+                if identity.program is None
+                else Group.program == identity.program
+            ),
+        )
+    ).all()
+    if len(groups) != 1:
+        raise ReviewValidationError(
+            "group not found by exact natural identity"
+            if not groups
+            else "group identity is ambiguous"
+        )
+    return groups[0]
+
+
+def _resolve_module(
+    session: Session,
+    document: ScheduleDocument,
+    identity: ModuleIdentity | None,
+) -> Module | None:
+    if identity is None:
+        return None
+    modules = session.scalars(
+        select(Module).where(
+            Module.document_id == document.id,
+            Module.date_from == identity.date_from,
+            Module.date_to == identity.date_to,
+        )
+    ).all()
+    if len(modules) != 1:
+        raise ReviewValidationError(
+            "module not found by exact document and date range"
+            if not modules
+            else "module identity is ambiguous"
+        )
+    return modules[0]
+
+
+def _teacher_spelling_key(name: str) -> str:
+    return re.sub(r"[\s.\-‐‑‒–—−]+", "", name.casefold().replace("ё", "е"))
+
+
+def _resolve_teacher(session: Session, name: str | None) -> Teacher | None:
+    if name is None:
+        return None
+    exact = session.scalars(
+        select(Teacher).where(Teacher.full_name == name)
+    ).all()
+    if len(exact) == 1:
+        return exact[0]
+    if len(exact) > 1:
+        raise ReviewValidationError(f"teacher {name!r} is ambiguous")
+
+    spelling_key = _teacher_spelling_key(name)
+    variant = [
+        teacher
+        for teacher in session.scalars(select(Teacher)).all()
+        if _teacher_spelling_key(teacher.full_name) == spelling_key
+    ]
+    if variant:
+        raise ReviewValidationError(
+            f"teacher spelling {name!r} would duplicate {variant[0].full_name!r}"
+        )
+    if len(name) > 200:
+        raise ReviewValidationError("teacher name exceeds database limit")
+    teacher = Teacher(full_name=name)
+    session.add(teacher)
+    session.flush()
+    return teacher
+
+
+def _manual_cell_key(operation_id: str) -> str:
+    if (
+        len(operation_id) > _MAX_CORRECTION_ID_LENGTH
+        or _CORRECTION_ID_RE.fullmatch(operation_id) is None
+    ):
+        raise ReviewValidationError(f"unsafe correction id {operation_id!r}")
+    value = f"manual:{operation_id}"
+    if len(value) > 50:  # defensive mirror of Lesson.cell_key String(50)
+        raise ReviewValidationError("manual provenance exceeds database limit")
+    return value
+
+
+def _write_state(
+    session: Session,
+    document: ScheduleDocument,
+    target: Lesson,
+    state: LessonState,
+    operation_id: str,
+) -> None:
+    if state.p_doc_id != str(document.p_doc_id):
+        raise ReviewValidationError(
+            f"lesson state document {state.p_doc_id} does not match document "
+            f"{document.p_doc_id}"
+        )
+    group = _resolve_group(session, state.group)
+    module = _resolve_module(session, document, state.module)
+    teacher = _resolve_teacher(session, state.teacher)
+    try:
+        lesson_kind = (
+            LessonKind(state.lesson_kind) if state.lesson_kind is not None else None
+        )
+        week_type = WeekType(state.week_type) if state.week_type is not None else None
+    except ValueError as exc:
+        raise ReviewValidationError("invalid lesson enum value") from exc
+
+    target.document_id = document.id
+    target.group = group
+    target.module = module
+    target.weekday = state.weekday
+    target.pair_number = state.pair_number
+    target.starts_at = state.starts_at
+    target.ends_at = state.ends_at
+    target.subject = state.subject
+    target.lesson_kind = lesson_kind
+    target.teacher = teacher
+    target.room = state.room
+    target.week_type = week_type
+    target.subgroup = state.subgroup
+    target.date_constraint_raw = state.date_constraint_raw
+    target.cell_raw = state.cell_raw
+    target.cell_key = _manual_cell_key(operation_id)
+    target.valid_from = state.valid_from
+    target.valid_to = state.valid_to
+    target.specific_dates = [item.isoformat() for item in state.specific_dates]
+
+
+def apply_document_corrections(
+    session: Session,
+    document: ScheduleDocument,
+    corrections: DocumentCorrections,
+) -> CorrectionResult:
+    """Apply one document's reviewed operations inside an owned savepoint."""
+    document_key = _canonical_document_id(document.p_doc_id)
+    correction_key = _canonical_document_id(corrections.p_doc_id)
+    if correction_key != document_key:
+        raise ReviewValidationError(
+            f"correction document id {correction_key} does not match {document_key}"
+        )
+    if corrections.sha256 != document.sha256:
+        raise ReviewValidationError(
+            f"document {document_key} changed and requires review"
+        )
+
+    result = CorrectionResult()
+    current_operation: CorrectionOperation | None = None
+    try:
+        with session.begin_nested():
+            for current_operation in corrections.operations:
+                if current_operation.operation in {"replace", "remove"}:
+                    expected = current_operation.expected_before
+                    if expected is None:
+                        raise ReviewValidationError(
+                            f"correction {current_operation.id} has no expected state"
+                        )
+                    matches = _matching_lessons(session, document, expected)
+                    if len(matches) != 1:
+                        raise ReviewValidationError(
+                            f"correction {current_operation.id} matched "
+                            f"{len(matches)} lessons"
+                        )
+                    target = matches[0]
+                    if current_operation.operation == "remove":
+                        session.delete(target)
+                        result = replace(result, removed=result.removed + 1)
+                    else:
+                        after = current_operation.after
+                        if after is None:
+                            raise ReviewValidationError(
+                                f"correction {current_operation.id} has no after state"
+                            )
+                        _write_state(
+                            session,
+                            document,
+                            target,
+                            after,
+                            current_operation.id,
+                        )
+                        result = replace(result, replaced=result.replaced + 1)
+                elif current_operation.operation == "add":
+                    after = current_operation.after
+                    if after is None:
+                        raise ReviewValidationError(
+                            f"correction {current_operation.id} has no after state"
+                        )
+                    if _matching_signatures(session, document, after):
+                        raise ReviewValidationError(
+                            f"correction {current_operation.id} duplicate exact signature"
+                        )
+                    target = Lesson(document_id=document.id)
+                    _write_state(
+                        session,
+                        document,
+                        target,
+                        after,
+                        current_operation.id,
+                    )
+                    session.add(target)
+                    result = replace(result, added=result.added + 1)
+                else:
+                    raise ReviewValidationError(
+                        f"invalid correction operation {current_operation.operation!r}"
+                    )
+                session.flush()
+    except IntegrityError as exc:
+        operation_id = current_operation.id if current_operation else "unknown"
+        raise ReviewValidationError(
+            f"correction {operation_id} violates a database constraint"
+        ) from exc
+    return result
 
 
 _REGISTRY_KEYS = frozenset({"version", "documents"})
