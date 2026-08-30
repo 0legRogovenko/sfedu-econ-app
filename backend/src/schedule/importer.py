@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import hashlib
 import io
+import json
 import logging
 import re
 import tempfile
@@ -33,7 +34,6 @@ from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass, field, replace
 from datetime import date, datetime, time
-from typing import TYPE_CHECKING
 
 import pdfplumber
 from sqlalchemy import delete, select
@@ -62,6 +62,12 @@ from src.schedule.extract_pdf import extract_pdf
 from src.schedule.fetch import Fetcher
 from src.schedule.grid import Grid
 from src.schedule.programs import canonical_program
+from src.schedule.reviewed_schedule import (
+    ReviewBundle,
+    ReviewValidationError,
+    lesson_state,
+    state_signature,
+)
 from src.schedule.source import parse_index
 from src.schedule.structure import (
     PAIR_HALVES,
@@ -72,9 +78,6 @@ from src.schedule.structure import (
     week_type_from_heading,
 )
 from src.schedule.weeks import is_week_calendar, parse_week_calendar
-
-if TYPE_CHECKING:
-    from src.schedule.reviewed_schedule import ReviewBundle
 
 logger = logging.getLogger(__name__)
 
@@ -471,6 +474,35 @@ class ImportReport:
         )
 
 
+def _canonical_link_document_id(p_doc_id: str | int) -> str:
+    if isinstance(p_doc_id, bool):
+        raise ReviewValidationError(f"invalid link document id {p_doc_id!r}")
+    if isinstance(p_doc_id, int):
+        if p_doc_id <= 0:
+            raise ReviewValidationError(f"invalid link document id {p_doc_id!r}")
+        return str(p_doc_id)
+    if isinstance(p_doc_id, str) and re.fullmatch(r"[1-9][0-9]*", p_doc_id):
+        return p_doc_id
+    raise ReviewValidationError(f"invalid link document id {p_doc_id!r}")
+
+
+def _require_complete_review_input(review_bundle: ReviewBundle, links) -> None:
+    linked = {_canonical_link_document_id(link.p_doc_id) for link in links}
+    managed = set(review_bundle.corrections.documents)
+    missing = sorted(managed - linked, key=int)
+    if missing:
+        raise ReviewValidationError(
+            "managed documents missing from import links: " + ", ".join(missing)
+        )
+
+
+def _require_clean_review_import_session(session) -> None:
+    if session.new or session.dirty or session.deleted:
+        raise ReviewValidationError(
+            "reviewed import requires a clean session boundary"
+        )
+
+
 def import_all(
     session,
     fetcher,
@@ -488,7 +520,11 @@ def import_all(
     ``review_bundle`` опционален: управляемые им документы всегда заново
     разбираются и проходят точную проверку перед snapshot/diff и commit.
     """
+    if review_bundle is not None:
+        _require_clean_review_import_session(session)
     links = list(links) if links is not None else parse_index(fetcher.fetch_index())
+    if review_bundle is not None:
+        _require_complete_review_input(review_bundle, links)
     report = ImportReport()
 
     known = set(session.scalars(select(ScheduleDocument.p_doc_id)).all())
@@ -528,12 +564,17 @@ def import_all(
         except Exception as exc:  # noqa: BLE001 — один файл не роняет цикл
             session.rollback()
             logger.exception("Импорт %s упал", link.p_doc_id)
+            previous_doc_type = session.scalar(
+                select(ScheduleDocument.doc_type).where(
+                    ScheduleDocument.p_doc_id == int(link.p_doc_id)
+                )
+            )
             report.documents.append(
                 DocumentReport(
                     p_doc_id=link.p_doc_id,
                     section=link.section,
                     label=link.label,
-                    doc_type=DocType.UNKNOWN,
+                    doc_type=previous_doc_type or DocType.UNKNOWN,
                     status=STATUS_FAILED,
                     error=str(exc),
                 )
@@ -572,8 +613,13 @@ def _import_link(
     review_bundle: ReviewBundle | None = None,
 ) -> DocumentReport:
     fetched = fetcher.fetch_document(link.p_doc_id)
+    actual_sha256 = hashlib.sha256(fetched.content).hexdigest()
+    if fetched.sha256 != actual_sha256:
+        raise ReviewValidationError(
+            f"document {link.p_doc_id}: fetched content SHA-256 mismatch"
+        )
     if review_bundle is not None:
-        review_bundle.guard_source(link.p_doc_id, fetched.sha256)
+        review_bundle.guard_source(link.p_doc_id, actual_sha256)
     managed = review_bundle is not None and review_bundle.manages(link.p_doc_id)
     doc_type = _DOC_TYPE[_classify(fetched.content)]
 
@@ -588,7 +634,7 @@ def _import_link(
         status=STATUS_IMPORTED,
     )
 
-    if document is not None and document.sha256 == fetched.sha256 and not managed:
+    if document is not None and document.sha256 == actual_sha256 and not managed:
         report.status = STATUS_UNCHANGED
         return report
 
@@ -601,7 +647,7 @@ def _import_link(
             section=link.section,
             label=link.label,
             doc_type=doc_type,
-            sha256=fetched.sha256,
+            sha256=actual_sha256,
             source_url=fetched.source_url,
         )
         session.add(document)
@@ -611,7 +657,7 @@ def _import_link(
         document.section = link.section
         document.label = link.label
         document.doc_type = doc_type
-        document.sha256 = fetched.sha256
+        document.sha256 = actual_sha256
         document.source_url = fetched.source_url
         document.fetched_at = datetime.now()
         report.status = STATUS_REIMPORTED
@@ -664,7 +710,7 @@ def _import_link(
                 ImportDiff(
                     document_id=document.id,
                     sha256_before=sha_before or "",
-                    sha256_after=fetched.sha256,
+                    sha256_after=actual_sha256,
                     added=len(diff.added),
                     removed=len(diff.removed),
                     details=diff.details(),
@@ -1540,23 +1586,46 @@ def _snapshot(session, document) -> tuple[str, ...]:
     exams = session.scalars(
         select(ExamEvent).where(ExamEvent.document_id == document.id)
     ).all()
+    p_doc_id = str(document.p_doc_id)
     items = [
-        f"пара: группа {lesson.group_id}, день {lesson.weekday}, пара "
-        f"{lesson.pair_number}, подгруппа {lesson.subgroup} — {lesson.subject} "
-        f"({lesson.room})"
+        state_signature(lesson_state(lesson, p_doc_id=p_doc_id))
         for lesson in lessons
-    ] + [
-        f"экзамен: группа {exam.group_id} — {exam.subject} ({exam.exam_at})"
-        for exam in exams
-    ]
+    ] + [_exam_snapshot_signature(exam, p_doc_id=p_doc_id) for exam in exams]
     return tuple(sorted(items))
 
 
+def _exam_snapshot_signature(exam: ExamEvent, *, p_doc_id: str) -> str:
+    group = exam.group
+    payload = {
+        "document": p_doc_id,
+        "group": {
+            "level": group.level.value,
+            "course": group.course,
+            "number": group.number,
+            "program": group.program,
+        },
+        "subject": exam.subject,
+        "teacher": exam.teacher,
+        "consultation_at": (
+            exam.consultation_at.isoformat() if exam.consultation_at else None
+        ),
+        "exam_at": exam.exam_at.isoformat() if exam.exam_at else None,
+        "room": exam.room,
+        "kind": exam.kind,
+    }
+    return "экзамен:" + json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+
+
 def _diff(before: tuple[str, ...], after: tuple[str, ...]) -> DocumentDiff:
-    was, now = set(before), set(after)
+    was, now = Counter(before), Counter(after)
     return DocumentDiff(
-        added=tuple(sorted(now - was)),
-        removed=tuple(sorted(was - now)),
+        added=tuple(sorted((now - was).elements())),
+        removed=tuple(sorted((was - now).elements())),
     )
 
 

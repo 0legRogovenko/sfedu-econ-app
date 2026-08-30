@@ -15,7 +15,7 @@ import hashlib
 import json
 from collections import Counter
 from dataclasses import replace
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 import pytest
@@ -72,9 +72,15 @@ POSTGRAD_FILES = 6  # 13613/13619/13659/… — аспирантура
 class FakeFetcher:
     """Фетчер по фикстурам: та же поверхность, что у Fetcher, но без сети."""
 
-    def __init__(self, index_html: str = INDEX_HTML, overrides: dict | None = None):
+    def __init__(
+        self,
+        index_html: str = INDEX_HTML,
+        overrides: dict | None = None,
+        claimed_hashes: dict | None = None,
+    ):
         self.index_html = index_html
         self.overrides = overrides or {}
+        self.claimed_hashes = claimed_hashes or {}
         self.requested: list[str] = []
 
     def fetch_index(self) -> str:
@@ -89,7 +95,7 @@ class FakeFetcher:
         return FetchedDocument(
             p_doc_id=p_doc_id,
             content=content,
-            sha256=importer.sha256(content),
+            sha256=self.claimed_hashes.get(p_doc_id, importer.sha256(content)),
             source_url=download_url(p_doc_id),
         )
 
@@ -1113,11 +1119,128 @@ def _review_bundle(
     )
 
 
+def _empty_review_bundle(*p_doc_ids: str) -> ReviewBundle:
+    signatures: tuple[str, ...] = ()
+    payload = json.dumps(
+        list(signatures),
+        ensure_ascii=False,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    lesson_hash = hashlib.sha256(payload).hexdigest()
+    corrections = {
+        p_doc_id: DocumentCorrections(
+            p_doc_id=p_doc_id,
+            sha256="a" * 64,
+            operations=(),
+        )
+        for p_doc_id in p_doc_ids
+    }
+    reviewed = {
+        p_doc_id: ReviewedDocument(
+            p_doc_id=p_doc_id,
+            sha256="a" * 64,
+            lesson_hash=lesson_hash,
+            signatures=signatures,
+        )
+        for p_doc_id in p_doc_ids
+    }
+    return ReviewBundle(
+        corrections=CorrectionRegistry(documents=corrections),
+        reviewed_documents=reviewed,
+    )
+
+
 def _document_report(report, p_doc_id: str = _REVIEWED_DOCUMENT_ID):
     return next(item for item in report.documents if item.p_doc_id == p_doc_id)
 
 
 class TestReviewedImporterIntegration:
+    @pytest.mark.parametrize(
+        ("links", "managed_ids", "missing_id"),
+        (
+            ((), ("14159",), "14159"),
+            ((_REVIEWED_LINK,), ("14159", "14160"), "14160"),
+        ),
+    )
+    def test_missing_managed_document_is_rejected_before_any_database_query(
+        self,
+        monkeypatch,
+        links,
+        managed_ids,
+        missing_id,
+    ):
+        session = make_session(autoflush=False)
+        original_scalars = session.scalars
+
+        def database_query_is_too_late(*_args, **_kwargs):
+            raise AssertionError("database queried before complete managed-set check")
+
+        monkeypatch.setattr(session, "scalars", database_query_is_too_late)
+        try:
+            with pytest.raises(
+                ReviewValidationError,
+                match=rf"managed documents missing.*{missing_id}",
+            ):
+                importer.import_all(
+                    session,
+                    FakeFetcher(),
+                    links=links,
+                    review_bundle=_empty_review_bundle(*managed_ids),
+                )
+        finally:
+            monkeypatch.setattr(session, "scalars", original_scalars)
+
+        assert session.scalar(select(func.count()).select_from(ScheduleDocument)) == 0
+        assert not session.new and not session.dirty and not session.deleted
+        session.close()
+
+    @pytest.mark.parametrize("autoflush", (False, True))
+    def test_review_bundle_rejects_dirty_entry_without_flushing_or_breaking_session(
+        self,
+        autoflush,
+    ):
+        session = make_session(autoflush=autoflush)
+        pending = Lesson()
+        session.add(pending)
+        try:
+            with pytest.raises(
+                ReviewValidationError,
+                match="reviewed import requires a clean session boundary",
+            ):
+                importer.import_all(
+                    session,
+                    FakeFetcher(),
+                    links=[],
+                    review_bundle=_empty_review_bundle(),
+                )
+
+            assert pending.id is None
+            assert pending in session.new
+            session.expunge(pending)
+            assert session.is_active
+            assert session.scalar(select(func.count()).select_from(Lesson)) == 0
+        finally:
+            session.close()
+
+    def test_legacy_import_keeps_its_existing_session_boundary_behavior(self):
+        session = make_session(autoflush=True)
+        pending = Group(
+            course=9,
+            number="9.9",
+            program=None,
+            level=EducationLevel.BACHELOR,
+        )
+        session.add(pending)
+        try:
+            report = importer.import_all(session, FakeFetcher(), links=[])
+
+            assert report.documents == []
+            assert pending.id is not None
+            assert session.get(Group, pending.id) is pending
+        finally:
+            session.rollback()
+            session.close()
+
     def test_unmanaged_same_hash_keeps_unchanged_status_and_cache(self):
         session = make_session(autoflush=False)
         empty_bundle = ReviewBundle(
@@ -1244,6 +1367,34 @@ class TestReviewedImporterIntegration:
         finally:
             session.close()
 
+    def test_teacher_only_correction_produces_non_empty_final_diff(self):
+        session = make_session(autoflush=False)
+        try:
+            _import_reviewed_master(session)
+            document, _, states = _reviewed_document_and_states(session)
+            before = states[0]
+            after = replace(before, teacher="Ревьюер Р.Р.")
+            operation = CorrectionOperation(
+                id="integration-replace-teacher",
+                operation="replace",
+                page=1,
+                evidence="reviewed PDF page 1",
+                expected_before=before,
+                after=after,
+            )
+            bundle = _review_bundle(document, (after, *states[1:]), operation)
+
+            report = _import_reviewed_master(session, review_bundle=bundle)
+            diff = _document_report(report).diff
+
+            assert diff is not None and not diff.is_empty
+            assert any("препод=Ревьюер Р.Р." in item for item in diff.added)
+            assert any(
+                f"препод={before.teacher or ''}" in item for item in diff.removed
+            )
+        finally:
+            session.close()
+
     def test_changed_managed_pdf_is_rejected_before_classification_and_preserves_data(
         self,
         monkeypatch,
@@ -1268,6 +1419,66 @@ class TestReviewedImporterIntegration:
 
             assert failed.status == importer.STATUS_FAILED
             assert "changed and requires review" in (failed.error or "")
+            assert reviewed_document_output(session, document) == expected
+        finally:
+            session.close()
+
+    def test_claimed_hash_cannot_hide_changed_content_in_non_atomic_import(self):
+        session = make_session(autoflush=False)
+        try:
+            _import_reviewed_master(session)
+            document, _, states = _reviewed_document_and_states(session)
+            bundle = _review_bundle(document, states)
+            expected = reviewed_document_output(session, document)
+            fetcher = FakeFetcher(
+                overrides={
+                    _REVIEWED_DOCUMENT_ID: b"%PDF-1.4\nchanged-but-old-hash-claimed"
+                },
+                claimed_hashes={_REVIEWED_DOCUMENT_ID: document.sha256},
+            )
+
+            report = importer.import_all(
+                session,
+                fetcher,
+                links=[_REVIEWED_LINK],
+                review_bundle=bundle,
+            )
+            failed = _document_report(report)
+
+            assert failed.status == importer.STATUS_FAILED
+            assert _REVIEWED_DOCUMENT_ID in (failed.error or "")
+            assert "fetched content SHA-256 mismatch" in (failed.error or "")
+            assert reviewed_document_output(session, document) == expected
+        finally:
+            session.close()
+
+    def test_claimed_hash_cannot_hide_changed_content_in_atomic_import(self):
+        session = make_session(autoflush=False)
+        try:
+            _import_reviewed_master(session)
+            document, _, states = _reviewed_document_and_states(session)
+            bundle = _review_bundle(document, states)
+            expected = reviewed_document_output(session, document)
+            fetcher = FakeFetcher(
+                overrides={
+                    _REVIEWED_DOCUMENT_ID: b"%PDF-1.4\nchanged-but-old-hash-claimed"
+                },
+                claimed_hashes={_REVIEWED_DOCUMENT_ID: document.sha256},
+            )
+
+            with pytest.raises(
+                ReviewValidationError,
+                match=rf"{_REVIEWED_DOCUMENT_ID}.*fetched content SHA-256 mismatch",
+            ):
+                importer.import_all(
+                    session,
+                    fetcher,
+                    links=[_REVIEWED_LINK],
+                    atomic=True,
+                    review_bundle=bundle,
+                )
+            session.rollback()
+
             assert reviewed_document_output(session, document) == expected
         finally:
             session.close()
@@ -1335,6 +1546,7 @@ class TestReviewedImporterIntegration:
             failed = _document_report(report)
 
             assert failed.status == importer.STATUS_FAILED
+            assert failed.doc_type == document.doc_type
             assert "reviewed schedule mismatch" in (failed.error or "")
             assert reviewed_document_output(session, document) == expected
             assert len(states) == len(expected.signatures)
@@ -1372,6 +1584,79 @@ class TestReviewedImporterIntegration:
             )
         finally:
             session.close()
+
+
+def test_import_diff_preserves_duplicate_multiplicity():
+    signature = "same reviewed row"
+
+    diff = importer._diff((signature, signature), (signature,))
+
+    assert diff.added == ()
+    assert diff.removed == (signature,)
+
+
+def test_exam_snapshot_is_complete_stable_and_preserves_duplicate_count():
+    session = make_session(autoflush=False)
+    try:
+        document = ScheduleDocument(
+            p_doc_id=90001,
+            section="Сессия",
+            label="2 курс",
+            doc_type=DocType.EXAM_SESSION,
+            sha256="a" * 64,
+            source_url="https://example.test/90001.pdf",
+        )
+        group = Group(
+            course=2,
+            number="2.3",
+            program=None,
+            level=EducationLevel.BACHELOR,
+        )
+        session.add_all([document, group])
+        session.flush()
+        exams = [
+            ExamEvent(
+                group=group,
+                document_id=document.id,
+                subject="Финансы",
+                teacher="Иванова И.И.",
+                consultation_at=datetime(2027, 1, 10, 12, 0),
+                exam_at=datetime(2027, 1, 11, 9, 0),
+                room="214",
+                kind="устный",
+            )
+            for _ in range(2)
+        ]
+        session.add_all(exams)
+        session.flush()
+
+        before = importer._snapshot(session, document)
+        payload = json.loads(before[0].removeprefix("экзамен:"))
+        session.delete(exams[1])
+        session.flush()
+        after = importer._snapshot(session, document)
+        diff = importer._diff(before, after)
+
+        assert payload == {
+            "document": "90001",
+            "group": {
+                "course": 2,
+                "level": "bachelor",
+                "number": "2.3",
+                "program": None,
+            },
+            "subject": "Финансы",
+            "teacher": "Иванова И.И.",
+            "consultation_at": "2027-01-10T12:00:00",
+            "exam_at": "2027-01-11T09:00:00",
+            "room": "214",
+            "kind": "устный",
+        }
+        assert before == (before[0], before[0])
+        assert diff.added == ()
+        assert diff.removed == (before[0],)
+    finally:
+        session.close()
 
 
 class TestChangedFile:
