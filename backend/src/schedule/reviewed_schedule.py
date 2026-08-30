@@ -915,9 +915,26 @@ def load_correction_registry(path: str | Path) -> CorrectionRegistry:
     return CorrectionRegistry(documents=MappingProxyType(documents.copy()))
 
 
-_MAX_DIFF_LINES = 40
+_MAX_MISMATCH_LINES = 42
+# One physical line is the mismatch heading and one is reserved for the
+# truncation marker. difflib's own headers count inside this remaining budget.
+_MAX_DIFF_LINES = _MAX_MISMATCH_LINES - 2
 _MAX_DIFF_LINE_BYTES = 500
 _MAX_MISMATCH_BYTES = 8 * 1024
+_DIFF_LINE_ESCAPES = str.maketrans(
+    {
+        "\n": r"\n",
+        "\r": r"\r",
+        "\v": r"\v",
+        "\f": r"\f",
+        "\x1c": r"\x1c",
+        "\x1d": r"\x1d",
+        "\x1e": r"\x1e",
+        "\x85": r"\x85",
+        "\u2028": r"\u2028",
+        "\u2029": r"\u2029",
+    }
+)
 
 
 def _require_sha256(value: str, *, context: str) -> str:
@@ -1024,7 +1041,7 @@ def _bounded_unified_diff(
             truncated = True
             break
         line, line_truncated = _truncate_utf8(
-            raw_line,
+            raw_line.translate(_DIFF_LINE_ESCAPES),
             min(_MAX_DIFF_LINE_BYTES, available),
         )
         truncated = truncated or line_truncated

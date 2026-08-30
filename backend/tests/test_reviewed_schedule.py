@@ -2291,6 +2291,27 @@ def test_reviewed_validation_diff_is_bounded_by_utf8_bytes_and_lines(db_session)
     assert len(message.splitlines()) <= 42
 
 
+def test_reviewed_validation_diff_escapes_embedded_physical_line_breaks(
+    db_session,
+):
+    document, _, _, _, _ = _seed_correction_document(db_session)
+    injected = "первая\rвторая\n" + "\n".join(
+        f"внедрённая-строка-{index:03d}" for index in range(250)
+    )
+    expected = _reviewed(document, (injected,))
+
+    with pytest.raises(ReviewValidationError) as caught:
+        validate_reviewed_document(db_session, document, expected)
+
+    message = str(caught.value)
+    assert "document 14159: reviewed schedule mismatch" in message
+    assert "--- reviewed/14159" in message
+    assert "+++ actual/14159" in message
+    assert r"первая\rвторая\nвнедрённая-строка-000" in message
+    assert len(message.splitlines()) <= 42
+    assert len(message.encode("utf-8")) <= 8 * 1024
+
+
 def test_review_bundle_freezes_mappings_and_delegates_source_guard(db_session):
     document, _, _, _, _ = _seed_correction_document(db_session)
     corrections = _corrections(document)
