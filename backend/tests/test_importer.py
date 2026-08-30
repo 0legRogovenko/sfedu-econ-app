@@ -11,8 +11,10 @@ Fetcher, только без /www/ и без Crawl-delay.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from collections import Counter
+from dataclasses import replace
 from datetime import date
 from pathlib import Path
 
@@ -38,6 +40,17 @@ from src.models import (
 )
 from src.schedule import importer
 from src.schedule.fetch import FetchedDocument
+from src.schedule.reviewed_schedule import (
+    CorrectionOperation,
+    CorrectionRegistry,
+    DocumentCorrections,
+    ReviewBundle,
+    ReviewedDocument,
+    ReviewValidationError,
+    lesson_state,
+    reviewed_document_output,
+    state_signature,
+)
 from src.schedule.source import ScheduleLink, download_url, parse_index
 from src.schedule.structure import week_type_from_heading
 
@@ -121,14 +134,14 @@ def _extracted_docs(corpus) -> list[tuple[str, "importer.DocumentReport"]]:
     return docs
 
 
-def make_session():
+def make_session(*, autoflush: bool = True):
     engine = create_engine(
         "sqlite://",
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
     Base.metadata.create_all(engine)
-    return sessionmaker(bind=engine)()
+    return sessionmaker(bind=engine, autoflush=autoflush)()
 
 
 @pytest.fixture(scope="module")
@@ -1011,6 +1024,354 @@ class TestIdempotency:
         )
         assert first.documents[0].p_doc_id == second.documents[0].p_doc_id
         session.close()
+
+
+_REVIEWED_DOCUMENT_ID = "14159"
+_REVIEWED_LINK = ScheduleLink(
+    "Осенний семестр",
+    "маг.1 курс",
+    _REVIEWED_DOCUMENT_ID,
+)
+
+
+def _import_reviewed_master(
+    session,
+    *,
+    review_bundle: ReviewBundle | None = None,
+    content: bytes | None = None,
+    atomic: bool = False,
+):
+    source = (
+        content
+        if content is not None
+        else (FIXTURES / "14159.pdf").read_bytes()
+    )
+    return importer.import_all(
+        session,
+        FakeFetcher(overrides={_REVIEWED_DOCUMENT_ID: source}),
+        links=[_REVIEWED_LINK],
+        atomic=atomic,
+        review_bundle=review_bundle,
+    )
+
+
+def _reviewed_document_and_states(session):
+    document = session.scalar(
+        select(ScheduleDocument).where(
+            ScheduleDocument.p_doc_id == int(_REVIEWED_DOCUMENT_ID)
+        )
+    )
+    assert document is not None
+    lessons = session.scalars(
+        select(Lesson)
+        .where(Lesson.document_id == document.id)
+        .order_by(Lesson.id)
+    ).all()
+    assert lessons
+    states = tuple(
+        lesson_state(lesson, p_doc_id=_REVIEWED_DOCUMENT_ID)
+        for lesson in lessons
+    )
+    return document, lessons, states
+
+
+def _reviewed_from_signatures(
+    document: ScheduleDocument,
+    signatures: tuple[str, ...],
+) -> ReviewedDocument:
+    signatures = tuple(sorted(signatures))
+    payload = json.dumps(
+        list(signatures),
+        ensure_ascii=False,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return ReviewedDocument(
+        p_doc_id=str(document.p_doc_id),
+        sha256=document.sha256,
+        lesson_hash=hashlib.sha256(payload).hexdigest(),
+        signatures=signatures,
+    )
+
+
+def _review_bundle(
+    document: ScheduleDocument,
+    states,
+    *operations: CorrectionOperation,
+) -> ReviewBundle:
+    signatures = tuple(state_signature(state) for state in states)
+    reviewed = _reviewed_from_signatures(document, signatures)
+    corrections = DocumentCorrections(
+        p_doc_id=str(document.p_doc_id),
+        sha256=document.sha256,
+        operations=tuple(operations),
+    )
+    return ReviewBundle(
+        corrections=CorrectionRegistry(
+            documents={str(document.p_doc_id): corrections}
+        ),
+        reviewed_documents={str(document.p_doc_id): reviewed},
+    )
+
+
+def _document_report(report, p_doc_id: str = _REVIEWED_DOCUMENT_ID):
+    return next(item for item in report.documents if item.p_doc_id == p_doc_id)
+
+
+class TestReviewedImporterIntegration:
+    def test_unmanaged_same_hash_keeps_unchanged_status_and_cache(self):
+        session = make_session(autoflush=False)
+        empty_bundle = ReviewBundle(
+            corrections=CorrectionRegistry(documents={}),
+            reviewed_documents={},
+        )
+        try:
+            first = _import_reviewed_master(session, review_bundle=empty_bundle)
+            before = _snapshot(session)
+            second = _import_reviewed_master(session, review_bundle=empty_bundle)
+
+            assert _document_report(first).status == importer.STATUS_IMPORTED
+            assert _document_report(second).status == importer.STATUS_UNCHANGED
+            assert _snapshot(session) == before
+        finally:
+            session.close()
+
+    def test_managed_same_hash_reparses_and_repairs_corrupted_lesson(self):
+        session = make_session(autoflush=False)
+        try:
+            _import_reviewed_master(session)
+            document, lessons, states = _reviewed_document_and_states(session)
+            bundle = _review_bundle(document, states)
+            expected = reviewed_document_output(session, document)
+
+            lessons[0].room = "WRONG"
+            session.commit()
+            report = _import_reviewed_master(session, review_bundle=bundle)
+
+            assert _document_report(report).status == importer.STATUS_REIMPORTED
+            assert reviewed_document_output(session, document) == expected
+            assert _document_report(report).lessons == len(expected.signatures)
+        finally:
+            session.close()
+
+    @pytest.mark.parametrize(
+        ("operation_name", "delta"),
+        (("add", 1), ("remove", -1)),
+    )
+    def test_report_lesson_count_includes_manual_add_or_remove(
+        self,
+        operation_name,
+        delta,
+    ):
+        session = make_session(autoflush=False)
+        try:
+            _import_reviewed_master(session)
+            document, _, states = _reviewed_document_and_states(session)
+            before = states[0]
+            if operation_name == "add":
+                after = replace(
+                    before,
+                    subject=f"{before.subject} — ручная проверка",
+                    cell_raw="Ручная проверка по официальному PDF",
+                )
+                expected_states = (*states, after)
+                operation = CorrectionOperation(
+                    id="integration-add-count",
+                    operation="add",
+                    page=1,
+                    evidence="reviewed PDF page 1",
+                    expected_before=None,
+                    after=after,
+                )
+            else:
+                expected_states = states[1:]
+                operation = CorrectionOperation(
+                    id="integration-remove-count",
+                    operation="remove",
+                    page=1,
+                    evidence="reviewed PDF page 1",
+                    expected_before=before,
+                    after=None,
+                )
+            bundle = _review_bundle(document, expected_states, operation)
+
+            report = _import_reviewed_master(session, review_bundle=bundle)
+            document_report = _document_report(report)
+
+            assert document_report.lessons == len(states) + delta
+            assert reviewed_document_output(session, document) == (
+                bundle.reviewed_documents[_REVIEWED_DOCUMENT_ID]
+            )
+        finally:
+            session.close()
+
+    def test_replace_diff_describes_final_corrected_rows_and_replay_is_stable(self):
+        session = make_session(autoflush=False)
+        try:
+            _import_reviewed_master(session)
+            document, _, states = _reviewed_document_and_states(session)
+            before = states[0]
+            after = replace(before, room="MANUAL-209")
+            expected_states = (after, *states[1:])
+            operation = CorrectionOperation(
+                id="integration-replace-room",
+                operation="replace",
+                page=1,
+                evidence="reviewed PDF page 1",
+                expected_before=before,
+                after=after,
+            )
+            bundle = _review_bundle(document, expected_states, operation)
+
+            first = _import_reviewed_master(session, review_bundle=bundle)
+            first_report = _document_report(first)
+            first_output = reviewed_document_output(session, document)
+            second = _import_reviewed_master(session, review_bundle=bundle)
+            second_report = _document_report(second)
+
+            assert first_report.status == importer.STATUS_REIMPORTED
+            assert first_report.lessons == len(states)
+            assert first_report.diff is not None
+            assert any("MANUAL-209" in item for item in first_report.diff.added)
+            assert first_output == bundle.reviewed_documents[_REVIEWED_DOCUMENT_ID]
+            assert second_report.status == importer.STATUS_REIMPORTED
+            assert second_report.diff is not None and second_report.diff.is_empty
+            assert reviewed_document_output(session, document) == first_output
+            assert session.scalar(
+                select(func.count())
+                .select_from(Lesson)
+                .where(Lesson.document_id == document.id)
+            ) == len(states)
+        finally:
+            session.close()
+
+    def test_changed_managed_pdf_is_rejected_before_classification_and_preserves_data(
+        self,
+        monkeypatch,
+    ):
+        session = make_session(autoflush=False)
+        try:
+            _import_reviewed_master(session)
+            document, _, states = _reviewed_document_and_states(session)
+            bundle = _review_bundle(document, states)
+            expected = reviewed_document_output(session, document)
+
+            def classification_must_not_run(_content):
+                raise RuntimeError("classification ran before source guard")
+
+            monkeypatch.setattr(importer, "_classify", classification_must_not_run)
+            report = _import_reviewed_master(
+                session,
+                review_bundle=bundle,
+                content=b"%PDF-1.4\nchanged-reviewed-source",
+            )
+            failed = _document_report(report)
+
+            assert failed.status == importer.STATUS_FAILED
+            assert "changed and requires review" in (failed.error or "")
+            assert reviewed_document_output(session, document) == expected
+        finally:
+            session.close()
+
+    def test_atomic_managed_hash_failure_rolls_back_the_whole_snapshot(self):
+        session = make_session(autoflush=False)
+        try:
+            _import_reviewed_master(session)
+            document, _, states = _reviewed_document_and_states(session)
+            bundle = _review_bundle(document, states)
+            expected = reviewed_document_output(session, document)
+            links = [
+                ScheduleLink("Осенний семестр", "1 курс", "13469"),
+                _REVIEWED_LINK,
+            ]
+            fetcher = FakeFetcher(
+                overrides={
+                    _REVIEWED_DOCUMENT_ID: b"%PDF-1.4\nchanged-reviewed-source"
+                }
+            )
+
+            with pytest.raises(ReviewValidationError, match="requires review"):
+                importer.import_all(
+                    session,
+                    fetcher,
+                    links=links,
+                    atomic=True,
+                    review_bundle=bundle,
+                )
+            session.rollback()
+
+            assert session.scalar(
+                select(ScheduleDocument).where(ScheduleDocument.p_doc_id == 13469)
+            ) is None
+            assert reviewed_document_output(session, document) == expected
+        finally:
+            session.close()
+
+    def test_managed_zero_operation_document_is_still_validated(self):
+        session = make_session(autoflush=False)
+        try:
+            _import_reviewed_master(session)
+            document, _, states = _reviewed_document_and_states(session)
+            expected = reviewed_document_output(session, document)
+            corrupted_signatures = list(expected.signatures)
+            corrupted_signatures[0] += "-not-in-the-pdf"
+            bad_expected = _reviewed_from_signatures(
+                document,
+                tuple(corrupted_signatures),
+            )
+            bundle = ReviewBundle(
+                corrections=CorrectionRegistry(
+                    documents={
+                        _REVIEWED_DOCUMENT_ID: DocumentCorrections(
+                            p_doc_id=_REVIEWED_DOCUMENT_ID,
+                            sha256=document.sha256,
+                            operations=(),
+                        )
+                    }
+                ),
+                reviewed_documents={_REVIEWED_DOCUMENT_ID: bad_expected},
+            )
+
+            report = _import_reviewed_master(session, review_bundle=bundle)
+            failed = _document_report(report)
+
+            assert failed.status == importer.STATUS_FAILED
+            assert "reviewed schedule mismatch" in (failed.error or "")
+            assert reviewed_document_output(session, document) == expected
+            assert len(states) == len(expected.signatures)
+        finally:
+            session.close()
+
+    def test_review_mismatch_rolls_back_manual_replace_and_parser_replacement(self):
+        session = make_session(autoflush=False)
+        try:
+            _import_reviewed_master(session)
+            document, _, states = _reviewed_document_and_states(session)
+            expected = reviewed_document_output(session, document)
+            before = states[0]
+            operation = CorrectionOperation(
+                id="integration-rejected-replace",
+                operation="replace",
+                page=1,
+                evidence="reviewed PDF page 1",
+                expected_before=before,
+                after=replace(before, room="MUST-ROLL-BACK"),
+            )
+            bundle = _review_bundle(document, states, operation)
+
+            report = _import_reviewed_master(session, review_bundle=bundle)
+            failed = _document_report(report)
+
+            assert failed.status == importer.STATUS_FAILED
+            assert "reviewed schedule mismatch" in (failed.error or "")
+            assert reviewed_document_output(session, document) == expected
+            assert all(
+                lesson.room != "MUST-ROLL-BACK"
+                for lesson in session.scalars(
+                    select(Lesson).where(Lesson.document_id == document.id)
+                )
+            )
+        finally:
+            session.close()
 
 
 class TestChangedFile:

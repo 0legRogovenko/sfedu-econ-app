@@ -33,6 +33,7 @@ from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass, field, replace
 from datetime import date, datetime, time
+from typing import TYPE_CHECKING
 
 import pdfplumber
 from sqlalchemy import delete, select
@@ -71,6 +72,9 @@ from src.schedule.structure import (
     week_type_from_heading,
 )
 from src.schedule.weeks import is_week_calendar, parse_week_calendar
+
+if TYPE_CHECKING:
+    from src.schedule.reviewed_schedule import ReviewBundle
 
 logger = logging.getLogger(__name__)
 
@@ -467,13 +471,22 @@ class ImportReport:
         )
 
 
-def import_all(session, fetcher, links=None, *, atomic: bool = False) -> ImportReport:
+def import_all(
+    session,
+    fetcher,
+    links=None,
+    *,
+    atomic: bool = False,
+    review_bundle: ReviewBundle | None = None,
+) -> ImportReport:
     """Полный цикл импорта. `fetcher` — Fetcher или его тестовый двойник.
 
     Суточный live-импорт по умолчанию фиксирует каждый файл отдельно: обрыв
     одного ответа ЮФУ не должен отменять уже скачанные документы. Явный
     ``atomic=True`` предназначен для заранее проверенного локального набора:
     любое исключение выходит вызывающему коду, который откатывает всю пачку.
+    ``review_bundle`` опционален: управляемые им документы всегда заново
+    разбираются и проходят точную проверку перед snapshot/diff и commit.
     """
     links = list(links) if links is not None else parse_index(fetcher.fetch_index())
     report = ImportReport()
@@ -492,11 +505,25 @@ def import_all(session, fetcher, links=None, *, atomic: bool = False) -> ImportR
 
     for link in links:
         if atomic:
-            report.documents.append(_import_link(session, fetcher, link))
+            report.documents.append(
+                _import_link(
+                    session,
+                    fetcher,
+                    link,
+                    review_bundle=review_bundle,
+                )
+            )
             session.flush()
             continue
         try:
-            report.documents.append(_import_link(session, fetcher, link))
+            report.documents.append(
+                _import_link(
+                    session,
+                    fetcher,
+                    link,
+                    review_bundle=review_bundle,
+                )
+            )
             session.commit()
         except Exception as exc:  # noqa: BLE001 — один файл не роняет цикл
             session.rollback()
@@ -537,8 +564,17 @@ def run_schedule_import(
         session.close()
 
 
-def _import_link(session, fetcher, link) -> DocumentReport:
+def _import_link(
+    session,
+    fetcher,
+    link,
+    *,
+    review_bundle: ReviewBundle | None = None,
+) -> DocumentReport:
     fetched = fetcher.fetch_document(link.p_doc_id)
+    if review_bundle is not None:
+        review_bundle.guard_source(link.p_doc_id, fetched.sha256)
+    managed = review_bundle is not None and review_bundle.manages(link.p_doc_id)
     doc_type = _DOC_TYPE[_classify(fetched.content)]
 
     document = session.scalar(
@@ -552,7 +588,7 @@ def _import_link(session, fetcher, link) -> DocumentReport:
         status=STATUS_IMPORTED,
     )
 
-    if document is not None and document.sha256 == fetched.sha256:
+    if document is not None and document.sha256 == fetched.sha256 and not managed:
         report.status = STATUS_UNCHANGED
         return report
 
@@ -611,6 +647,14 @@ def _import_link(session, fetcher, link) -> DocumentReport:
             f"{deficit} из {report.ledger.total} ячеек — возможна тихая потеря "
             "пар (сменилась вёрстка sfedu.ru?). Нужна проверка."
         )
+    if review_bundle is not None and managed:
+        # apply_and_validate требует чистую границу и владеет savepoint'ом
+        # финальной проверки. prove() обязан видеть parser-only результат,
+        # поэтому ручные исправления идут строго после него.
+        session.flush()
+        correction_result = review_bundle.apply_and_validate(session, document)
+        report.lessons += correction_result.added - correction_result.removed
+        session.flush()
     if report.status == STATUS_REIMPORTED:
         after = _snapshot(session, document)
         diff = _diff(before, after)
