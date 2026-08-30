@@ -1,3 +1,5 @@
+import difflib
+import hashlib
 import json
 import re
 from collections.abc import Mapping
@@ -13,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from src.models import (
     EducationLevel,
+    ExamEvent,
     Group,
     Lesson,
     LessonKind,
@@ -138,6 +141,14 @@ class CorrectionResult:
     added: int = 0
     replaced: int = 0
     removed: int = 0
+
+
+@dataclass(frozen=True)
+class ReviewedDocument:
+    p_doc_id: str
+    sha256: str
+    lesson_hash: str
+    signatures: tuple[str, ...]
 
 
 def lesson_state(lesson: Lesson, *, p_doc_id: str) -> LessonState:
@@ -898,3 +909,271 @@ def load_correction_registry(path: str | Path) -> CorrectionRegistry:
             correction_ids.add(operation.id)
         documents[document.p_doc_id] = document
     return CorrectionRegistry(documents=MappingProxyType(documents.copy()))
+
+
+_MAX_DIFF_LINES = 40
+_MAX_DIFF_LINE_LENGTH = 500
+_MAX_DIFF_CHARACTERS = 8_000
+
+
+def _require_sha256(value: str, *, context: str) -> str:
+    if not isinstance(value, str) or _SHA256_RE.fullmatch(value) is None:
+        raise ReviewValidationError(f"{context}: invalid SHA-256")
+    return value
+
+
+def _lesson_hash(signatures: tuple[str, ...]) -> str:
+    return hashlib.sha256("\n".join(signatures).encode("utf-8")).hexdigest()
+
+
+def _validate_reviewed_metadata(reviewed: ReviewedDocument) -> str:
+    if not isinstance(reviewed, ReviewedDocument):
+        raise ReviewValidationError("reviewed document has invalid type")
+    key = _canonical_document_id(reviewed.p_doc_id)
+    if reviewed.p_doc_id != key:
+        raise ReviewValidationError(
+            f"reviewed document id {reviewed.p_doc_id!r} is not canonical"
+        )
+    _require_sha256(reviewed.sha256, context=f"document {key} source")
+    _require_sha256(reviewed.lesson_hash, context=f"document {key} lesson hash")
+    if not isinstance(reviewed.signatures, tuple) or not all(
+        isinstance(item, str) for item in reviewed.signatures
+    ):
+        raise ReviewValidationError(
+            f"document {key}: reviewed signatures must be a tuple of strings"
+        )
+    if _lesson_hash(reviewed.signatures) != reviewed.lesson_hash:
+        raise ReviewValidationError(
+            f"document {key}: reviewed lesson hash does not match signatures"
+        )
+    return key
+
+
+def reviewed_document_output(
+    session: Session,
+    document: ScheduleDocument,
+) -> ReviewedDocument:
+    """Build the complete, deterministic lesson output for one source document."""
+    key = _canonical_document_id(document.p_doc_id)
+    sha256 = _require_sha256(
+        document.sha256,
+        context=f"document {key} source",
+    )
+    exam_id = session.scalar(
+        select(ExamEvent.id)
+        .where(ExamEvent.document_id == document.id)
+        .limit(1)
+    )
+    if exam_id is not None:
+        raise ReviewValidationError(
+            f"document {key}: exams must remain empty"
+        )
+    lessons = session.scalars(
+        select(Lesson).where(Lesson.document_id == document.id)
+    ).all()
+    signatures = tuple(
+        sorted(
+            state_signature(lesson_state(item, p_doc_id=key))
+            for item in lessons
+        )
+    )
+    return ReviewedDocument(
+        p_doc_id=key,
+        sha256=sha256,
+        lesson_hash=_lesson_hash(signatures),
+        signatures=signatures,
+    )
+
+
+def _bounded_unified_diff(
+    expected: tuple[str, ...],
+    actual: tuple[str, ...],
+    *,
+    p_doc_id: str,
+) -> str:
+    lines: list[str] = []
+    characters = 0
+    truncated = False
+    diff = difflib.unified_diff(
+        expected,
+        actual,
+        fromfile=f"reviewed/{p_doc_id}",
+        tofile=f"actual/{p_doc_id}",
+        lineterm="",
+    )
+    for index, raw_line in enumerate(diff):
+        if index >= _MAX_DIFF_LINES:
+            truncated = True
+            break
+        line = raw_line
+        if len(line) > _MAX_DIFF_LINE_LENGTH:
+            line = f"{line[: _MAX_DIFF_LINE_LENGTH - 3]}..."
+            truncated = True
+        required = len(line) + (1 if lines else 0)
+        if characters + required > _MAX_DIFF_CHARACTERS:
+            truncated = True
+            break
+        lines.append(line)
+        characters += required
+    if truncated:
+        marker = "... diff truncated ..."
+        if characters + len(marker) + 1 <= _MAX_DIFF_CHARACTERS:
+            lines.append(marker)
+    return "\n".join(lines)
+
+
+def validate_reviewed_document(
+    session: Session,
+    document: ScheduleDocument,
+    expected: ReviewedDocument,
+) -> None:
+    """Fail closed unless the whole imported document equals reviewed output."""
+    document_key = _canonical_document_id(document.p_doc_id)
+    expected_key = _validate_reviewed_metadata(expected)
+    if expected_key != document_key:
+        raise ReviewValidationError(
+            f"reviewed document id {expected_key} does not match {document_key}"
+        )
+    source_sha256 = _require_sha256(
+        document.sha256,
+        context=f"document {document_key} source",
+    )
+    if expected.sha256 != source_sha256:
+        raise ReviewValidationError(
+            f"document {document_key} changed and requires review"
+        )
+
+    actual = reviewed_document_output(session, document)
+    if (
+        actual.lesson_hash == expected.lesson_hash
+        and actual.signatures == expected.signatures
+    ):
+        return
+    diff = _bounded_unified_diff(
+        expected.signatures,
+        actual.signatures,
+        p_doc_id=document_key,
+    )
+    suffix = f"\n{diff}" if diff else ""
+    raise ReviewValidationError(
+        f"document {document_key}: reviewed schedule mismatch{suffix}"
+    )
+
+
+def _canonical_bundle_mapping(
+    values: Mapping,
+    *,
+    context: str,
+) -> dict[str, object]:
+    if not isinstance(values, Mapping):
+        raise ReviewValidationError(f"{context} must be a mapping")
+    canonical: dict[str, object] = {}
+    for raw_key, value in values.items():
+        key = _canonical_document_id(raw_key)
+        if key in canonical:
+            raise ReviewValidationError(f"duplicate document id {key}")
+        if raw_key != key:
+            raise ReviewValidationError(
+                f"{context} document id {raw_key!r} is not canonical"
+            )
+        canonical[key] = value
+    return canonical
+
+
+@dataclass(frozen=True)
+class ReviewBundle:
+    corrections: CorrectionRegistry
+    reviewed_documents: Mapping[str, ReviewedDocument]
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.corrections, CorrectionRegistry):
+            raise ReviewValidationError("corrections must be a CorrectionRegistry")
+        correction_documents = _canonical_bundle_mapping(
+            self.corrections.documents,
+            context="corrections",
+        )
+        reviewed_documents = _canonical_bundle_mapping(
+            self.reviewed_documents,
+            context="reviewed output",
+        )
+        if correction_documents.keys() != reviewed_documents.keys():
+            raise ReviewValidationError(
+                "correction and reviewed document key sets do not match"
+            )
+        frozen_corrections: dict[str, DocumentCorrections] = {}
+        frozen_reviewed: dict[str, ReviewedDocument] = {}
+        for key in sorted(correction_documents):
+            corrections = correction_documents[key]
+            reviewed = reviewed_documents[key]
+            if not isinstance(corrections, DocumentCorrections):
+                raise ReviewValidationError(
+                    f"document {key}: invalid corrections type"
+                )
+            correction_key = _canonical_document_id(corrections.p_doc_id)
+            if corrections.p_doc_id != key or correction_key != key:
+                raise ReviewValidationError(
+                    f"correction document id {correction_key} does not match {key}"
+                )
+            _require_sha256(
+                corrections.sha256,
+                context=f"document {key} correction source",
+            )
+            if not isinstance(reviewed, ReviewedDocument):
+                raise ReviewValidationError(
+                    f"document {key}: invalid reviewed output type"
+                )
+            reviewed_key = _validate_reviewed_metadata(reviewed)
+            if reviewed_key != key:
+                raise ReviewValidationError(
+                    f"reviewed document id {reviewed_key} does not match {key}"
+                )
+            if corrections.sha256 != reviewed.sha256:
+                raise ReviewValidationError(
+                    f"document {key}: source SHA-256 mismatch between corrections "
+                    "and reviewed output"
+                )
+            frozen_corrections[key] = corrections
+            frozen_reviewed[key] = reviewed
+        object.__setattr__(
+            self,
+            "corrections",
+            CorrectionRegistry(
+                documents=MappingProxyType(frozen_corrections.copy())
+            ),
+        )
+        object.__setattr__(
+            self,
+            "reviewed_documents",
+            MappingProxyType(frozen_reviewed.copy()),
+        )
+
+    def manages(self, p_doc_id: str | int) -> bool:
+        return self.corrections.manages(p_doc_id)
+
+    def guard_source(self, p_doc_id: str | int, sha256: str) -> None:
+        self.corrections.guard_source(p_doc_id, sha256)
+
+    def apply_and_validate(
+        self,
+        session: Session,
+        document: ScheduleDocument,
+    ) -> CorrectionResult:
+        """Apply and validate without committing the caller-owned transaction.
+
+        If final validation fails, changes already flushed into the outer
+        transaction remain the caller's responsibility to roll back. Task 5's
+        importer integration owns that outer atomic boundary.
+        """
+        key = _canonical_document_id(document.p_doc_id)
+        corrections = self.corrections.documents.get(key)
+        if corrections is None:
+            return CorrectionResult()
+        expected = self.reviewed_documents.get(key)
+        if expected is None:  # defensive fail-closed guard after construction
+            raise ReviewValidationError(
+                f"document {key} has no reviewed output"
+            )
+        self.guard_source(key, document.sha256)
+        result = apply_document_corrections(session, document, corrections)
+        validate_reviewed_document(session, document, expected)
+        return result

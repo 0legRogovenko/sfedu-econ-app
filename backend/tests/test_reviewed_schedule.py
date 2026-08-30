@@ -1,3 +1,4 @@
+import hashlib
 import json
 from dataclasses import FrozenInstanceError, replace
 from datetime import date, time
@@ -8,6 +9,7 @@ from sqlalchemy import select, text
 from src.models import (
     DocType,
     EducationLevel,
+    ExamEvent,
     Group,
     Lesson,
     LessonKind,
@@ -23,11 +25,15 @@ from src.schedule.reviewed_schedule import (
     DocumentCorrections,
     GroupIdentity,
     ModuleIdentity,
+    ReviewBundle,
     ReviewValidationError,
+    ReviewedDocument,
     apply_document_corrections,
     lesson_state,
     load_correction_registry,
+    reviewed_document_output,
     state_signature,
+    validate_reviewed_document,
 )
 
 
@@ -2027,3 +2033,323 @@ def test_late_failure_rolls_back_teacher_created_by_earlier_operation(
     assert db_session.is_active
     assert list(db_session.scalars(select(Teacher))) == [existing_teacher]
     assert _persisted_lessons(db_session, document) == [lesson]
+
+
+def _reviewed(
+    document: ScheduleDocument,
+    signatures: tuple[str, ...],
+    **overrides,
+) -> ReviewedDocument:
+    data = {
+        "p_doc_id": str(document.p_doc_id),
+        "sha256": document.sha256,
+        "lesson_hash": hashlib.sha256(
+            "\n".join(signatures).encode("utf-8")
+        ).hexdigest(),
+        "signatures": signatures,
+    }
+    data.update(overrides)
+    return ReviewedDocument(**data)
+
+
+def _bundle(
+    document: ScheduleDocument,
+    corrections: DocumentCorrections,
+    expected: ReviewedDocument,
+) -> ReviewBundle:
+    return ReviewBundle(
+        corrections=CorrectionRegistry(
+            documents={str(document.p_doc_id): corrections}
+        ),
+        reviewed_documents={str(document.p_doc_id): expected},
+    )
+
+
+def test_reviewed_document_output_is_frozen_sorted_and_hashed(db_session):
+    document, group, module, teacher, first = _seed_correction_document(db_session)
+    second = _lesson(
+        group=group,
+        document_id=document.id,
+        module=module,
+        teacher=teacher,
+        weekday=2,
+        pair_number=3,
+        subject="Банковское дело",
+        room="401",
+        valid_from=date(2026, 9, 1),
+        valid_to=date(2026, 11, 1),
+        cell_key="1:4:5",
+    )
+    db_session.add(second)
+    db_session.flush()
+
+    output = reviewed_document_output(db_session, document)
+    expected_signatures = tuple(
+        sorted(
+            state_signature(lesson_state(item, p_doc_id="14159"))
+            for item in (first, second)
+        )
+    )
+
+    assert output == ReviewedDocument(
+        p_doc_id="14159",
+        sha256="a" * 64,
+        lesson_hash=hashlib.sha256(
+            "\n".join(expected_signatures).encode("utf-8")
+        ).hexdigest(),
+        signatures=expected_signatures,
+    )
+    with pytest.raises(FrozenInstanceError):
+        output.lesson_hash = "b" * 64
+
+
+def test_reviewed_document_output_preserves_duplicate_signatures():
+    group = Group(
+        course=1,
+        number=None,
+        level=EducationLevel.MASTER,
+        program="Корпоративные финансы",
+    )
+    lesson = _lesson(group=group)
+    document = ScheduleDocument(
+        id=7,
+        p_doc_id=14159,
+        section="Осенний семестр",
+        label="1 курс Маг",
+        doc_type=DocType.SEMESTER_GRID_MASTER,
+        sha256="a" * 64,
+        source_url="https://example.test/14159.pdf",
+    )
+
+    class _DuplicateRows:
+        def all(self):
+            return [lesson, lesson]
+
+    class _DuplicateSession:
+        def scalar(self, statement):
+            return None
+
+        def scalars(self, statement):
+            return _DuplicateRows()
+
+    output = reviewed_document_output(_DuplicateSession(), document)
+    signature = state_signature(lesson_state(lesson, p_doc_id="14159"))
+
+    assert output.signatures == (signature, signature)
+    assert output.lesson_hash == hashlib.sha256(
+        f"{signature}\n{signature}".encode("utf-8")
+    ).hexdigest()
+
+
+def test_reviewed_document_output_rejects_any_exam_event(db_session):
+    document, group, _, _, _ = _seed_correction_document(db_session)
+    db_session.add(
+        ExamEvent(
+            group_id=group.id,
+            document_id=document.id,
+            subject="Экзамен без отдельного официального расписания",
+        )
+    )
+    db_session.flush()
+
+    with pytest.raises(ReviewValidationError, match="exams must remain empty"):
+        reviewed_document_output(db_session, document)
+
+
+def test_reviewed_output_rejects_content_drift_with_unchanged_count(db_session):
+    document, _, _, _, lesson = _seed_correction_document(db_session)
+    expected = reviewed_document_output(db_session, document)
+    lesson.subject = "Информационно-коммуникационные технологии"
+    db_session.flush()
+
+    with pytest.raises(
+        ReviewValidationError,
+        match="document 14159: reviewed schedule mismatch",
+    ) as caught:
+        validate_reviewed_document(db_session, document, expected)
+
+    message = str(caught.value)
+    assert "Экономическая теория" in message
+    assert "Информационно-коммуникационные технологии" in message
+
+
+@pytest.mark.parametrize(
+    ("expected_factory", "message"),
+    [
+        (
+            lambda document, output: replace(output, p_doc_id="014159"),
+            "invalid document id",
+        ),
+        (
+            lambda document, output: replace(output, sha256="b" * 64),
+            "changed and requires review",
+        ),
+        (
+            lambda document, output: replace(output, lesson_hash="b" * 64),
+            "reviewed lesson hash does not match signatures",
+        ),
+    ],
+)
+def test_reviewed_validation_fails_closed_for_identity_source_and_hash_drift(
+    db_session, expected_factory, message
+):
+    document, _, _, _, _ = _seed_correction_document(db_session)
+    output = reviewed_document_output(db_session, document)
+
+    with pytest.raises(ReviewValidationError, match=message):
+        validate_reviewed_document(
+            db_session,
+            document,
+            expected_factory(document, output),
+        )
+
+
+def test_reviewed_validation_diff_is_deterministically_bounded(db_session):
+    document, _, _, _, _ = _seed_correction_document(db_session)
+    signatures = tuple(
+        f"expected-{index:04d}-" + "x" * 1_000 for index in range(500)
+    )
+    expected = _reviewed(document, signatures)
+
+    with pytest.raises(ReviewValidationError) as caught:
+        validate_reviewed_document(db_session, document, expected)
+
+    message = str(caught.value)
+    assert "document 14159: reviewed schedule mismatch" in message
+    assert "diff truncated" in message
+    assert len(message) <= 9_000
+
+
+def test_review_bundle_freezes_mappings_and_delegates_source_guard(db_session):
+    document, _, _, _, _ = _seed_correction_document(db_session)
+    corrections = _corrections(document)
+    expected = reviewed_document_output(db_session, document)
+    correction_documents = {"14159": corrections}
+    reviewed_documents = {"14159": expected}
+    bundle = ReviewBundle(
+        corrections=CorrectionRegistry(documents=correction_documents),
+        reviewed_documents=reviewed_documents,
+    )
+
+    correction_documents.clear()
+    reviewed_documents.clear()
+
+    assert bundle.manages(14159)
+    with pytest.raises(TypeError):
+        bundle.reviewed_documents["14160"] = expected
+    with pytest.raises(
+        ReviewValidationError,
+        match="document 14159 changed and requires review",
+    ):
+        bundle.guard_source(14159, "b" * 64)
+
+
+@pytest.mark.parametrize(
+    ("correction_documents", "reviewed_documents", "message"),
+    [
+        ({}, {"14159": "expected"}, "key sets do not match"),
+        ({"14159": "corrections"}, {}, "key sets do not match"),
+        (
+            {"014159": "corrections"},
+            {"014159": "expected"},
+            "invalid document id",
+        ),
+    ],
+)
+def test_review_bundle_rejects_key_set_and_canonical_id_errors(
+    db_session, correction_documents, reviewed_documents, message
+):
+    document, _, _, _, _ = _seed_correction_document(db_session)
+    corrections = _corrections(document)
+    expected = reviewed_document_output(db_session, document)
+    correction_values = {
+        key: corrections if value == "corrections" else value
+        for key, value in correction_documents.items()
+    }
+    reviewed_values = {
+        key: expected if value == "expected" else value
+        for key, value in reviewed_documents.items()
+    }
+
+    with pytest.raises(ReviewValidationError, match=message):
+        ReviewBundle(
+            corrections=CorrectionRegistry(documents=correction_values),
+            reviewed_documents=reviewed_values,
+        )
+
+
+@pytest.mark.parametrize(
+    ("corrections_change", "reviewed_change", "message"),
+    [
+        ({"p_doc_id": "14160"}, {}, "correction document id"),
+        ({}, {"p_doc_id": "14160"}, "reviewed document id"),
+        ({}, {"sha256": "b" * 64}, "source SHA-256 mismatch"),
+    ],
+)
+def test_review_bundle_rejects_value_identity_and_hash_mismatches(
+    db_session, corrections_change, reviewed_change, message
+):
+    document, _, _, _, _ = _seed_correction_document(db_session)
+    corrections = replace(_corrections(document), **corrections_change)
+    expected = replace(
+        reviewed_document_output(db_session, document), **reviewed_change
+    )
+
+    with pytest.raises(ReviewValidationError, match=message):
+        ReviewBundle(
+            corrections=CorrectionRegistry(documents={"14159": corrections}),
+            reviewed_documents={"14159": expected},
+        )
+
+
+def test_managed_document_with_zero_operations_is_still_validated(db_session):
+    document, _, _, _, lesson = _seed_correction_document(db_session)
+    expected = reviewed_document_output(db_session, document)
+    bundle = _bundle(document, _corrections(document), expected)
+    lesson.room = "999"
+
+    with pytest.raises(ReviewValidationError, match="reviewed schedule mismatch"):
+        bundle.apply_and_validate(db_session, document)
+
+
+def test_unmanaged_document_returns_zero_without_mutation(db_session):
+    document, _, _, _, lesson = _seed_correction_document(db_session)
+    before = lesson_state(lesson, p_doc_id="14159")
+    bundle = ReviewBundle(
+        corrections=CorrectionRegistry(documents={}),
+        reviewed_documents={},
+    )
+
+    result = bundle.apply_and_validate(db_session, document)
+
+    assert result == CorrectionResult()
+    assert lesson_state(lesson, p_doc_id="14159") == before
+
+
+def test_apply_and_validate_never_reports_success_after_validation_mismatch(
+    db_session, monkeypatch
+):
+    document, _, _, _, lesson = _seed_correction_document(db_session)
+    before = lesson_state(lesson, p_doc_id="14159")
+    corrections = _corrections(
+        document,
+        _correction(
+            "replace",
+            operation_id="replace-room-before-review",
+            expected_before=before,
+            after=replace(before, room="209"),
+        ),
+    )
+    expected = reviewed_document_output(db_session, document)
+    bundle = _bundle(document, corrections, expected)
+
+    def fail_if_committed():
+        pytest.fail("apply_and_validate must not commit the caller transaction")
+
+    monkeypatch.setattr(db_session, "commit", fail_if_committed)
+
+    with pytest.raises(ReviewValidationError, match="reviewed schedule mismatch"):
+        bundle.apply_and_validate(db_session, document)
+
+    assert lesson.room == "209"
+    assert db_session.is_active
