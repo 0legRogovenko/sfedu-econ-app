@@ -414,6 +414,20 @@ def _row_signature(row) -> tuple:
 
 _MAX_IMPORT_DIFF_DETAIL_LINES = 42
 _MAX_IMPORT_DIFF_DETAIL_BYTES = 8 * 1024
+_IMPORT_DIFF_LINE_ESCAPES = str.maketrans(
+    {
+        "\r": r"\r",
+        "\n": r"\n",
+        "\v": r"\v",
+        "\f": r"\f",
+        "\x1c": r"\u001c",
+        "\x1d": r"\u001d",
+        "\x1e": r"\u001e",
+        "\x85": r"\u0085",
+        "\u2028": r"\u2028",
+        "\u2029": r"\u2029",
+    }
+)
 
 
 @dataclass
@@ -458,7 +472,7 @@ class DocumentDiff:
 
         for prefix, items in (("− было: ", self.removed), ("+ стало: ", self.added)):
             for item in items:
-                display = item.replace("\r", r"\r").replace("\n", r"\n")
+                display = item.translate(_IMPORT_DIFF_LINE_ESCAPES)
                 if not append_entry(
                     f"{prefix}{display}",
                     emitted_after=emitted + 1,

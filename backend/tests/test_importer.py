@@ -1851,6 +1851,47 @@ def test_import_diff_details_are_bounded_without_losing_complete_counts():
     assert importer.DocumentDiff(added=(), removed=()).is_empty
 
 
+@pytest.mark.parametrize(
+    ("separator", "escaped"),
+    (
+        ("\v", r"\v"),
+        ("\f", r"\f"),
+        ("\x1c", r"\u001c"),
+        ("\x1d", r"\u001d"),
+        ("\x1e", r"\u001e"),
+        ("\x85", r"\u0085"),
+        ("\u2028", r"\u2028"),
+        ("\u2029", r"\u2029"),
+    ),
+)
+def test_import_diff_details_escape_every_other_splitlines_separator(
+    separator,
+    escaped,
+):
+    assert f"before{separator}after".splitlines() == ["before", "after"]
+    signature = f"before{separator}after"
+    diff = importer.DocumentDiff(added=(signature,) * 100_000, removed=())
+
+    details = diff.details()
+    lines = details.splitlines()
+    emitted = sum(line.startswith("+ стало: ") for line in lines)
+    summary = next(
+        line for line in lines if line.startswith("… пропущено изменений: ")
+    )
+    omitted = int(summary.rsplit(" ", 1)[-1])
+
+    assert len(lines) <= 42
+    assert len(details.encode("utf-8")) <= 8 * 1024
+    assert omitted == len(diff.added) - emitted
+    assert f"+ стало: before{escaped}after" in lines
+
+
+def test_import_diff_details_keep_normal_output_unchanged():
+    diff = importer.DocumentDiff(added=("new",), removed=("old",))
+
+    assert diff.details() == "− было: old\n+ стало: new"
+
+
 def test_exam_snapshot_is_complete_stable_and_preserves_duplicate_count():
     session = make_session(autoflush=False)
     try:
