@@ -1,3 +1,4 @@
+import json
 from dataclasses import FrozenInstanceError, replace
 from datetime import date, time
 
@@ -13,9 +14,14 @@ from src.models import (
     WeekType,
 )
 from src.schedule.reviewed_schedule import (
+    CorrectionOperation,
+    CorrectionRegistry,
+    DocumentCorrections,
     GroupIdentity,
     ModuleIdentity,
+    ReviewValidationError,
     lesson_state,
+    load_correction_registry,
     state_signature,
 )
 
@@ -297,3 +303,527 @@ def test_signature_escapes_subject_and_date_constraint_control_characters():
 
     assert r"|предмет=A\\B\|C\/D\nE\rF|вид=" in signature
     assert r"|даты=G\\H\|I\/J\nK\rL|с=" in signature
+
+
+def _state_json(**overrides):
+    payload = {
+        "p_doc_id": "14159",
+        "group": {
+            "level": "master",
+            "course": 1,
+            "number": None,
+            "program": "Корпоративные финансы",
+        },
+        "weekday": 5,
+        "pair_number": 2,
+        "starts_at": "09:50:00",
+        "ends_at": "11:25:00",
+        "subject": "Международная экономика",
+        "lesson_kind": "seminar",
+        "teacher": None,
+        "room": "209",
+        "week_type": "upper",
+        "subgroup": 0,
+        "module": {
+            "date_from": "2026-09-01",
+            "date_to": "2026-11-01",
+        },
+        "date_constraint_raw": "до 07.10",
+        "valid_from": "2026-09-01",
+        "valid_to": "2026-10-07",
+        "specific_dates": ["2026-09-05"],
+        "cell_raw": "Международная экономика (с) ауд.209",
+    }
+    payload.update(overrides)
+    return payload
+
+
+def _operation_json(operation="replace", **overrides):
+    payload = {
+        "id": "master-room-209",
+        "operation": operation,
+        "page": 4,
+        "evidence": "reviewed PDF page 4",
+        "expected_before": _state_json(),
+        "after": _state_json(room="210"),
+    }
+    if operation == "add":
+        payload["expected_before"] = None
+    elif operation == "remove":
+        payload["after"] = None
+    payload.update(overrides)
+    return payload
+
+
+def _document_json(*, p_doc_id="14159", sha256=None, operations=None):
+    return {
+        "p_doc_id": p_doc_id,
+        "sha256": sha256 or "a" * 64,
+        "operations": operations if operations is not None else [],
+    }
+
+
+def _write_registry(tmp_path, *, documents=None, **overrides):
+    payload = {
+        "version": 1,
+        "documents": documents if documents is not None else [],
+    }
+    payload.update(overrides)
+    path = tmp_path / "corrections.json"
+    path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    return path
+
+
+def test_registry_loads_strict_typed_operations_and_guards_sources(tmp_path):
+    operations = [
+        _operation_json("add", id="add-master-lesson"),
+        _operation_json("replace", id="replace-master-room"),
+        _operation_json("remove", id="remove-master-lesson"),
+    ]
+    path = _write_registry(
+        tmp_path,
+        documents=[_document_json(operations=operations)],
+    )
+
+    registry = load_correction_registry(path)
+
+    assert isinstance(registry, CorrectionRegistry)
+    assert registry.manages("14159")
+    assert registry.manages(14159)
+    document = registry.documents["14159"]
+    assert isinstance(document, DocumentCorrections)
+    assert document.operations == tuple(document.operations)
+    assert all(isinstance(item, CorrectionOperation) for item in document.operations)
+    assert document.operations[0].expected_before is None
+    assert document.operations[0].after.starts_at == time(9, 50)
+    assert document.operations[1].after.module == ModuleIdentity(
+        date_from=date(2026, 9, 1), date_to=date(2026, 11, 1)
+    )
+    assert document.operations[1].after.specific_dates == (date(2026, 9, 5),)
+    assert document.operations[2].after is None
+    registry.guard_source(14159, "a" * 64)
+
+    with pytest.raises(FrozenInstanceError):
+        document.operations[0].page = 8
+
+
+def test_registry_rejects_unknown_hash_for_managed_document(tmp_path):
+    path = _write_registry(
+        tmp_path,
+        documents=[_document_json()],
+    )
+    registry = load_correction_registry(path)
+
+    with pytest.raises(
+        ReviewValidationError,
+        match="document 14159 changed and requires review",
+    ):
+        registry.guard_source("14159", "b" * 64)
+
+
+def test_registry_guard_is_noop_for_unmanaged_document(tmp_path):
+    registry = load_correction_registry(
+        _write_registry(tmp_path, documents=[_document_json()])
+    )
+
+    assert not registry.manages("99999")
+    registry.guard_source("99999", "not-even-a-hash")
+
+
+def test_registry_rejects_duplicate_document_ids(tmp_path):
+    path = _write_registry(
+        tmp_path,
+        documents=[_document_json(), _document_json()],
+    )
+
+    with pytest.raises(ReviewValidationError, match="duplicate document id 14159"):
+        load_correction_registry(path)
+
+
+def test_registry_rejects_duplicate_operation_ids_in_one_document(tmp_path):
+    operation = _operation_json("remove")
+    path = _write_registry(
+        tmp_path,
+        documents=[_document_json(operations=[operation, operation])],
+    )
+
+    with pytest.raises(
+        ReviewValidationError,
+        match="duplicate correction id master-room-209",
+    ):
+        load_correction_registry(path)
+
+
+def test_registry_rejects_duplicate_operation_ids_across_documents(tmp_path):
+    first = _operation_json("remove")
+    second = _operation_json(
+        "remove",
+        expected_before=_state_json(p_doc_id="14160"),
+    )
+    path = _write_registry(
+        tmp_path,
+        documents=[
+            _document_json(operations=[first]),
+            _document_json(
+                p_doc_id="14160",
+                sha256="b" * 64,
+                operations=[second],
+            ),
+        ],
+    )
+
+    with pytest.raises(
+        ReviewValidationError,
+        match="duplicate correction id master-room-209",
+    ):
+        load_correction_registry(path)
+
+
+@pytest.mark.parametrize(
+    ("payload", "message"),
+    [
+        ({"version": 1, "documents": [], "typo": True}, "registry: unknown keys"),
+        (
+            {
+                "version": 1,
+                "documents": [_document_json() | {"source": "pdf"}],
+            },
+            "document 14159: unknown keys",
+        ),
+        (
+            {
+                "version": 1,
+                "documents": [
+                    _document_json(
+                        operations=[_operation_json("remove", typo=True)]
+                    )
+                ],
+            },
+            "correction master-room-209: unknown keys",
+        ),
+        (
+            {
+                "version": 1,
+                "documents": [
+                    _document_json(
+                        operations=[
+                            _operation_json(
+                                "remove",
+                                expected_before=_state_json(typo=True),
+                            )
+                        ]
+                    )
+                ],
+            },
+            "lesson state: unknown keys",
+        ),
+        (
+            {
+                "version": 1,
+                "documents": [
+                    _document_json(
+                        operations=[
+                            _operation_json(
+                                "remove",
+                                expected_before=_state_json(
+                                    group=_state_json()["group"] | {"typo": True}
+                                ),
+                            )
+                        ]
+                    )
+                ],
+            },
+            "group identity: unknown keys",
+        ),
+        (
+            {
+                "version": 1,
+                "documents": [
+                    _document_json(
+                        operations=[
+                            _operation_json(
+                                "remove",
+                                expected_before=_state_json(
+                                    module=_state_json()["module"] | {"typo": True}
+                                ),
+                            )
+                        ]
+                    )
+                ],
+            },
+            "module identity: unknown keys",
+        ),
+    ],
+)
+def test_registry_rejects_unknown_keys_at_every_level(tmp_path, payload, message):
+    path = tmp_path / "corrections.json"
+    path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+
+    with pytest.raises(ReviewValidationError, match=message):
+        load_correction_registry(path)
+
+
+@pytest.mark.parametrize(
+    ("sha256", "message"),
+    [
+        ("a" * 63, "invalid SHA-256"),
+        ("g" * 64, "invalid SHA-256"),
+        ("A" * 64, "invalid SHA-256"),
+    ],
+)
+def test_registry_rejects_malformed_sha256(tmp_path, sha256, message):
+    path = _write_registry(
+        tmp_path,
+        documents=[_document_json(sha256=sha256)],
+    )
+
+    with pytest.raises(ReviewValidationError, match=message):
+        load_correction_registry(path)
+
+
+@pytest.mark.parametrize(
+    "correction_id",
+    ["", "UPPERCASE", "spaces are unsafe", "../escape", "a" * 44],
+)
+def test_registry_rejects_unsafe_correction_id(tmp_path, correction_id):
+    path = _write_registry(
+        tmp_path,
+        documents=[
+            _document_json(
+                operations=[_operation_json("remove", id=correction_id)]
+            )
+        ],
+    )
+
+    with pytest.raises(ReviewValidationError, match="unsafe correction id"):
+        load_correction_registry(path)
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("level", "postgraduate", "invalid education level"),
+        ("lesson_kind", "practice", "invalid lesson kind"),
+        ("week_type", "both", "invalid week type"),
+    ],
+)
+def test_registry_validates_enum_values(tmp_path, field, value, message):
+    state = _state_json()
+    if field == "level":
+        state["group"] = state["group"] | {"level": value}
+    else:
+        state[field] = value
+    path = _write_registry(
+        tmp_path,
+        documents=[
+            _document_json(
+                operations=[_operation_json("remove", expected_before=state)]
+            )
+        ],
+    )
+
+    with pytest.raises(ReviewValidationError, match=message):
+        load_correction_registry(path)
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("weekday", -1, "weekday must be between 0 and 5"),
+        ("weekday", 6, "weekday must be between 0 and 5"),
+        ("pair_number", 0, "pair number must be between 1 and 7"),
+        ("pair_number", 8, "pair number must be between 1 and 7"),
+        ("subgroup", -1, "subgroup must be between 0 and 99"),
+        ("subgroup", 100, "subgroup must be between 0 and 99"),
+    ],
+)
+def test_registry_validates_lesson_integer_boundaries(
+    tmp_path, field, value, message
+):
+    path = _write_registry(
+        tmp_path,
+        documents=[
+            _document_json(
+                operations=[
+                    _operation_json(
+                        "remove",
+                        expected_before=_state_json(**{field: value}),
+                    )
+                ]
+            )
+        ],
+    )
+
+    with pytest.raises(ReviewValidationError, match=message):
+        load_correction_registry(path)
+
+
+@pytest.mark.parametrize("page", [0, -1, 10_001])
+def test_registry_validates_source_page_boundaries(tmp_path, page):
+    path = _write_registry(
+        tmp_path,
+        documents=[
+            _document_json(
+                operations=[_operation_json("remove", page=page)]
+            )
+        ],
+    )
+
+    with pytest.raises(ReviewValidationError, match="page must be between 1 and 10000"):
+        load_correction_registry(path)
+
+
+@pytest.mark.parametrize(
+    ("overrides", "message"),
+    [
+        (
+            {"starts_at": "11:25:00", "ends_at": "09:50:00"},
+            "lesson time range is invalid",
+        ),
+        ({"starts_at": "not-a-time"}, "invalid ISO time"),
+        ({"valid_from": "30.02.2026"}, "invalid ISO date"),
+        (
+            {"valid_from": "2026-11-01", "valid_to": "2026-09-01"},
+            "validity date range is invalid",
+        ),
+        (
+            {
+                "module": {
+                    "date_from": "2026-11-01",
+                    "date_to": "2026-09-01",
+                }
+            },
+            "module date range is invalid",
+        ),
+    ],
+)
+def test_registry_validates_iso_values_and_ranges(tmp_path, overrides, message):
+    path = _write_registry(
+        tmp_path,
+        documents=[
+            _document_json(
+                operations=[
+                    _operation_json(
+                        "remove",
+                        expected_before=_state_json(**overrides),
+                    )
+                ]
+            )
+        ],
+    )
+
+    with pytest.raises(ReviewValidationError, match=message):
+        load_correction_registry(path)
+
+
+@pytest.mark.parametrize("evidence", ["", "   ", "\n\t"])
+def test_registry_rejects_blank_evidence(tmp_path, evidence):
+    path = _write_registry(
+        tmp_path,
+        documents=[
+            _document_json(
+                operations=[_operation_json("remove", evidence=evidence)]
+            )
+        ],
+    )
+
+    with pytest.raises(ReviewValidationError, match="evidence must not be blank"):
+        load_correction_registry(path)
+
+
+@pytest.mark.parametrize(
+    ("operation", "changes", "message"),
+    [
+        ("add", {"after": None}, "add requires after"),
+        (
+            "add",
+            {"expected_before": _state_json()},
+            "add forbids expected_before",
+        ),
+        (
+            "replace",
+            {"expected_before": None},
+            "replace requires expected_before and after",
+        ),
+        (
+            "replace",
+            {"after": None},
+            "replace requires expected_before and after",
+        ),
+        ("remove", {"expected_before": None}, "remove requires expected_before"),
+        (
+            "remove",
+            {"after": _state_json()},
+            "remove forbids after",
+        ),
+    ],
+)
+def test_registry_enforces_operation_semantics(
+    tmp_path, operation, changes, message
+):
+    path = _write_registry(
+        tmp_path,
+        documents=[
+            _document_json(
+                operations=[_operation_json(operation, **changes)]
+            )
+        ],
+    )
+
+    with pytest.raises(ReviewValidationError, match=message):
+        load_correction_registry(path)
+
+
+def test_registry_accepts_absent_irrelevant_state_keys(tmp_path):
+    add = _operation_json("add", id="add-state")
+    add.pop("expected_before")
+    remove = _operation_json("remove", id="remove-state")
+    remove.pop("after")
+
+    registry = load_correction_registry(
+        _write_registry(
+            tmp_path,
+            documents=[_document_json(operations=[add, remove])],
+        )
+    )
+
+    assert registry.documents["14159"].operations[0].expected_before is None
+    assert registry.documents["14159"].operations[1].after is None
+
+
+@pytest.mark.parametrize("state_field", ["expected_before", "after"])
+def test_registry_requires_state_document_id_to_match_document(
+    tmp_path, state_field
+):
+    operation = _operation_json(
+        "replace",
+        **{state_field: _state_json(p_doc_id="14160")},
+    )
+    path = _write_registry(
+        tmp_path,
+        documents=[_document_json(operations=[operation])],
+    )
+
+    with pytest.raises(
+        ReviewValidationError,
+        match="lesson state document 14160 does not match document 14159",
+    ):
+        load_correction_registry(path)
+
+
+@pytest.mark.parametrize(
+    ("payload", "message"),
+    [
+        ({"documents": []}, "registry: missing keys: version"),
+        ({"version": 2, "documents": []}, "unsupported correction version 2"),
+        ({"version": 1, "documents": "not-a-list"}, "documents must be a list"),
+    ],
+)
+def test_registry_rejects_missing_version_and_wrong_top_level_types(
+    tmp_path, payload, message
+):
+    path = tmp_path / "corrections.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ReviewValidationError, match=message):
+        load_correction_registry(path)
