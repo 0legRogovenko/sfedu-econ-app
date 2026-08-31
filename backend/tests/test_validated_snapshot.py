@@ -186,7 +186,7 @@ def test_validates_v2_assets_once_and_freezes_the_bundle(tmp_path, monkeypatch):
         snapshot.expected_counts["lessons"] = 5
 
 
-@pytest.mark.parametrize("version", [0, 3, "2", True])
+@pytest.mark.parametrize("version", [0, 3, "2", True, 1.0, 2.0])
 def test_rejects_unknown_or_non_integer_manifest_versions(tmp_path, version):
     snapshot_dir = _build_v2_snapshot(tmp_path)
     manifest = _manifest(snapshot_dir)
@@ -294,6 +294,74 @@ def test_v2_rejects_duplicate_and_noncanonical_document_ids(tmp_path):
     manifest["documents"][0]["p_doc_id"] = "014159"
     _write_manifest(snapshot_dir, manifest)
     with pytest.raises(SnapshotValidationError, match="invalid document id"):
+        validate_snapshot(snapshot_dir)
+
+
+def test_v2_rejects_manifest_document_missing_from_review_bundle_before_import(
+    tmp_path, db_session, monkeypatch
+):
+    snapshot_dir = _build_v2_snapshot(tmp_path)
+    second_pdf = snapshot_dir / "14160.pdf"
+    second_pdf.write_bytes(b"%PDF-reviewed-test-two\n")
+    manifest = _manifest(snapshot_dir)
+    manifest["documents"].append(
+        {
+            "p_doc_id": "14160",
+            "section": "Осенний семестр",
+            "label": "маг.2 курс",
+            **_asset_metadata(second_pdf),
+        }
+    )
+    manifest["expected_counts"]["documents"] = 2
+    _write_manifest(snapshot_dir, manifest)
+    called = False
+
+    def forbidden_import(*args, **kwargs):
+        nonlocal called
+        called = True
+        raise AssertionError("database importer must not run")
+
+    monkeypatch.setattr(
+        "src.schedule.validated_snapshot.import_all", forbidden_import
+    )
+
+    with pytest.raises(
+        SnapshotValidationError,
+        match="review bundle omits declared documents: 14160",
+    ):
+        import_validated_snapshot(db_session, snapshot_dir)
+
+    assert called is False
+
+
+def test_v2_rejects_review_bundle_document_missing_from_manifest(tmp_path):
+    snapshot_dir = _build_v2_snapshot(tmp_path)
+    manifest = _manifest(snapshot_dir)
+    source_sha = manifest["documents"][0]["sha256"]
+    corrections_path = snapshot_dir / "corrections.json"
+    corrections = json.loads(corrections_path.read_text(encoding="utf-8"))
+    corrections["documents"].append(
+        {"p_doc_id": "14160", "sha256": source_sha, "operations": []}
+    )
+    _rewrite_asset_and_manifest_hash(
+        snapshot_dir,
+        "corrections_file",
+        corrections,
+    )
+    reviewed_path = snapshot_dir / "reviewed_schedule.json"
+    reviewed = json.loads(reviewed_path.read_text(encoding="utf-8"))
+    reviewed["documents"]["14160"] = {
+        "sha256": source_sha,
+        "lesson_hash": _lesson_hash(()),
+        "signatures": [],
+    }
+    _rewrite_asset_and_manifest_hash(
+        snapshot_dir,
+        "reviewed_schedule_file",
+        reviewed,
+    )
+
+    with pytest.raises(SnapshotValidationError, match="undeclared documents: 14160"):
         validate_snapshot(snapshot_dir)
 
 

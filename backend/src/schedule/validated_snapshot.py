@@ -146,9 +146,11 @@ def _manifest_payload(manifest_path: Path) -> tuple[dict, int]:
     if not isinstance(payload, dict):
         raise SnapshotValidationError("snapshot manifest is missing or invalid")
     version = payload.get("version")
-    if version == 1 and not isinstance(version, bool):
+    if isinstance(version, bool) or not isinstance(version, int):
+        raise SnapshotValidationError("unsupported snapshot manifest version")
+    if version == 1:
         return payload, 1
-    if isinstance(version, bool) or not isinstance(version, int) or version != 2:
+    if version != 2:
         raise SnapshotValidationError("unsupported snapshot manifest version")
     return payload, 2
 
@@ -430,6 +432,14 @@ def _validate_v2_snapshot(root: Path, payload: dict) -> ValidatedSnapshot:
         if unknown:
             raise ReviewValidationError(
                 "review bundle references undeclared documents: " + ", ".join(unknown)
+            )
+        missing = sorted(
+            document_hashes.keys() - set(review_bundle.corrections.documents),
+            key=int,
+        )
+        if missing:
+            raise ReviewValidationError(
+                "review bundle omits declared documents: " + ", ".join(missing)
             )
         for p_doc_id in review_bundle.corrections.documents:
             review_bundle.guard_source(p_doc_id, document_hashes[p_doc_id])
