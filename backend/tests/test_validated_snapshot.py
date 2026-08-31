@@ -297,9 +297,7 @@ def test_v2_rejects_duplicate_and_noncanonical_document_ids(tmp_path):
         validate_snapshot(snapshot_dir)
 
 
-def test_v2_rejects_manifest_document_missing_from_review_bundle_before_import(
-    tmp_path, db_session, monkeypatch
-):
+def test_v2_accepts_manifest_document_outside_nonempty_review_bundle(tmp_path):
     snapshot_dir = _build_v2_snapshot(tmp_path)
     second_pdf = snapshot_dir / "14160.pdf"
     second_pdf.write_bytes(b"%PDF-reviewed-test-two\n")
@@ -314,24 +312,55 @@ def test_v2_rejects_manifest_document_missing_from_review_bundle_before_import(
     )
     manifest["expected_counts"]["documents"] = 2
     _write_manifest(snapshot_dir, manifest)
-    called = False
 
-    def forbidden_import(*args, **kwargs):
-        nonlocal called
-        called = True
-        raise AssertionError("database importer must not run")
+    snapshot = validate_snapshot(snapshot_dir)
 
-    monkeypatch.setattr(
-        "src.schedule.validated_snapshot.import_all", forbidden_import
+    assert {item.link.p_doc_id for item in snapshot.documents} == {"14159", "14160"}
+    assert snapshot.review_bundle is not None
+    assert set(snapshot.review_bundle.corrections.documents) == {"14159"}
+    assert set(snapshot.review_bundle.reviewed_documents) == {"14159"}
+
+
+def test_v2_rejects_empty_review_bundle(tmp_path):
+    snapshot_dir = _build_v2_snapshot(tmp_path, managed=False)
+
+    with pytest.raises(SnapshotValidationError, match="manage at least one document"):
+        validate_snapshot(snapshot_dir)
+
+
+def test_v2_rejects_mismatched_correction_and_reviewed_id_sets(tmp_path):
+    snapshot_dir = _build_v2_snapshot(tmp_path)
+    _rewrite_asset_and_manifest_hash(
+        snapshot_dir,
+        "reviewed_schedule_file",
+        {"version": 1, "documents": {}},
     )
 
-    with pytest.raises(
-        SnapshotValidationError,
-        match="review bundle omits declared documents: 14160",
-    ):
-        import_validated_snapshot(db_session, snapshot_dir)
+    with pytest.raises(SnapshotValidationError, match="key sets do not match"):
+        validate_snapshot(snapshot_dir)
 
-    assert called is False
+
+def test_v2_guards_every_managed_source_hash(tmp_path):
+    snapshot_dir = _build_v2_snapshot(tmp_path)
+    corrections_path = snapshot_dir / "corrections.json"
+    corrections = json.loads(corrections_path.read_text(encoding="utf-8"))
+    corrections["documents"][0]["sha256"] = "0" * 64
+    _rewrite_asset_and_manifest_hash(
+        snapshot_dir,
+        "corrections_file",
+        corrections,
+    )
+    reviewed_path = snapshot_dir / "reviewed_schedule.json"
+    reviewed = json.loads(reviewed_path.read_text(encoding="utf-8"))
+    reviewed["documents"]["14159"]["sha256"] = "0" * 64
+    _rewrite_asset_and_manifest_hash(
+        snapshot_dir,
+        "reviewed_schedule_file",
+        reviewed,
+    )
+
+    with pytest.raises(SnapshotValidationError, match="changed and requires review"):
+        validate_snapshot(snapshot_dir)
 
 
 def test_v2_rejects_review_bundle_document_missing_from_manifest(tmp_path):

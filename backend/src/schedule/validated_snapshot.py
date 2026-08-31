@@ -433,13 +433,9 @@ def _validate_v2_snapshot(root: Path, payload: dict) -> ValidatedSnapshot:
             raise ReviewValidationError(
                 "review bundle references undeclared documents: " + ", ".join(unknown)
             )
-        missing = sorted(
-            document_hashes.keys() - set(review_bundle.corrections.documents),
-            key=int,
-        )
-        if missing:
+        if not review_bundle.corrections.documents:
             raise ReviewValidationError(
-                "review bundle omits declared documents: " + ", ".join(missing)
+                "review bundle must manage at least one document"
             )
         for p_doc_id in review_bundle.corrections.documents:
             review_bundle.guard_source(p_doc_id, document_hashes[p_doc_id])

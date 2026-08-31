@@ -13,6 +13,7 @@ from src.schedule.source import INDEX_URL
 from src.schedule.validated_snapshot import (
     DEFAULT_SNAPSHOT_DIR,
     SnapshotValidationError,
+    import_validated_snapshot,
     validate_snapshot,
 )
 
@@ -231,7 +232,10 @@ def test_draft_v2_baseline_imports_all_documents_and_exports_only_managed_ids(
     } == source_before
 
 
-def test_confirmed_export_bootstraps_first_reviewed_output_for_draft_v2(tmp_path):
+def test_confirmed_export_bootstraps_and_finalizes_seven_pdf_six_reviewed_v2(
+    tmp_path,
+    db_session,
+):
     snapshot_dir = _build_draft_v2_snapshot(tmp_path)
     output = snapshot_dir / "reviewed_schedule.json"
     source_before = {
@@ -265,6 +269,30 @@ def test_confirmed_export_bootstraps_first_reviewed_output_for_draft_v2(tmp_path
         match="missing keys: reviewed_schedule_file",
     ):
         validate_snapshot(snapshot_dir)
+
+    manifest_path = snapshot_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["reviewed_schedule_file"] = _asset_metadata(output)
+    _write_json(manifest_path, manifest)
+
+    validated = validate_snapshot(snapshot_dir)
+    assert {item.link.p_doc_id for item in validated.documents} == DRAFT_DOCUMENT_IDS
+    assert len(validated.documents) == 7
+    assert validated.review_bundle is not None
+    correction_ids = set(validated.review_bundle.corrections.documents)
+    reviewed_ids = set(validated.review_bundle.reviewed_documents)
+    assert correction_ids == reviewed_ids == DRAFT_MANAGED_IDS
+    assert correction_ids
+    source_hashes = {
+        item["p_doc_id"]: item["sha256"] for item in manifest["documents"]
+    }
+    for p_doc_id in correction_ids:
+        validated.review_bundle.guard_source(p_doc_id, source_hashes[p_doc_id])
+
+    result = import_validated_snapshot(db_session, snapshot_dir)
+    assert result["counts"] == manifest["expected_counts"]
+    assert {item["p_doc_id"] for item in result["documents"]} == DRAFT_DOCUMENT_IDS
+    assert len(result["documents"]) == 7
 
 
 @pytest.mark.parametrize("filename", ["undeclared.txt", "reviewed_schedule.json"])
