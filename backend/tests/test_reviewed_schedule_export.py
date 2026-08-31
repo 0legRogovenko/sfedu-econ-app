@@ -11,6 +11,7 @@ from src.models import EducationLevel, Group
 from src.schedule.reviewed_schedule import _lesson_hash
 from src.schedule.source import INDEX_URL
 from src.schedule.validated_snapshot import (
+    DEFAULT_SNAPSHOT_DIR,
     SnapshotValidationError,
     validate_snapshot,
 )
@@ -28,6 +29,10 @@ EXPECTED_COUNTS = {
     "exams": 0,
     "unparsed": 0,
 }
+DRAFT_DOCUMENT_IDS = frozenset(
+    {"14159", "14160", "14174", "14175", "14176", "14177", "14178"}
+)
+DRAFT_MANAGED_IDS = DRAFT_DOCUMENT_IDS - {"14174"}
 
 
 def _asset_metadata(path: Path) -> dict:
@@ -121,6 +126,53 @@ def _build_v2_snapshot(tmp_path: Path) -> Path:
     return snapshot_dir
 
 
+def _build_draft_v2_snapshot(tmp_path: Path) -> Path:
+    source_manifest = json.loads(
+        (DEFAULT_SNAPSHOT_DIR / "manifest.json").read_text(encoding="utf-8")
+    )
+    snapshot_dir = tmp_path / "snapshot-v2-draft"
+    snapshot_dir.mkdir()
+    documents = []
+    corrections_documents = []
+    for source_document in source_manifest["documents"]:
+        source = DEFAULT_SNAPSHOT_DIR / source_document["filename"]
+        destination = snapshot_dir / source.name
+        shutil.copyfile(source, destination)
+        document = {
+            "p_doc_id": source_document["p_doc_id"],
+            "section": source_document["section"],
+            "label": source_document["label"],
+            **_asset_metadata(destination),
+        }
+        documents.append(document)
+        if document["p_doc_id"] in DRAFT_MANAGED_IDS:
+            corrections_documents.append(
+                {
+                    "p_doc_id": document["p_doc_id"],
+                    "sha256": document["sha256"],
+                    "operations": [],
+                }
+            )
+
+    corrections = snapshot_dir / "corrections.json"
+    _write_json(
+        corrections,
+        {"version": 1, "documents": corrections_documents},
+    )
+    _write_json(
+        snapshot_dir / "manifest.json",
+        {
+            "version": 2,
+            "captured_at": source_manifest["captured_at"],
+            "source_index_url": source_manifest["source_index_url"],
+            "expected_counts": source_manifest["expected_counts"],
+            "documents": documents,
+            "corrections_file": _asset_metadata(corrections),
+        },
+    )
+    return snapshot_dir
+
+
 def _export(snapshot_dir: Path, output: Path, *extra: str) -> int:
     return exporter.export_main(
         ["--snapshot-dir", str(snapshot_dir), "--output", str(output), *extra]
@@ -137,6 +189,145 @@ def test_baseline_outside_snapshot_writes_version_one(tmp_path):
     assert payload["version"] == 1
     assert set(payload["documents"]) == {DOCUMENT_ID}
     assert output.read_bytes().endswith(b"\n")
+
+
+def test_draft_v2_baseline_imports_all_documents_and_exports_only_managed_ids(
+    tmp_path,
+    monkeypatch,
+):
+    snapshot_dir = _build_draft_v2_snapshot(tmp_path)
+    output = tmp_path / "draft-parser-baseline.json"
+    source_before = {
+        path.name: path.read_bytes()
+        for path in snapshot_dir.iterdir()
+        if path.is_file()
+    }
+    imported_ids = []
+    real_import_all = exporter.import_all
+
+    def recording_import_all(session, fetcher, links=None, **kwargs):
+        imported_ids.extend(link.p_doc_id for link in links)
+        return real_import_all(session, fetcher, links=links, **kwargs)
+
+    monkeypatch.setattr(exporter, "import_all", recording_import_all)
+
+    with pytest.raises(
+        SnapshotValidationError,
+        match="missing keys: reviewed_schedule_file",
+    ):
+        validate_snapshot(snapshot_dir)
+
+    assert _export(snapshot_dir, output) == 0
+
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert set(imported_ids) == DRAFT_DOCUMENT_IDS
+    assert len(imported_ids) == 7
+    assert set(payload["documents"]) == DRAFT_MANAGED_IDS
+    assert len(payload["documents"]) == 6
+    assert {
+        path.name: path.read_bytes()
+        for path in snapshot_dir.iterdir()
+        if path.is_file()
+    } == source_before
+
+
+def test_confirmed_export_bootstraps_first_reviewed_output_for_draft_v2(tmp_path):
+    snapshot_dir = _build_draft_v2_snapshot(tmp_path)
+    output = snapshot_dir / "reviewed_schedule.json"
+    source_before = {
+        path.name: path.read_bytes()
+        for path in snapshot_dir.iterdir()
+        if path.is_file()
+    }
+
+    with pytest.raises(
+        SnapshotValidationError,
+        match="missing keys: reviewed_schedule_file",
+    ):
+        validate_snapshot(snapshot_dir)
+
+    assert _export(
+        snapshot_dir,
+        output,
+        "--confirm",
+        exporter.CONFIRMATION,
+    ) == 0
+
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert set(payload["documents"]) == DRAFT_MANAGED_IDS
+    assert {
+        path.name: path.read_bytes()
+        for path in snapshot_dir.iterdir()
+        if path.is_file() and path.name != output.name
+    } == source_before
+    with pytest.raises(
+        SnapshotValidationError,
+        match="missing keys: reviewed_schedule_file",
+    ):
+        validate_snapshot(snapshot_dir)
+
+
+@pytest.mark.parametrize("filename", ["undeclared.txt", "reviewed_schedule.json"])
+def test_draft_v2_baseline_rejects_every_undeclared_file(tmp_path, filename):
+    snapshot_dir = _build_draft_v2_snapshot(tmp_path)
+    (snapshot_dir / filename).write_bytes(b"untrusted")
+
+    with pytest.raises(SnapshotValidationError, match="undeclared files"):
+        _export(snapshot_dir, tmp_path / "baseline.json")
+
+
+def test_draft_v2_cannot_declare_authoritative_output_as_a_source_asset(tmp_path):
+    snapshot_dir = _build_draft_v2_snapshot(tmp_path)
+    corrections = snapshot_dir / "corrections.json"
+    reserved = snapshot_dir / "reviewed_schedule.json"
+    corrections.rename(reserved)
+    manifest_path = snapshot_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["corrections_file"] = _asset_metadata(reserved)
+    _write_json(manifest_path, manifest)
+    original = reserved.read_bytes()
+
+    with pytest.raises(SnapshotValidationError, match="reserved output filename"):
+        _export(
+            snapshot_dir,
+            reserved,
+            "--confirm",
+            exporter.CONFIRMATION,
+        )
+
+    assert reserved.read_bytes() == original
+
+
+@pytest.mark.parametrize(
+    ("mutation", "message"),
+    [
+        ("empty", "manage at least one document"),
+        ("wrong-source-hash", "changed and requires review"),
+    ],
+)
+def test_draft_v2_requires_nonempty_source_hash_bound_registry(
+    tmp_path,
+    mutation,
+    message,
+):
+    snapshot_dir = _build_draft_v2_snapshot(tmp_path)
+    corrections_path = snapshot_dir / "corrections.json"
+    corrections = json.loads(corrections_path.read_text(encoding="utf-8"))
+    if mutation == "empty":
+        corrections["documents"] = []
+    else:
+        corrections["documents"][0]["sha256"] = "0" * 64
+    _write_json(corrections_path, corrections)
+    manifest_path = snapshot_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["corrections_file"] = _asset_metadata(corrections_path)
+    _write_json(manifest_path, manifest)
+    output = tmp_path / "baseline.json"
+
+    with pytest.raises(SnapshotValidationError, match=message):
+        _export(snapshot_dir, output)
+
+    assert not output.exists()
 
 
 @pytest.mark.parametrize("confirmation", [None, "wrong-value"])
