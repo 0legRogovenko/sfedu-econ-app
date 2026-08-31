@@ -18,6 +18,9 @@ from src.schedule.validated_snapshot import (
 )
 
 
+LEGACY_SNAPSHOT_DIR = DEFAULT_SNAPSHOT_DIR.parent / "2026-08-28"
+
+
 def _asset_metadata(path):
     content = path.read_bytes()
     return {
@@ -143,19 +146,88 @@ def test_imports_exact_validated_official_snapshot(db_session):
     assert result["counts"] == {
         "documents": 7,
         "groups": 39,
-        "lessons": 608,
+        "lessons": 612,
         "calendar_weeks": 120,
         "exams": 0,
-        "unparsed": 16,
+        "unparsed": 17,
     }
     assert db_session.scalar(select(func.count()).select_from(ScheduleDocument)) == 7
     assert db_session.scalar(select(func.count()).select_from(Group)) == 39
-    assert db_session.scalar(select(func.count()).select_from(Lesson)) == 608
+    assert db_session.scalar(select(func.count()).select_from(Lesson)) == 612
     assert db_session.scalar(select(func.count()).select_from(WeekCalendar)) == 120
 
 
-def test_v1_snapshot_remains_read_only_compatible_and_has_no_review_bundle():
+def test_current_review_bundle_is_the_six_supplied_pdfs_plus_postgraduate():
     snapshot = validate_snapshot(DEFAULT_SNAPSHOT_DIR)
+
+    assert {
+        document.link.p_doc_id: document.sha256 for document in snapshot.documents
+    } == {
+        "14175": "e4532cd0bbe6a3e7a0bd400006a6900689dae04b7cfab58d9e623b4ba4d860fc",
+        "14176": "fc23269224d9ce84aae67dcccdfe6cb3179ee7b47f02e6c829898ba5dd9328d5",
+        "14177": "185c61e49950d60ff457e5cce347dab803dc2da1e7021bb636780f48e022446b",
+        "14178": "311bb1720648d6072265bfcf73b3f0112af335929ecf39ff6fb89b75687e15c4",
+        "14159": "6ff0e7ec277c22cf99b6c2365e7b2c3771d6d4ad946c07453e1973253a0c41d9",
+        "14160": "005fb3145527fd51821823203af05fd3de8841ae5bb4994de7172f062c6afdf8",
+        "14174": "5e43a96a3d7031c6cf0f08e9ca2d0e69f40ad27e5c0c9622ffcf4380212df008",
+    }
+    assert snapshot.expected_counts["exams"] == 0
+
+
+def test_current_review_bundle_pins_exact_managed_signatures_and_operations():
+    snapshot = validate_snapshot(DEFAULT_SNAPSHOT_DIR)
+
+    assert snapshot.review_bundle is not None
+    corrections = snapshot.review_bundle.corrections.documents
+    reviewed = snapshot.review_bundle.reviewed_documents
+    managed_ids = {"14159", "14160", "14175", "14176", "14177", "14178"}
+    assert set(corrections) == managed_ids
+    assert set(reviewed) == managed_ids
+    assert {
+        p_doc_id: (document.lesson_hash, len(document.signatures))
+        for p_doc_id, document in reviewed.items()
+    } == {
+        "14159": (
+            "dae36f107a66e8967317c5c58ce60efdd31f29cea7579dc60192e1f6ced051ce",
+            82,
+        ),
+        "14160": (
+            "3fcf71e51d92bd69c37996774e53346c6efed24df89529cb720592ba927a0043",
+            71,
+        ),
+        "14175": (
+            "cdf03a26cffe46bb918d4af5ef903ddef6420bc0fa8653829ec714023dd72b9a",
+            122,
+        ),
+        "14176": (
+            "27204ec1158dbaf35faca8f0cf98d56bda36fb16cd53986b28602942b1079779",
+            102,
+        ),
+        "14177": (
+            "259080a8453c5a86fccdbd7b87bbdf6ed017c6df7142859f8454bb9927615956",
+            122,
+        ),
+        "14178": (
+            "e316f0fd759840729a2c6b26513d13ab9f6d6fd2be028055740245b8f7e25db3",
+            113,
+        ),
+    }
+    assert {
+        p_doc_id: [operation.operation for operation in document.operations]
+        for p_doc_id, document in corrections.items()
+    } == {
+        "14159": ["replace"] * 20,
+        "14160": ["replace"] * 15 + ["add"] * 4 + ["replace"] * 2,
+        "14175": [],
+        "14176": [],
+        "14177": [],
+        "14178": [],
+    }
+    assert sum(len(document.operations) for document in corrections.values()) == 41
+
+
+def test_v1_snapshot_remains_read_only_compatible_and_has_no_review_bundle():
+    snapshot = validate_snapshot(LEGACY_SNAPSHOT_DIR)
 
     assert snapshot.review_bundle is None
     assert len(snapshot.documents) == 7
@@ -218,7 +290,7 @@ def test_manifest_rejects_duplicate_version_before_selecting_schema(
 
 def test_v1_manifest_rejects_nested_duplicate_json_key(tmp_path):
     snapshot_dir = tmp_path / "snapshot-v1"
-    shutil.copytree(DEFAULT_SNAPSHOT_DIR, snapshot_dir)
+    shutil.copytree(LEGACY_SNAPSHOT_DIR, snapshot_dir)
     path = snapshot_dir / "manifest.json"
     raw = json.dumps(_manifest(snapshot_dir), ensure_ascii=False)
     path.write_text(
@@ -559,7 +631,7 @@ def test_rejects_undeclared_files_in_snapshot(tmp_path):
     shutil.copytree(DEFAULT_SNAPSHOT_DIR, snapshot_dir)
     (snapshot_dir / "unexpected.pdf").write_bytes(b"%PDF-unreviewed")
 
-    with pytest.raises(SnapshotValidationError, match="unexpected files"):
+    with pytest.raises(SnapshotValidationError, match="undeclared files"):
         validate_snapshot(snapshot_dir)
 
 

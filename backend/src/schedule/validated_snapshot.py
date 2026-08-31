@@ -43,7 +43,7 @@ DEFAULT_SNAPSHOT_DIR = (
     Path(__file__).resolve().parents[2]
     / "data"
     / "schedule_snapshot"
-    / "2026-08-28"
+    / "2026-08-30"
 )
 
 
