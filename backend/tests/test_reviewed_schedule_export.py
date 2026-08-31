@@ -174,6 +174,33 @@ def _build_draft_v2_snapshot(tmp_path: Path) -> Path:
     return snapshot_dir
 
 
+def _move_complete_v2_source_to_authoritative_target(
+    snapshot_dir: Path,
+    source_role: str,
+) -> Path:
+    manifest_path = snapshot_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    reviewed = snapshot_dir / manifest["reviewed_schedule_file"]["filename"]
+    alternate_reviewed = snapshot_dir / "reviewed-output.json"
+    reviewed.rename(alternate_reviewed)
+    manifest["reviewed_schedule_file"] = _asset_metadata(alternate_reviewed)
+
+    if source_role == "pdf":
+        source = snapshot_dir / manifest["documents"][0]["filename"]
+        source.rename(snapshot_dir / "reviewed_schedule.json")
+        manifest["documents"][0].update(
+            _asset_metadata(snapshot_dir / "reviewed_schedule.json")
+        )
+    else:
+        source = snapshot_dir / manifest["corrections_file"]["filename"]
+        source.rename(snapshot_dir / "reviewed_schedule.json")
+        manifest["corrections_file"] = _asset_metadata(
+            snapshot_dir / "reviewed_schedule.json"
+        )
+    _write_json(manifest_path, manifest)
+    return snapshot_dir / "reviewed_schedule.json"
+
+
 def _export(snapshot_dir: Path, output: Path, *extra: str) -> int:
     return exporter.export_main(
         ["--snapshot-dir", str(snapshot_dir), "--output", str(output), *extra]
@@ -375,6 +402,68 @@ def test_exact_reviewed_filename_requires_exact_confirmation(
 
 def test_exact_confirmation_permits_authoritative_target(tmp_path):
     snapshot_dir = _build_v1_snapshot(tmp_path)
+    output = snapshot_dir / "reviewed_schedule.json"
+
+    assert _export(
+        snapshot_dir,
+        output,
+        "--confirm",
+        exporter.CONFIRMATION,
+    ) == 0
+
+    assert json.loads(output.read_text(encoding="utf-8"))["version"] == 1
+
+
+def test_v1_authoritative_target_cannot_overwrite_declared_pdf(tmp_path):
+    snapshot_dir = _build_v1_snapshot(tmp_path)
+    manifest_path = snapshot_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    pdf = snapshot_dir / manifest["documents"][0]["filename"]
+    output = snapshot_dir / "reviewed_schedule.json"
+    pdf.rename(output)
+    manifest["documents"][0].update(_asset_metadata(output))
+    _write_json(manifest_path, manifest)
+    original = output.read_bytes()
+
+    with pytest.raises(SnapshotValidationError, match="declared source asset"):
+        _export(
+            snapshot_dir,
+            output,
+            "--confirm",
+            exporter.CONFIRMATION,
+        )
+
+    assert output.read_bytes() == original
+
+
+@pytest.mark.parametrize("source_role", ["pdf", "corrections"])
+def test_complete_v2_authoritative_target_cannot_overwrite_source_role(
+    tmp_path,
+    source_role,
+):
+    snapshot_dir = _build_v2_snapshot(tmp_path)
+    output = _move_complete_v2_source_to_authoritative_target(
+        snapshot_dir,
+        source_role,
+    )
+    original = output.read_bytes()
+
+    with pytest.raises(
+        SnapshotValidationError,
+        match="explicitly declared reviewed output",
+    ):
+        _export(
+            snapshot_dir,
+            output,
+            "--confirm",
+            exporter.CONFIRMATION,
+        )
+
+    assert output.read_bytes() == original
+
+
+def test_complete_v2_declared_reviewed_target_remains_permitted(tmp_path):
+    snapshot_dir = _build_v2_snapshot(tmp_path)
     output = snapshot_dir / "reviewed_schedule.json"
 
     assert _export(

@@ -43,7 +43,6 @@ from src.schedule.validated_snapshot import (  # noqa: E402
     SnapshotDocument,
     SnapshotValidationError,
     ValidatedSnapshot,
-    validate_snapshot,
 )
 
 
@@ -328,7 +327,26 @@ def _load_export_snapshot(
             allow_existing_reviewed=allow_existing_reviewed,
         )
 
-    snapshot = validate_snapshot(root)
+    if version == 1:
+        snapshot = snapshot_validation._validate_v1_snapshot(root, payload)
+        if allow_existing_reviewed and any(
+            document.path == root / _REVIEWED_FILENAME
+            for document in snapshot.documents
+        ):
+            raise SnapshotValidationError(
+                "authoritative output target is a declared source asset"
+            )
+    else:
+        snapshot = snapshot_validation._validate_v2_snapshot(root, payload)
+        if allow_existing_reviewed:
+            declared_reviewed = (
+                root / payload["reviewed_schedule_file"]["filename"]
+            ).resolve()
+            if declared_reviewed != root / _REVIEWED_FILENAME:
+                raise SnapshotValidationError(
+                    "authoritative target is not the explicitly declared "
+                    "reviewed output asset"
+                )
     corrections = (
         snapshot.review_bundle.corrections
         if snapshot.review_bundle is not None
