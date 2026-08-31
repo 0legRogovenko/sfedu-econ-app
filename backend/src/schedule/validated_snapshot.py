@@ -135,28 +135,22 @@ def _duplicate_json_object(pairs):
 def _manifest_payload(manifest_path: Path) -> tuple[dict, int]:
     try:
         content = manifest_path.read_bytes()
-        loose = json.loads(content)
+        payload = json.loads(
+            content.decode("utf-8"),
+            object_pairs_hook=_duplicate_json_object,
+        )
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
         raise SnapshotValidationError(
             "snapshot manifest is missing or invalid"
         ) from error
-    if not isinstance(loose, dict):
+    if not isinstance(payload, dict):
         raise SnapshotValidationError("snapshot manifest is missing or invalid")
-    version = loose.get("version")
+    version = payload.get("version")
     if version == 1 and not isinstance(version, bool):
-        return loose, 1
+        return payload, 1
     if isinstance(version, bool) or not isinstance(version, int) or version != 2:
         raise SnapshotValidationError("unsupported snapshot manifest version")
-    try:
-        strict = json.loads(
-            content.decode("utf-8"),
-            object_pairs_hook=_duplicate_json_object,
-        )
-    except (UnicodeDecodeError, json.JSONDecodeError) as error:
-        raise SnapshotValidationError("snapshot manifest is invalid") from error
-    if not isinstance(strict, dict):
-        raise SnapshotValidationError("snapshot manifest is invalid")
-    return strict, 2
+    return payload, 2
 
 
 def _check_exact_keys(value: dict, *, allowed: frozenset[str], context: str) -> None:

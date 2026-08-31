@@ -197,13 +197,57 @@ def test_rejects_unknown_or_non_integer_manifest_versions(tmp_path, version):
         validate_snapshot(snapshot_dir)
 
 
-def test_v2_manifest_rejects_duplicate_json_keys(tmp_path):
+@pytest.mark.parametrize(
+    "version_members",
+    ['"version": 2, "version": 1', '"version": 1, "version": 2'],
+)
+def test_manifest_rejects_duplicate_version_before_selecting_schema(
+    tmp_path, version_members
+):
     snapshot_dir = _build_v2_snapshot(tmp_path)
     path = snapshot_dir / "manifest.json"
     raw = path.read_text(encoding="utf-8")
-    path.write_text(raw.replace('{"version": 2,', '{"version": 2, "version": 2,'), encoding="utf-8")
+    path.write_text(
+        raw.replace('"version": 2', version_members, 1),
+        encoding="utf-8",
+    )
 
     with pytest.raises(SnapshotValidationError, match="duplicate JSON key version"):
+        validate_snapshot(snapshot_dir)
+
+
+def test_v1_manifest_rejects_nested_duplicate_json_key(tmp_path):
+    snapshot_dir = tmp_path / "snapshot-v1"
+    shutil.copytree(DEFAULT_SNAPSHOT_DIR, snapshot_dir)
+    path = snapshot_dir / "manifest.json"
+    raw = json.dumps(_manifest(snapshot_dir), ensure_ascii=False)
+    path.write_text(
+        raw.replace(
+            '"expected_counts": {"documents": 7',
+            '"expected_counts": {"documents": 7, "documents": 7',
+            1,
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(SnapshotValidationError, match="duplicate JSON key documents"):
+        validate_snapshot(snapshot_dir)
+
+
+def test_v2_manifest_rejects_nested_duplicate_json_key(tmp_path):
+    snapshot_dir = _build_v2_snapshot(tmp_path)
+    path = snapshot_dir / "manifest.json"
+    raw = path.read_text(encoding="utf-8")
+    path.write_text(
+        raw.replace(
+            '"expected_counts": {"documents": 1',
+            '"expected_counts": {"documents": 1, "documents": 1',
+            1,
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(SnapshotValidationError, match="duplicate JSON key documents"):
         validate_snapshot(snapshot_dir)
 
 
