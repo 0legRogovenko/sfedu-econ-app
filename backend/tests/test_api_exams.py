@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from src.models import ExamEvent, Group
+from src.schedule.validated_snapshot import import_validated_snapshot
 
 
 def _seed_exams(db_session):
@@ -48,6 +49,10 @@ def _seed_exams(db_session):
     )
     db_session.flush()
     return group, other
+
+
+def _import_reviewed_semester_snapshot(db_session):
+    return import_validated_snapshot(db_session)
 
 
 def test_exams_sorted_by_exam_at_nulls_last(client, db_session):
@@ -123,3 +128,28 @@ def test_exams_etag_304(client, db_session):
         headers={"If-None-Match": first.headers["etag"]},
     )
     assert second.status_code == 304
+
+
+def test_reviewed_semester_snapshot_does_not_infer_exam_events(
+    client, db_session
+):
+    imported = _import_reviewed_semester_snapshot(db_session)
+    groups_response = client.get("/api/groups")
+
+    assert groups_response.status_code == 200
+    groups = groups_response.json()
+    assert len(groups) == imported["counts"]["groups"]
+
+    for group in groups:
+        response = client.get(f"/api/exams?group_id={group['id']}")
+        group_label = group["number"] or group["program"]
+
+        assert response.status_code == 200, (
+            f"group_id={group['id']} label={group_label!r}: "
+            f"status={response.status_code}, body={response.text}"
+        )
+        exams = response.json()
+        assert exams == [], (
+            f"group_id={group['id']} label={group_label!r} "
+            f"returned exams={exams!r}"
+        )

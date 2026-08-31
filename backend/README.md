@@ -104,6 +104,37 @@ Read-only ручки для приложения (все отдают ETag, по
     TELEGRAM_ALERT_BOT_TOKEN=
     TELEGRAM_ALERT_CHAT_ID=
 
+## Reviewed schedule corrections
+
+The beta schedule is imported from the authenticated snapshot in
+`data/schedule_snapshot/2026-08-30`. Manual corrections are not database edits:
+they are exact source-hash-bound operations in `corrections.json`.
+
+If SFEDU replaces a managed PDF, the scheduled importer preserves the last
+reviewed data and reports `requires review`. Render and review the new PDF,
+create a new snapshot revision, update corrections, then regenerate reviewed
+output only with the explicit confirmation command:
+
+```bash
+cd backend
+python scripts/export_reviewed_schedule.py \
+  --snapshot-dir data/schedule_snapshot/2026-08-30 \
+  --output data/schedule_snapshot/2026-08-30/reviewed_schedule.json \
+  --confirm I_REVIEWED_EVERY_RENDERED_GROUP
+```
+
+After any regeneration, update the manifest v2 `corrections_file` and
+`reviewed_schedule_file` byte sizes and SHA-256 values. Before importing,
+validate the authenticated snapshot in the isolated test database:
+
+```bash
+cd backend
+pytest tests/test_validated_snapshot.py::test_imports_exact_validated_official_snapshot -q
+```
+
+Curriculum rows marked `экзамен` are not exam events. Add exams only from a
+separate official exam timetable with exact dates and times.
+
 ## Разработка локально
 
     python3 -m venv venv && source venv/bin/activate
