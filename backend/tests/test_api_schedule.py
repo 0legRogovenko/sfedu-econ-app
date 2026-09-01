@@ -441,6 +441,369 @@ def test_reviewed_corporate_finance_lessons_use_rendered_module_window(
     assert sum(lesson["valid_to"] == "2026-11-01" for lesson in lessons) == 11
 
 
+_MULTI_TEACHER_14159 = (
+    (
+        "Экономика, управление и право",
+        4,
+        6,
+        "Институциональная экономика и право",
+        "lecture",
+        "Вольчик В.В., Ширяев И.М.",
+        "118",
+    ),
+    (
+        "Экономическая аналитика",
+        1,
+        6,
+        "Анализ данных в R и Python",
+        None,
+        "Маслюкова Е.В., Головачева М.М.",
+        "325",
+    ),
+    (
+        "Экономическая аналитика",
+        1,
+        7,
+        "Анализ данных в R и Python",
+        None,
+        "Маслюкова Е.В., Головачева М.М.",
+        "325",
+    ),
+    (
+        "Экономическая аналитика",
+        4,
+        6,
+        "Институциональная экономика и право",
+        "lecture",
+        "Вольчик В.В., Ширяев И.М.",
+        "118",
+    ),
+    (
+        "Экономическая аналитика",
+        4,
+        7,
+        "Институциональная экономика и право",
+        "seminar",
+        "Вольчик В.В., Ширяев И.М.",
+        "118",
+    ),
+    (
+        "Учетные технологии и аудит",
+        0,
+        5,
+        "Финансовый учет (продвинутый уровень)",
+        "lecture",
+        "Фролова И.В., Овчаренко О.В.",
+        "324",
+    ),
+    (
+        "Учетные технологии и аудит",
+        0,
+        6,
+        "Финансовый учет (продвинутый уровень)",
+        "seminar",
+        "Фролова И.В., Овчаренко О.В.",
+        "324",
+    ),
+    (
+        "Учетные технологии и аудит",
+        0,
+        7,
+        "Финансовый учет (продвинутый уровень)",
+        "seminar",
+        "Фролова И.В., Овчаренко О.В.",
+        "324",
+    ),
+    (
+        "Учетные технологии и аудит",
+        4,
+        5,
+        "Аудит (продвинутый уровень)",
+        "lecture",
+        "Фролова И.В., Овчаренко О.В.",
+        "325",
+    ),
+    (
+        "Учетные технологии и аудит",
+        4,
+        6,
+        "Аудит (продвинутый уровень)",
+        "seminar",
+        "Фролова И.В., Овчаренко О.В.",
+        "325",
+    ),
+    (
+        "Учетные технологии и аудит",
+        4,
+        7,
+        "Аудит (продвинутый уровень)",
+        "seminar",
+        "Фролова И.В., Овчаренко О.В.",
+        "325",
+    ),
+    (
+        "Корпоративные финансы",
+        1,
+        6,
+        "Международные стандарты финансовой отчетности (продвинутый уровень)",
+        "lecture",
+        "Полховская Т.Ю., Палий В.П.",
+        "219",
+    ),
+    (
+        "Корпоративные финансы",
+        1,
+        7,
+        "Международные стандарты финансовой отчетности (продвинутый уровень)",
+        "seminar",
+        "Полховская Т.Ю., Палий В.П.",
+        None,
+    ),
+    (
+        "Экономика труда и управление персоналом",
+        2,
+        7,
+        "Управление персоналом: продвинутый уровень",
+        "seminar",
+        "Костенко Е.П., Несоленая О.В., Постникова В.П.",
+        "311",
+    ),
+    (
+        "International Economics and Analytics (Международная экономика и аналитика)",
+        0,
+        6,
+        "Tools of Research in Professional Activity (Методы и инструменты исследований в профессиональной деятельности)",
+        "lecture",
+        "Цыганков С.С., Архипова К.Э.",
+        "402",
+    ),
+    (
+        "International Economics and Analytics (Международная экономика и аналитика)",
+        0,
+        7,
+        "Tools of Research in Professional Activity (Методы и инструменты исследований в профессиональной деятельности)",
+        "seminar",
+        "Цыганков С.С., Архипова К.Э.",
+        "402",
+    ),
+    (
+        "Economics and Public Procurement (Экономика и государственные закупки)",
+        0,
+        6,
+        "Tools of Research in Professional Activity (Методы и инструменты исследований в профессиональной деятельности)",
+        "lecture",
+        "Цыганков С.С., Архипова К.Э.",
+        "402",
+    ),
+    (
+        "Economics and Public Procurement (Экономика и государственные закупки)",
+        0,
+        7,
+        "Tools of Research in Professional Activity (Методы и инструменты исследований в профессиональной деятельности)",
+        "seminar",
+        "Цыганков С.С., Архипова К.Э.",
+        "402",
+    ),
+    (
+        "Economics and Public Procurement (Экономика и государственные закупки)",
+        3,
+        7,
+        "Law and Economics (Экономический анализ права)",
+        "seminar",
+        "Цыганков С.С., Маскаев А.И.",
+        "402",
+    ),
+    (
+        "Economics and Public Procurement (Экономика и государственные закупки)",
+        4,
+        6,
+        "Law and Economics (Экономический анализ права)",
+        "lecture",
+        "Цыганков С.С., Маскаев А.И.",
+        "402",
+    ),
+    (
+        "Economics and Public Procurement (Экономика и государственные закупки)",
+        4,
+        7,
+        "Law and Economics (Экономический анализ права)",
+        "seminar",
+        "Цыганков С.С., Маскаев А.И.",
+        "402",
+    ),
+)
+
+
+_MULTI_TEACHER_14160 = (
+    (
+        "Экономика, управление и право",
+        0,
+        6,
+        "По выбору: Экономическая политика и государственное и муниципальное управление",
+        "lecture",
+        "Кот В.В., Стрельченко Е.А.",
+        "219",
+    ),
+    (
+        "Экономика, управление и право",
+        0,
+        7,
+        "Экономическая политика и государственное и муниципальное управление",
+        "seminar",
+        "Кот В.В., Стрельченко Е.А.",
+        "219",
+    ),
+    (
+        "Экономическая аналитика",
+        0,
+        6,
+        "Экономическая политика и государственное и муниципальное управление",
+        "lecture",
+        "Кот В.В., Стрельченко Е.А.",
+        "219",
+    ),
+    (
+        "Экономическая аналитика",
+        0,
+        7,
+        "Экономическая политика и государственное и муниципальное управление",
+        "seminar",
+        "Кот В.В., Стрельченко Е.А.",
+        "219",
+    ),
+    (
+        "Экономика труда и управление персоналом",
+        0,
+        6,
+        "Управление талантами",
+        None,
+        "Маличенко И.П., Постникова В.П., Осипова И.В.",
+        "306",
+    ),
+    (
+        "Экономика труда и управление персоналом",
+        0,
+        7,
+        "Управление талантами",
+        "seminar",
+        "Маличенко И.П., Постникова В.П., Осипова И.В.",
+        "306",
+    ),
+    (
+        "Корпоративные финансы",
+        1,
+        5,
+        "Внутрикорпоративный финансовый контроль и комплаенс",
+        "lecture",
+        "Давыденко И.Г., Войтенко М.С.",
+        None,
+    ),
+    (
+        "Корпоративные финансы",
+        1,
+        6,
+        "Внутрикорпоративный финансовый контроль и комплаенс",
+        "seminar",
+        "Давыденко И.Г., Войтенко М.С.",
+        None,
+    ),
+)
+
+
+def _assert_source_multi_teacher_lessons(
+    client,
+    db_session,
+    imported_draft,
+    expected,
+):
+    expected_api = [
+        (program, weekday, pair_number, subject, teacher, room)
+        for (
+            program,
+            weekday,
+            pair_number,
+            subject,
+            _lesson_kind,
+            teacher,
+            room,
+        ) in expected
+    ]
+    expected_db = list(expected)
+    actual_api = []
+    actual_db = []
+
+    for program in dict.fromkeys(item[0] for item in expected):
+        program_expected = [item for item in expected if item[0] == program]
+        selectors = {(item[1], item[2], item[3]) for item in program_expected}
+        data = _master_schedule(client, imported_draft, program)
+        api_lessons = [
+            lesson
+            for lesson in data["lessons"]
+            if (lesson["weekday"], lesson["pair_number"], lesson["subject"])
+            in selectors
+        ]
+        actual_api.extend(
+            (
+                program,
+                lesson["weekday"],
+                lesson["pair_number"],
+                lesson["subject"],
+                lesson["teacher"]["full_name"],
+                lesson["room"],
+            )
+            for lesson in api_lessons
+        )
+
+        rows = db_session.scalars(
+            select(Lesson).where(Lesson.group_id == imported_draft[program])
+        ).all()
+        actual_db.extend(
+            (
+                program,
+                lesson.weekday,
+                lesson.pair_number,
+                lesson.subject,
+                lesson.lesson_kind.value if lesson.lesson_kind else None,
+                lesson.teacher.full_name,
+                lesson.room,
+            )
+            for lesson in rows
+            if (lesson.weekday, lesson.pair_number, lesson.subject) in selectors
+        )
+
+    sort_key = lambda item: repr(item)  # noqa: E731 - shared exact tuple ordering
+    assert sorted(actual_api, key=sort_key) == sorted(expected_api, key=sort_key)
+    assert sorted(actual_db, key=sort_key) == sorted(expected_db, key=sort_key)
+
+
+def test_reviewed_first_year_master_preserves_all_source_multi_teachers(
+    client,
+    db_session,
+    imported_14159_draft,
+):
+    assert len(_MULTI_TEACHER_14159) == 21
+    _assert_source_multi_teacher_lessons(
+        client,
+        db_session,
+        imported_14159_draft,
+        _MULTI_TEACHER_14159,
+    )
+
+
+def test_reviewed_second_year_master_preserves_all_source_multi_teachers(
+    client,
+    db_session,
+    imported_14160_draft,
+):
+    assert len(_MULTI_TEACHER_14160) == 8
+    _assert_source_multi_teacher_lessons(
+        client,
+        db_session,
+        imported_14160_draft,
+        _MULTI_TEACHER_14160,
+    )
+
+
 def test_reviewed_second_year_master_keeps_full_multi_teacher_strings(
     client,
     db_session,

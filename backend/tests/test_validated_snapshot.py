@@ -188,7 +188,7 @@ def test_current_review_bundle_pins_exact_managed_signatures_and_operations():
         for p_doc_id, document in reviewed.items()
     } == {
         "14159": (
-            "dae36f107a66e8967317c5c58ce60efdd31f29cea7579dc60192e1f6ced051ce",
+            "6f4e75e246b7652a0568944a233d4823d073e8893b099cc32c841041263a1708",
             82,
         ),
         "14160": (
@@ -216,14 +216,14 @@ def test_current_review_bundle_pins_exact_managed_signatures_and_operations():
         p_doc_id: [operation.operation for operation in document.operations]
         for p_doc_id, document in corrections.items()
     } == {
-        "14159": ["replace"] * 20,
+        "14159": ["replace"] * 39,
         "14160": ["replace"] * 15 + ["add"] * 4 + ["replace"] * 2,
         "14175": [],
         "14176": [],
         "14177": [],
         "14178": [],
     }
-    assert sum(len(document.operations) for document in corrections.values()) == 41
+    assert sum(len(document.operations) for document in corrections.values()) == 60
 
 
 def test_v1_snapshot_remains_read_only_compatible_and_has_no_review_bundle():
