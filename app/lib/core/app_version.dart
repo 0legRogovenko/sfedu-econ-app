@@ -6,7 +6,7 @@ import 'api_client.dart';
 /// Build-номер приложения. ДОЛЖЕН совпадать с числом после «+» в version:
 /// pubspec.yaml — тест app_version_test.dart сверяет и падает при рассинхроне.
 /// Меняется вместе с релизом.
-const appBuild = 1;
+const appBuild = 2;
 
 /// Минимальный build, который сервер считает рабочим (GET /api/version).
 /// null — не удалось узнать (офлайн/сбой): НЕ блокируем, офлайн-первое
