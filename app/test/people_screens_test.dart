@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sfedu_econ/core/clock.dart';
 import 'package:sfedu_econ/features/onboarding/group_repository.dart';
@@ -80,50 +81,62 @@ final _yearData = ScheduleData(
   ],
   modules: [
     Module(
-        id: 1,
-        name: 'I модуль',
-        dateFrom: DateTime(2025, 9, 1),
-        dateTo: DateTime(2026, 1, 11)),
+      id: 1,
+      name: 'I модуль',
+      dateFrom: DateTime(2025, 9, 1),
+      dateTo: DateTime(2026, 1, 11),
+    ),
     Module(
-        id: 2,
-        name: 'I модуль',
-        dateFrom: DateTime(2026, 2, 9),
-        dateTo: DateTime(2026, 6, 22)),
+      id: 2,
+      name: 'I модуль',
+      dateFrom: DateTime(2026, 2, 9),
+      dateTo: DateTime(2026, 6, 22),
+    ),
   ],
   weekCalendar: [
     WeekCalendarEntry(
-        dateFrom: DateTime(2025, 9, 1),
-        dateTo: DateTime(2025, 9, 7),
-        weekType: WeekType.upper), // осень, первая неделя — верхняя
+      dateFrom: DateTime(2025, 9, 1),
+      dateTo: DateTime(2025, 9, 7),
+      weekType: WeekType.upper,
+    ), // осень, первая неделя — верхняя
     WeekCalendarEntry(
-        dateFrom: DateTime(2026, 2, 9),
-        dateTo: DateTime(2026, 2, 15),
-        weekType: WeekType.lower), // весна, первая неделя — нижняя
+      dateFrom: DateTime(2026, 2, 9),
+      dateTo: DateTime(2026, 2, 15),
+      weekType: WeekType.lower,
+    ), // весна, первая неделя — нижняя
   ],
 );
 
-ProviderContainer _container({ScheduleData? data, Object? error, DateTime? now}) =>
-    ProviderContainer(overrides: [
-      clockProvider.overrideWithValue(() => now ?? _now),
-      groupsProvider.overrideWith((ref) async => _groups),
-      personScheduleProvider.overrideWith((ref, id) async {
-        if (error != null) throw error;
-        return data ?? _data;
-      }),
-    ]);
+ProviderContainer _container({
+  ScheduleData? data,
+  Object? error,
+  DateTime? now,
+}) => ProviderContainer(
+  overrides: [
+    clockProvider.overrideWithValue(() => now ?? _now),
+    groupsProvider.overrideWith((ref) async => _groups),
+    personScheduleProvider.overrideWith((ref, id) async {
+      if (error != null) throw error;
+      return data ?? _data;
+    }),
+  ],
+);
 
 Future<void> _pump(WidgetTester tester, ProviderContainer c, Widget w) async {
-  await tester.pumpWidget(UncontrolledProviderScope(
-    container: c,
-    child: MaterialApp(home: w),
-  ));
+  await tester.pumpWidget(
+    UncontrolledProviderScope(
+      container: c,
+      child: MaterialApp(home: w),
+    ),
+  );
   await tester.pumpAndSettle();
 }
 
 void main() {
   group('расписание человека', () {
-    testWidgets('карточка пары подписана ГРУППОЙ, а не человеком',
-        (tester) async {
+    testWidgets('карточка пары подписана ГРУППОЙ, а не человеком', (
+      tester,
+    ) async {
       final c = _container();
       addTearDown(c.dispose);
       await _pump(tester, c, const PersonScheduleScreen(person: _person));
@@ -163,8 +176,9 @@ void main() {
       expect(find.textContaining('нижняя'), findsNothing);
     });
 
-    testWidgets('переключатель семестра показывает выбор студента',
-        (tester) async {
+    testWidgets('переключатель семестра показывает выбор студента', (
+      tester,
+    ) async {
       // Общий провайдер: студент выбрал осенний — расписание преподавателя
       // открывается на нём же, а не на текущей (по дате — весенней) неделе.
       final c = _container(data: _yearData);
@@ -186,8 +200,9 @@ void main() {
       expect(find.text('Матанализ'), findsOneWidget);
     });
 
-    testWidgets('весенний выбор — той же верхненедельной пары нет',
-        (tester) async {
+    testWidgets('весенний выбор — той же верхненедельной пары нет', (
+      tester,
+    ) async {
       // Весна: первая неделя нижняя — верхненедельной пары там не должно быть.
       final c = _container(data: _yearData);
       addTearDown(c.dispose);
@@ -197,8 +212,9 @@ void main() {
       expect(find.text('Пар нет — отдыхаем'), findsOneWidget);
     });
 
-    testWidgets('не текущий семестр открывается с понедельника, не с сегодня',
-        (tester) async {
+    testWidgets('не текущий семестр открывается с понедельника, не с сегодня', (
+      tester,
+    ) async {
       // Сегодня среда (2026-07-15), выбран осенний (не текущий). Пара стоит в
       // понедельник — она видна, значит экран открылся на понедельнике первой
       // недели, а не на сегодняшней среде.
@@ -209,29 +225,72 @@ void main() {
       expect(find.text('Матанализ'), findsOneWidget);
     });
 
-    testWidgets('переключение семестра у преподавателя не трогает выбор студента',
-        (tester) async {
-      // Студент ничего не выбирал (провайдер null). На экране преподавателя
-      // листаем на осенний — общий провайдер должен остаться null, чтобы
-      // домашнее расписание студента не переехало на чужой семестр.
-      final c = _container(data: _yearData);
-      addTearDown(c.dispose);
-      await _pump(tester, c, const PersonScheduleScreen(person: _person));
+    testWidgets(
+      'переключение семестра у преподавателя не трогает выбор студента',
+      (tester) async {
+        // Студент ничего не выбирал (провайдер null). На экране преподавателя
+        // листаем на осенний — общий провайдер должен остаться null, чтобы
+        // домашнее расписание студента не переехало на чужой семестр.
+        final c = _container(data: _yearData);
+        addTearDown(c.dispose);
+        await _pump(tester, c, const PersonScheduleScreen(person: _person));
 
-      // По дате (июль) стартово показан весенний; переключаем на осенний.
-      await tester.tap(find.byTooltip('Выбор семестра'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Осенний'));
-      await tester.pumpAndSettle();
+        // По дате (июль) стартово показан весенний; переключаем на осенний.
+        await tester.tap(find.byTooltip('Выбор семестра'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Осенний'));
+        await tester.pumpAndSettle();
 
-      // Локально переключилось (видна осенняя верхненедельная пара)…
-      expect(find.text('Матанализ'), findsOneWidget);
-      // …но общий выбор студента не тронут.
-      expect(c.read(viewedSemesterProvider), isNull);
-    });
+        // Локально переключилось (видна осенняя верхненедельная пара)…
+        expect(find.text('Матанализ'), findsOneWidget);
+        // …но общий выбор студента не тронут.
+        expect(c.read(viewedSemesterProvider), isNull);
+      },
+    );
   });
 
   group('карточка человека', () {
+    testWidgets('долгое нажатие на адрес копирует email', (tester) async {
+      String? copiedText;
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      messenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
+        if (call.method == 'Clipboard.setData') {
+          copiedText =
+              (call.arguments as Map<Object?, Object?>)['text'] as String?;
+        }
+        return null;
+      });
+      addTearDown(
+        () => messenger.setMockMethodCallHandler(SystemChannels.platform, null),
+      );
+
+      const personWithEmail = Person(
+        id: 'p-email',
+        shortName: 'Вольчик В.В.',
+        fullName: 'Вольчик Вячеслав Витальевич',
+        sections: ['Экономическая теория'],
+        roles: ['доцент'],
+        email: 'volchik@sfedu.ru',
+        hasSchedule: false,
+        lessonCount: 0,
+        examCount: 0,
+      );
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      await _pump(
+        tester,
+        container,
+        const PersonScreen(person: personWithEmail),
+      );
+
+      await tester.longPress(find.text('volchik@sfedu.ru'));
+      await tester.pump();
+
+      expect(copiedText, 'volchik@sfedu.ru');
+      expect(find.text('Почта скопирована'), findsOneWidget);
+    });
+
     testWidgets('показывает экзамены преподавателя', (tester) async {
       const examPerson = Person(
         id: 'p9',
@@ -244,8 +303,10 @@ void main() {
         lessonCount: 0,
         examCount: 1,
       );
-      final c = ProviderContainer(overrides: [
-        personExamsProvider.overrideWith((ref, id) async => [
+      final c = ProviderContainer(
+        overrides: [
+          personExamsProvider.overrideWith(
+            (ref, id) async => [
               ExamEvent(
                 id: 1,
                 groupId: 3,
@@ -256,8 +317,10 @@ void main() {
                 room: '220',
                 kind: null,
               ),
-            ]),
-      ]);
+            ],
+          ),
+        ],
+      );
       addTearDown(c.dispose);
       await _pump(tester, c, const PersonScreen(person: examPerson));
 
@@ -275,10 +338,9 @@ void main() {
   });
 
   group('поиск преподавателя из расписания', () {
-    ProviderContainer searchContainer(List<Person> people) =>
-        ProviderContainer(overrides: [
-          peopleProvider.overrideWith((ref) async => people),
-        ]);
+    ProviderContainer searchContainer(List<Person> people) => ProviderContainer(
+      overrides: [peopleProvider.overrideWith((ref) async => people)],
+    );
 
     testWidgets('показывает только людей с расписанием', (tester) async {
       final c = searchContainer(const [
