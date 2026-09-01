@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../people/people_providers.dart';
 import '../people/person.dart';
+import 'email_copy_region.dart';
 
 /// Единый справочник людей — ОДИН поиск вместо двух (был отдельный по контактам
 /// и отдельный по преподавателям расписания). По пустому запросу показываем
@@ -195,10 +196,15 @@ class _PersonTile extends StatelessWidget {
         // Кнопка письма прямо в списке — частый сценарий, не заставляем
         // открывать карточку ради одного тапа.
         trailing: person.email != null
-            ? IconButton(
-                icon: const Icon(Icons.email_outlined),
-                tooltip: 'Написать письмо',
-                onPressed: () => _email(context),
+            ? EmailCopyRegion(
+                email: person.email!,
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.email_outlined,
+                    semanticLabel: 'Написать письмо',
+                  ),
+                  onPressed: () => _email(context),
+                ),
               )
             : (person.hasSchedule
                 ? const Icon(Icons.chevron_right)
