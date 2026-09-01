@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/room_format.dart';
+import '../contacts/email_copy_region.dart';
 import '../exams/exams_logic.dart';
 import 'people_providers.dart';
 import 'person.dart';
@@ -57,16 +58,18 @@ class PersonScreen extends ConsumerWidget {
           ],
           const SizedBox(height: 24),
           if (person.email != null)
-            OutlinedButton.icon(
-              onPressed: () => _email(context),
-              icon: const Icon(Icons.email_outlined),
-              label: Text(person.email!),
+            EmailCopyRegion(
+              email: person.email!,
+              child: OutlinedButton.icon(
+                onPressed: () => _email(context),
+                icon: const Icon(Icons.email_outlined),
+                label: Text(person.email!),
+              ),
             ),
           if (person.hasSchedule) ...[
             const SizedBox(height: 12),
             FilledButton.icon(
-              onPressed: () =>
-                  context.push('/people/schedule', extra: person),
+              onPressed: () => context.push('/people/schedule', extra: person),
               icon: const Icon(Icons.calendar_today_outlined),
               label: const Text('Расписание'),
             ),
@@ -76,7 +79,9 @@ class PersonScreen extends ConsumerWidget {
             const SizedBox(height: 24),
             Text('Экзамены', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
-            ref.watch(personExamsProvider(person.id)).when(
+            ref
+                .watch(personExamsProvider(person.id))
+                .when(
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
                   error: (error, _) => Text(
@@ -95,8 +100,10 @@ class PersonScreen extends ConsumerWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(exam.subject,
-                                      style: theme.textTheme.titleSmall),
+                                  Text(
+                                    exam.subject,
+                                    style: theme.textTheme.titleSmall,
+                                  ),
                                   const SizedBox(height: 4),
                                   Text(
                                     [

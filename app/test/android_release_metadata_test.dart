@@ -13,7 +13,7 @@ void main() {
     expect(gradle, contains('namespace = "ru.olegrogovenko.econapp"'));
     expect(gradle, contains('applicationId = "ru.olegrogovenko.econapp"'));
     expect(manifest, contains('android:label="Эконом ЮФУ"'));
-    expect(pubspec, contains('version: 0.1.0-beta.1+1'));
+    expect(pubspec, contains('version: 0.1.0-beta.2+2'));
   });
 
   test('MainActivity follows the release namespace', () {

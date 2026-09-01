@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -174,6 +175,33 @@ void main() {
 
     expect(
         find.widgetWithIcon(IconButton, Icons.email_outlined), findsOneWidget);
+  });
+
+  testWidgets('долгое нажатие на иконку копирует email', (tester) async {
+    String? copiedText;
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') {
+        copiedText =
+            (call.arguments as Map<Object?, Object?>)['text'] as String?;
+      }
+      return null;
+    });
+    addTearDown(
+      () => messenger.setMockMethodCallHandler(SystemChannels.platform, null),
+    );
+
+    await tester.pumpWidget(await _app([
+      _person(email: 'volchik@sfedu.ru'),
+    ]));
+    await _openContacts(tester);
+
+    await tester.longPress(find.byIcon(Icons.email_outlined));
+    await tester.pump();
+
+    expect(copiedText, 'volchik@sfedu.ru');
+    expect(find.text('Почта скопирована'), findsOneWidget);
   });
 
   testWidgets('офлайн: честно про сеть, а не пустой справочник',
