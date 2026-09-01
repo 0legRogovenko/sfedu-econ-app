@@ -1,0 +1,3609 @@
+{
+  "version": 1,
+  "documents": [
+    {
+      "p_doc_id": "14175",
+      "sha256": "e4532cd0bbe6a3e7a0bd400006a6900689dae04b7cfab58d9e623b4ba4d860fc",
+      "operations": []
+    },
+    {
+      "p_doc_id": "14176",
+      "sha256": "fc23269224d9ce84aae67dcccdfe6cb3179ee7b47f02e6c829898ba5dd9328d5",
+      "operations": []
+    },
+    {
+      "p_doc_id": "14177",
+      "sha256": "185c61e49950d60ff457e5cce347dab803dc2da1e7021bb636780f48e022446b",
+      "operations": []
+    },
+    {
+      "p_doc_id": "14178",
+      "sha256": "311bb1720648d6072265bfcf73b3f0112af335929ecf39ff6fb89b75687e15c4",
+      "operations": []
+    },
+    {
+      "p_doc_id": "14159",
+      "sha256": "6ff0e7ec277c22cf99b6c2365e7b2c3771d6d4ad946c07453e1973253a0c41d9",
+      "operations": [
+        {
+          "id": "14159-001",
+          "operation": "replace",
+          "page": 2,
+          "evidence": "Tuesday 17:35–19:10, first choice: \"Договорное право (л) Муравьева Е.В. ауд.\"; no room follows \"ауд.\"",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Экономика, управление и право"
+            },
+            "weekday": 1,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "По выбору: Договорное право",
+            "lesson_kind": "lecture",
+            "teacher": "Муравьева Е.В.",
+            "room": "Система",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "По выбору:\nДоговорное право (л) Муравьева Е.В. ауд.\nСистема и основные институты гражданского права (с) Федорова И.В. ауд."
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Экономика, управление и право"
+            },
+            "weekday": 1,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "По выбору: Договорное право",
+            "lesson_kind": "lecture",
+            "teacher": "Муравьева Е.В.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "По выбору:\nДоговорное право (л) Муравьева Е.В. ауд.\nСистема и основные институты гражданского права (с) Федорова И.В. ауд."
+          }
+        },
+        {
+          "id": "14159-002",
+          "operation": "replace",
+          "page": 2,
+          "evidence": "Tuesday 17:35–19:10, second choice: \"Система и основные институты гражданского права (с) Федорова И.В. ауд.\"",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Экономика, управление и право"
+            },
+            "weekday": 1,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "и основные институты гражданского права",
+            "lesson_kind": "seminar",
+            "teacher": "Федорова И.В. ауд.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "По выбору:\nДоговорное право (л) Муравьева Е.В. ауд.\nСистема и основные институты гражданского права (с) Федорова И.В. ауд."
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Экономика, управление и право"
+            },
+            "weekday": 1,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Система и основные институты гражданского права",
+            "lesson_kind": "seminar",
+            "teacher": "Федорова И.В.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "По выбору:\nДоговорное право (л) Муравьева Е.В. ауд.\nСистема и основные институты гражданского права (с) Федорова И.В. ауд."
+          }
+        },
+        {
+          "id": "14159-003",
+          "operation": "replace",
+          "page": 2,
+          "evidence": "Tuesday 19:15–20:50: \"Договорное право (с) Муравьева Е.В. ауд.\"; the room value is blank.",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Экономика, управление и право"
+            },
+            "weekday": 1,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Договорное право",
+            "lesson_kind": "seminar",
+            "teacher": "Муравьева Е.В. ауд.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Договорное право (с) Муравьева Е.В. ауд."
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Экономика, управление и право"
+            },
+            "weekday": 1,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Договорное право",
+            "lesson_kind": "seminar",
+            "teacher": "Муравьева Е.В.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Договорное право (с) Муравьева Е.В. ауд."
+          }
+        },
+        {
+          "id": "14159-004",
+          "operation": "replace",
+          "page": 2,
+          "evidence": "Thursday 17:35–19:10: \"До 01.10 ... (л) Маслюкова Е.В. ауд.\"; the room value is blank.",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Экономика, управление и право"
+            },
+            "weekday": 3,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Методы и инструменты исследований в профессиональной деятельности",
+            "lesson_kind": "lecture",
+            "teacher": "Маслюкова Е.В. ауд.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": "До 01.10",
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-10-01",
+            "specific_dates": [],
+            "cell_raw": "До 01.10 Методы и инструменты исследований в профессиональной деятельности (л) Маслюкова Е.В. ауд."
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Экономика, управление и право"
+            },
+            "weekday": 3,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Методы и инструменты исследований в профессиональной деятельности",
+            "lesson_kind": "lecture",
+            "teacher": "Маслюкова Е.В.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": "До 01.10",
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-10-01",
+            "specific_dates": [],
+            "cell_raw": "До 01.10 Методы и инструменты исследований в профессиональной деятельности (л) Маслюкова Е.В. ауд."
+          }
+        },
+        {
+          "id": "14159-005",
+          "operation": "replace",
+          "page": 3,
+          "evidence": "Thursday 17:35–19:10: \"До 01.10 ... (л) Маслюкова Е.В. ауд.\"; the room value is blank.",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Экономическая аналитика"
+            },
+            "weekday": 3,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Методы и инструменты исследований в профессиональной деятельности",
+            "lesson_kind": "lecture",
+            "teacher": "Маслюкова Е.В. ауд.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": "До 01.10",
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-10-01",
+            "specific_dates": [],
+            "cell_raw": "До 01.10 Методы и инструменты исследований в профессиональной деятельности (л) Маслюкова Е.В. ауд."
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Экономическая аналитика"
+            },
+            "weekday": 3,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Методы и инструменты исследований в профессиональной деятельности",
+            "lesson_kind": "lecture",
+            "teacher": "Маслюкова Е.В.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": "До 01.10",
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-10-01",
+            "specific_dates": [],
+            "cell_raw": "До 01.10 Методы и инструменты исследований в профессиональной деятельности (л) Маслюкова Е.В. ауд."
+          }
+        },
+        {
+          "id": "14159-006",
+          "operation": "replace",
+          "page": 4,
+          "evidence": "Thursday 17:35–19:10: \"До 07.10 ... (л) Маслюкова Е.В. ауд.\"; the room value is blank.",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Учетные технологии и аудит"
+            },
+            "weekday": 3,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Методы и инструменты исследований в профессиональной деятельности",
+            "lesson_kind": "lecture",
+            "teacher": "Маслюкова Е.В. ауд.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": "До 07.10",
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-10-07",
+            "specific_dates": [],
+            "cell_raw": "До 07.10 Методы и инструменты исследований в профессиональной деятельности (л) Маслюкова Е.В. ауд."
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Учетные технологии и аудит"
+            },
+            "weekday": 3,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Методы и инструменты исследований в профессиональной деятельности",
+            "lesson_kind": "lecture",
+            "teacher": "Маслюкова Е.В.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": "До 07.10",
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-10-07",
+            "specific_dates": [],
+            "cell_raw": "До 07.10 Методы и инструменты исследований в профессиональной деятельности (л) Маслюкова Е.В. ауд."
+          }
+        },
+        {
+          "id": "14159-007",
+          "operation": "replace",
+          "page": 4,
+          "evidence": "Saturday 08:00–10:25: \"Факультатив: Иностранный язык для профессиональной коммуникации (с) Онлайн\"; no subgroup marker is visible.",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Учетные технологии и аудит"
+            },
+            "weekday": 5,
+            "pair_number": 1,
+            "starts_at": "08:00:00",
+            "ends_at": "10:25:00",
+            "subject": "Факультатив: Иностранный язык для профессиональной коммуникации",
+            "lesson_kind": "seminar",
+            "teacher": null,
+            "room": null,
+            "week_type": null,
+            "subgroup": 1,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Факультатив: Иностранный язык для профессиональной коммуникации (с)"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Учетные технологии и аудит"
+            },
+            "weekday": 5,
+            "pair_number": 1,
+            "starts_at": "08:00:00",
+            "ends_at": "10:25:00",
+            "subject": "Факультатив: Иностранный язык для профессиональной коммуникации",
+            "lesson_kind": "seminar",
+            "teacher": null,
+            "room": "Онлайн",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Факультатив: Иностранный язык для профессиональной коммуникации (с)"
+          }
+        },
+        {
+          "id": "14159-008",
+          "operation": "replace",
+          "page": 5,
+          "evidence": "Thursday 17:35–19:10: \"До 07.10 ... (л) Маслюкова Е.В. ауд.\"; the room value is blank.",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Международная экономика и бизнес"
+            },
+            "weekday": 3,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Методы и инструменты исследований в профессиональной деятельности",
+            "lesson_kind": "lecture",
+            "teacher": "Маслюкова Е.В. ауд.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": "До 07.10",
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-10-07",
+            "specific_dates": [],
+            "cell_raw": "До 07.10 Методы и инструменты исследований в профессиональной деятельности (л) Маслюкова Е.В. ауд."
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Международная экономика и бизнес"
+            },
+            "weekday": 3,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Методы и инструменты исследований в профессиональной деятельности",
+            "lesson_kind": "lecture",
+            "teacher": "Маслюкова Е.В.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": "До 07.10",
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-10-07",
+            "specific_dates": [],
+            "cell_raw": "До 07.10 Методы и инструменты исследований в профессиональной деятельности (л) Маслюкова Е.В. ауд."
+          }
+        },
+        {
+          "id": "14159-009",
+          "operation": "replace",
+          "page": 6,
+          "evidence": "Page header: \"1 модуль: 1 сентября – 1 ноября\"; Monday 17:35–18:20: \"Финансовый анализ (продвинутый уровень)\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 0,
+            "pair_number": 5,
+            "starts_at": "17:35:00",
+            "ends_at": "18:20:00",
+            "subject": "Финансовый анализ (продвинутый уровень)",
+            "lesson_kind": "lecture",
+            "teacher": "Давыденко И.Г.",
+            "room": "209",
+            "week_type": null,
+            "subgroup": 0,
+            "module": null,
+            "date_constraint_raw": null,
+            "valid_from": null,
+            "valid_to": null,
+            "specific_dates": [],
+            "cell_raw": "Финансовый анализ (продвинутый уровень) (л) Давыденко И.Г. ауд.209"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 0,
+            "pair_number": 5,
+            "starts_at": "17:35:00",
+            "ends_at": "18:20:00",
+            "subject": "Финансовый анализ (продвинутый уровень)",
+            "lesson_kind": "lecture",
+            "teacher": "Давыденко И.Г.",
+            "room": "209",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Финансовый анализ (продвинутый уровень) (л) Давыденко И.Г. ауд.209"
+          }
+        },
+        {
+          "id": "14159-010",
+          "operation": "replace",
+          "page": 6,
+          "evidence": "Page header: \"1 модуль: 1 сентября – 1 ноября\"; Monday 18:25–20:00: \"Финансовый анализ (продвинутый уровень)\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 0,
+            "pair_number": 6,
+            "starts_at": "18:25:00",
+            "ends_at": "20:00:00",
+            "subject": "Финансовый анализ (продвинутый уровень)",
+            "lesson_kind": "seminar",
+            "teacher": "Давыденко И.Г.",
+            "room": "209",
+            "week_type": null,
+            "subgroup": 0,
+            "module": null,
+            "date_constraint_raw": null,
+            "valid_from": null,
+            "valid_to": null,
+            "specific_dates": [],
+            "cell_raw": "Финансовый анализ (продвинутый уровень) (с) Давыденко И.Г. ауд.209"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 0,
+            "pair_number": 6,
+            "starts_at": "18:25:00",
+            "ends_at": "20:00:00",
+            "subject": "Финансовый анализ (продвинутый уровень)",
+            "lesson_kind": "seminar",
+            "teacher": "Давыденко И.Г.",
+            "room": "209",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Финансовый анализ (продвинутый уровень) (с) Давыденко И.Г. ауд.209"
+          }
+        },
+        {
+          "id": "14159-011",
+          "operation": "replace",
+          "page": 6,
+          "evidence": "Page header: \"1 модуль: 1 сентября – 1 ноября\"; Monday 20:05–21:40: \"Модуль проектной деятельности\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 0,
+            "pair_number": 7,
+            "starts_at": "20:05:00",
+            "ends_at": "21:40:00",
+            "subject": "Модуль проектной деятельности",
+            "lesson_kind": "seminar",
+            "teacher": "Давыденко И.Г.",
+            "room": "209",
+            "week_type": null,
+            "subgroup": 0,
+            "module": null,
+            "date_constraint_raw": null,
+            "valid_from": null,
+            "valid_to": null,
+            "specific_dates": [],
+            "cell_raw": "Модуль проектной деятельности (с) Давыденко И.Г. ауд.209"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 0,
+            "pair_number": 7,
+            "starts_at": "20:05:00",
+            "ends_at": "21:40:00",
+            "subject": "Модуль проектной деятельности",
+            "lesson_kind": "seminar",
+            "teacher": "Давыденко И.Г.",
+            "room": "209",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Модуль проектной деятельности (с) Давыденко И.Г. ауд.209"
+          }
+        },
+        {
+          "id": "14159-012",
+          "operation": "replace",
+          "page": 6,
+          "evidence": "Page header: \"1 модуль: 1 сентября – 1 ноября\"; Tuesday 17:35–19:10: \"Международные стандарты финансовой отчетности (продвинутый уровень)\". Page 6 source text for this lecture contains the full teacher string \"Полховская Т.Ю., Палий В.П.\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 1,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Международные стандарты финансовой отчетности (продвинутый уровень)",
+            "lesson_kind": "lecture",
+            "teacher": "Полховская Т.Ю.",
+            "room": "219",
+            "week_type": null,
+            "subgroup": 0,
+            "module": null,
+            "date_constraint_raw": null,
+            "valid_from": null,
+            "valid_to": null,
+            "specific_dates": [],
+            "cell_raw": "Международные стандарты финансовой отчетности (продвинутый уровень) (л) Полховская Т.Ю., Палий В.П.\nауд.219"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 1,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Международные стандарты финансовой отчетности (продвинутый уровень)",
+            "lesson_kind": "lecture",
+            "teacher": "Полховская Т.Ю., Палий В.П.",
+            "room": "219",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Международные стандарты финансовой отчетности (продвинутый уровень) (л) Полховская Т.Ю., Палий В.П.\nауд.219"
+          }
+        },
+        {
+          "id": "14159-013",
+          "operation": "replace",
+          "page": 6,
+          "evidence": "Page header: \"1 модуль: 1 сентября – 1 ноября\"; Tuesday 19:15–20:50: \"Международные стандарты финансовой отчетности (продвинутый уровень)\". Page 6 source text for this seminar contains the full teacher string \"Полховская Т.Ю., Палий В.П.\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 1,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Международные стандарты финансовой отчетности (продвинутый уровень)",
+            "lesson_kind": "seminar",
+            "teacher": "Полховская Т.Ю.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": null,
+            "date_constraint_raw": null,
+            "valid_from": null,
+            "valid_to": null,
+            "specific_dates": [],
+            "cell_raw": "Международные стандарты финансовой отчетности (продвинутый уровень) (с) Полховская Т.Ю., Палий В.П."
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 1,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Международные стандарты финансовой отчетности (продвинутый уровень)",
+            "lesson_kind": "seminar",
+            "teacher": "Полховская Т.Ю., Палий В.П.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Международные стандарты финансовой отчетности (продвинутый уровень) (с) Полховская Т.Ю., Палий В.П."
+          }
+        },
+        {
+          "id": "14159-014",
+          "operation": "replace",
+          "page": 6,
+          "evidence": "Page header: \"1 модуль: 1 сентября – 1 ноября\"; Wednesday 17:35–18:20: \"Корпоративные финансы (продвинутый уровень)\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 2,
+            "pair_number": 5,
+            "starts_at": "17:35:00",
+            "ends_at": "18:20:00",
+            "subject": "Корпоративные финансы (продвинутый уровень)",
+            "lesson_kind": "lecture",
+            "teacher": "Полховская Т.Ю.",
+            "room": "306",
+            "week_type": null,
+            "subgroup": 0,
+            "module": null,
+            "date_constraint_raw": null,
+            "valid_from": null,
+            "valid_to": null,
+            "specific_dates": [],
+            "cell_raw": "Корпоративные финансы (продвинутый уровень) (л) Полховская Т.Ю. ауд.306"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 2,
+            "pair_number": 5,
+            "starts_at": "17:35:00",
+            "ends_at": "18:20:00",
+            "subject": "Корпоративные финансы (продвинутый уровень)",
+            "lesson_kind": "lecture",
+            "teacher": "Полховская Т.Ю.",
+            "room": "306",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Корпоративные финансы (продвинутый уровень) (л) Полховская Т.Ю. ауд.306"
+          }
+        },
+        {
+          "id": "14159-015",
+          "operation": "replace",
+          "page": 6,
+          "evidence": "Page header: \"1 модуль: 1 сентября – 1 ноября\"; Wednesday 18:25–20:00: \"Корпоративные финансы (продвинутый уровень)\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 2,
+            "pair_number": 6,
+            "starts_at": "18:25:00",
+            "ends_at": "20:00:00",
+            "subject": "Корпоративные финансы (продвинутый уровень)",
+            "lesson_kind": "seminar",
+            "teacher": "Шевченко А.А.",
+            "room": "306",
+            "week_type": null,
+            "subgroup": 0,
+            "module": null,
+            "date_constraint_raw": null,
+            "valid_from": null,
+            "valid_to": null,
+            "specific_dates": [],
+            "cell_raw": "Корпоративные финансы (продвинутый уровень) (с) Шевченко А.А. ауд.306"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 2,
+            "pair_number": 6,
+            "starts_at": "18:25:00",
+            "ends_at": "20:00:00",
+            "subject": "Корпоративные финансы (продвинутый уровень)",
+            "lesson_kind": "seminar",
+            "teacher": "Шевченко А.А.",
+            "room": "306",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Корпоративные финансы (продвинутый уровень) (с) Шевченко А.А. ауд.306"
+          }
+        },
+        {
+          "id": "14159-016",
+          "operation": "replace",
+          "page": 6,
+          "evidence": "Page header: \"1 модуль: 1 сентября – 1 ноября\"; Thursday 17:35–19:10: \"Методы и инструменты исследований в профессиональной деятельности\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 3,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Методы и инструменты исследований в профессиональной деятельности",
+            "lesson_kind": "lecture",
+            "teacher": "Маслюкова Е.В. ауд.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": null,
+            "date_constraint_raw": "До 01.10",
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-10-01",
+            "specific_dates": [],
+            "cell_raw": "До 01.10 Методы и инструменты исследований в профессиональной деятельности (л) Маслюкова Е.В. ауд."
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 3,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Методы и инструменты исследований в профессиональной деятельности",
+            "lesson_kind": "lecture",
+            "teacher": "Маслюкова Е.В.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": "До 01.10",
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-10-01",
+            "specific_dates": [],
+            "cell_raw": "До 01.10 Методы и инструменты исследований в профессиональной деятельности (л) Маслюкова Е.В. ауд."
+          }
+        },
+        {
+          "id": "14159-017",
+          "operation": "replace",
+          "page": 6,
+          "evidence": "Page header: \"1 модуль: 1 сентября – 1 ноября\"; Thursday 19:15–20:50: \"Методы и инструменты исследований в профессиональной деятельности\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 3,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Методы и инструменты исследований в профессиональной деятельности",
+            "lesson_kind": "seminar",
+            "teacher": "Патракеева О.Ю.",
+            "room": "219",
+            "week_type": null,
+            "subgroup": 0,
+            "module": null,
+            "date_constraint_raw": null,
+            "valid_from": null,
+            "valid_to": null,
+            "specific_dates": [],
+            "cell_raw": "Методы и инструменты исследований в профессиональной деятельности (с) Патракеева О.Ю. ауд.219"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 3,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Методы и инструменты исследований в профессиональной деятельности",
+            "lesson_kind": "seminar",
+            "teacher": "Патракеева О.Ю.",
+            "room": "219",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Методы и инструменты исследований в профессиональной деятельности (с) Патракеева О.Ю. ауд.219"
+          }
+        },
+        {
+          "id": "14159-018",
+          "operation": "replace",
+          "page": 6,
+          "evidence": "Page header: \"1 модуль: 1 сентября – 1 ноября\"; Friday 17:35–18:20: \"Финансовая экономика\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 4,
+            "pair_number": 5,
+            "starts_at": "17:35:00",
+            "ends_at": "18:20:00",
+            "subject": "Финансовая экономика",
+            "lesson_kind": "lecture",
+            "teacher": "Свиридов О.Ю.",
+            "room": "108",
+            "week_type": null,
+            "subgroup": 0,
+            "module": null,
+            "date_constraint_raw": null,
+            "valid_from": null,
+            "valid_to": null,
+            "specific_dates": [],
+            "cell_raw": "Финансовая экономика (л) Свиридов О.Ю. ауд.108"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 4,
+            "pair_number": 5,
+            "starts_at": "17:35:00",
+            "ends_at": "18:20:00",
+            "subject": "Финансовая экономика",
+            "lesson_kind": "lecture",
+            "teacher": "Свиридов О.Ю.",
+            "room": "108",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Финансовая экономика (л) Свиридов О.Ю. ауд.108"
+          }
+        },
+        {
+          "id": "14159-019",
+          "operation": "replace",
+          "page": 6,
+          "evidence": "Page header: \"1 модуль: 1 сентября – 1 ноября\"; Friday 18:25–20:00: \"Финансовая экономика\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 4,
+            "pair_number": 6,
+            "starts_at": "18:25:00",
+            "ends_at": "20:00:00",
+            "subject": "Финансовая экономика",
+            "lesson_kind": "seminar",
+            "teacher": "Свиридов О.Ю.",
+            "room": "108",
+            "week_type": null,
+            "subgroup": 0,
+            "module": null,
+            "date_constraint_raw": null,
+            "valid_from": null,
+            "valid_to": null,
+            "specific_dates": [],
+            "cell_raw": "Финансовая экономика (с) Свиридов О.Ю. ауд.108"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 4,
+            "pair_number": 6,
+            "starts_at": "18:25:00",
+            "ends_at": "20:00:00",
+            "subject": "Финансовая экономика",
+            "lesson_kind": "seminar",
+            "teacher": "Свиридов О.Ю.",
+            "room": "108",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Финансовая экономика (с) Свиридов О.Ю. ауд.108"
+          }
+        },
+        {
+          "id": "14159-020",
+          "operation": "replace",
+          "page": 6,
+          "evidence": "Page header: \"1 модуль: 1 сентября – 1 ноября\"; Saturday 08:00–10:25: \"Факультатив: Иностранный язык для профессиональной коммуникации\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 5,
+            "pair_number": 1,
+            "starts_at": "08:00:00",
+            "ends_at": "10:25:00",
+            "subject": "Факультатив: Иностранный язык для профессиональной коммуникации",
+            "lesson_kind": "seminar",
+            "teacher": null,
+            "room": "Онлайн",
+            "week_type": null,
+            "subgroup": 0,
+            "module": null,
+            "date_constraint_raw": null,
+            "valid_from": null,
+            "valid_to": null,
+            "specific_dates": [],
+            "cell_raw": "Факультатив: Иностранный язык для профессиональной коммуникации (с) Онлайн"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 5,
+            "pair_number": 1,
+            "starts_at": "08:00:00",
+            "ends_at": "10:25:00",
+            "subject": "Факультатив: Иностранный язык для профессиональной коммуникации",
+            "lesson_kind": "seminar",
+            "teacher": null,
+            "room": "Онлайн",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Факультатив: Иностранный язык для профессиональной коммуникации (с) Онлайн"
+          }
+        },
+        {
+          "id": "14159-021",
+          "operation": "replace",
+          "page": 9,
+          "evidence": "Page 9 source cell: \"Tools of Research in Professional Activity (Методы и инструменты исследований в профессиональной деятельности)\n(л) Цыганков С.С., Архипова К.Э. ауд.402\"; preserves the full source teacher string \"Цыганков С.С., Архипова К.Э.\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Economics and Public Procurement (Экономика и государственные закупки)"
+            },
+            "weekday": 0,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Tools of Research in Professional Activity (Методы и инструменты исследований в профессиональной деятельности)",
+            "lesson_kind": "lecture",
+            "teacher": "Цыганков С.С.",
+            "room": "402",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Tools of Research in Professional Activity (Методы и инструменты исследований в профессиональной деятельности)\n(л) Цыганков С.С., Архипова К.Э. ауд.402"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Economics and Public Procurement (Экономика и государственные закупки)"
+            },
+            "weekday": 0,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Tools of Research in Professional Activity (Методы и инструменты исследований в профессиональной деятельности)",
+            "lesson_kind": "lecture",
+            "teacher": "Цыганков С.С., Архипова К.Э.",
+            "room": "402",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Tools of Research in Professional Activity (Методы и инструменты исследований в профессиональной деятельности)\n(л) Цыганков С.С., Архипова К.Э. ауд.402"
+          }
+        },
+        {
+          "id": "14159-022",
+          "operation": "replace",
+          "page": 9,
+          "evidence": "Page 9 source cell: \"Tools of Research in Professional Activity (Методы и инструменты исследований в профессиональной деятельности)\n(с) Цыганков С.С., Архипова К.Э. ауд.402\"; preserves the full source teacher string \"Цыганков С.С., Архипова К.Э.\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Economics and Public Procurement (Экономика и государственные закупки)"
+            },
+            "weekday": 0,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Tools of Research in Professional Activity (Методы и инструменты исследований в профессиональной деятельности)",
+            "lesson_kind": "seminar",
+            "teacher": "Цыганков С.С.",
+            "room": "402",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Tools of Research in Professional Activity (Методы и инструменты исследований в профессиональной деятельности)\n(с) Цыганков С.С., Архипова К.Э. ауд.402"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Economics and Public Procurement (Экономика и государственные закупки)"
+            },
+            "weekday": 0,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Tools of Research in Professional Activity (Методы и инструменты исследований в профессиональной деятельности)",
+            "lesson_kind": "seminar",
+            "teacher": "Цыганков С.С., Архипова К.Э.",
+            "room": "402",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Tools of Research in Professional Activity (Методы и инструменты исследований в профессиональной деятельности)\n(с) Цыганков С.С., Архипова К.Э. ауд.402"
+          }
+        },
+        {
+          "id": "14159-023",
+          "operation": "replace",
+          "page": 9,
+          "evidence": "Page 9 source cell: \"Law and Economics (Экономический анализ права) (с) Цыганков С.С., Маскаев А.И. ауд.402\"; preserves the full source teacher string \"Цыганков С.С., Маскаев А.И.\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Economics and Public Procurement (Экономика и государственные закупки)"
+            },
+            "weekday": 3,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Law and Economics (Экономический анализ права)",
+            "lesson_kind": "seminar",
+            "teacher": "Цыганков С.С.",
+            "room": "402",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Law and Economics (Экономический анализ права) (с) Цыганков С.С., Маскаев А.И. ауд.402"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Economics and Public Procurement (Экономика и государственные закупки)"
+            },
+            "weekday": 3,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Law and Economics (Экономический анализ права)",
+            "lesson_kind": "seminar",
+            "teacher": "Цыганков С.С., Маскаев А.И.",
+            "room": "402",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Law and Economics (Экономический анализ права) (с) Цыганков С.С., Маскаев А.И. ауд.402"
+          }
+        },
+        {
+          "id": "14159-024",
+          "operation": "replace",
+          "page": 9,
+          "evidence": "Page 9 source cell: \"Law and Economics (Экономический анализ права) (л) Цыганков С.С., Маскаев А.И. ауд.402\"; preserves the full source teacher string \"Цыганков С.С., Маскаев А.И.\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Economics and Public Procurement (Экономика и государственные закупки)"
+            },
+            "weekday": 4,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Law and Economics (Экономический анализ права)",
+            "lesson_kind": "lecture",
+            "teacher": "Цыганков С.С.",
+            "room": "402",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Law and Economics (Экономический анализ права) (л) Цыганков С.С., Маскаев А.И. ауд.402"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Economics and Public Procurement (Экономика и государственные закупки)"
+            },
+            "weekday": 4,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Law and Economics (Экономический анализ права)",
+            "lesson_kind": "lecture",
+            "teacher": "Цыганков С.С., Маскаев А.И.",
+            "room": "402",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Law and Economics (Экономический анализ права) (л) Цыганков С.С., Маскаев А.И. ауд.402"
+          }
+        },
+        {
+          "id": "14159-025",
+          "operation": "replace",
+          "page": 9,
+          "evidence": "Page 9 source cell: \"Law and Economics (Экономический анализ права) (с) Цыганков С.С., Маскаев А.И. ауд.402\"; preserves the full source teacher string \"Цыганков С.С., Маскаев А.И.\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Economics and Public Procurement (Экономика и государственные закупки)"
+            },
+            "weekday": 4,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Law and Economics (Экономический анализ права)",
+            "lesson_kind": "seminar",
+            "teacher": "Цыганков С.С.",
+            "room": "402",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Law and Economics (Экономический анализ права) (с) Цыганков С.С., Маскаев А.И. ауд.402"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Economics and Public Procurement (Экономика и государственные закупки)"
+            },
+            "weekday": 4,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Law and Economics (Экономический анализ права)",
+            "lesson_kind": "seminar",
+            "teacher": "Цыганков С.С., Маскаев А.И.",
+            "room": "402",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Law and Economics (Экономический анализ права) (с) Цыганков С.С., Маскаев А.И. ауд.402"
+          }
+        },
+        {
+          "id": "14159-026",
+          "operation": "replace",
+          "page": 8,
+          "evidence": "Page 8 source cell: \"Tools of Research in Professional Activity (Методы и инструменты исследований в профессиональной деятельности)\n(л) Цыганков С.С., Архипова К.Э. ауд.402\"; preserves the full source teacher string \"Цыганков С.С., Архипова К.Э.\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "International Economics and Analytics (Международная экономика и аналитика)"
+            },
+            "weekday": 0,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Tools of Research in Professional Activity (Методы и инструменты исследований в профессиональной деятельности)",
+            "lesson_kind": "lecture",
+            "teacher": "Цыганков С.С.",
+            "room": "402",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Tools of Research in Professional Activity (Методы и инструменты исследований в профессиональной деятельности)\n(л) Цыганков С.С., Архипова К.Э. ауд.402"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "International Economics and Analytics (Международная экономика и аналитика)"
+            },
+            "weekday": 0,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Tools of Research in Professional Activity (Методы и инструменты исследований в профессиональной деятельности)",
+            "lesson_kind": "lecture",
+            "teacher": "Цыганков С.С., Архипова К.Э.",
+            "room": "402",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Tools of Research in Professional Activity (Методы и инструменты исследований в профессиональной деятельности)\n(л) Цыганков С.С., Архипова К.Э. ауд.402"
+          }
+        },
+        {
+          "id": "14159-027",
+          "operation": "replace",
+          "page": 8,
+          "evidence": "Page 8 source cell: \"Tools of Research in Professional Activity (Методы и инструменты исследований в профессиональной деятельности)\n(с) Цыганков С.С., Архипова К.Э. ауд.402\"; preserves the full source teacher string \"Цыганков С.С., Архипова К.Э.\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "International Economics and Analytics (Международная экономика и аналитика)"
+            },
+            "weekday": 0,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Tools of Research in Professional Activity (Методы и инструменты исследований в профессиональной деятельности)",
+            "lesson_kind": "seminar",
+            "teacher": "Цыганков С.С.",
+            "room": "402",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Tools of Research in Professional Activity (Методы и инструменты исследований в профессиональной деятельности)\n(с) Цыганков С.С., Архипова К.Э. ауд.402"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "International Economics and Analytics (Международная экономика и аналитика)"
+            },
+            "weekday": 0,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Tools of Research in Professional Activity (Методы и инструменты исследований в профессиональной деятельности)",
+            "lesson_kind": "seminar",
+            "teacher": "Цыганков С.С., Архипова К.Э.",
+            "room": "402",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Tools of Research in Professional Activity (Методы и инструменты исследований в профессиональной деятельности)\n(с) Цыганков С.С., Архипова К.Э. ауд.402"
+          }
+        },
+        {
+          "id": "14159-028",
+          "operation": "replace",
+          "page": 4,
+          "evidence": "Page 4 source cell: \"Финансовый учет (продвинутый уровень) (л) Фролова И.В., Овчаренко О.В. ауд.324\"; preserves the full source teacher string \"Фролова И.В., Овчаренко О.В.\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Учетные технологии и аудит"
+            },
+            "weekday": 0,
+            "pair_number": 5,
+            "starts_at": "16:40:00",
+            "ends_at": "18:20:00",
+            "subject": "Финансовый учет (продвинутый уровень)",
+            "lesson_kind": "lecture",
+            "teacher": "Фролова И.В.",
+            "room": "324",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Финансовый учет (продвинутый уровень) (л) Фролова И.В., Овчаренко О.В. ауд.324"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Учетные технологии и аудит"
+            },
+            "weekday": 0,
+            "pair_number": 5,
+            "starts_at": "16:40:00",
+            "ends_at": "18:20:00",
+            "subject": "Финансовый учет (продвинутый уровень)",
+            "lesson_kind": "lecture",
+            "teacher": "Фролова И.В., Овчаренко О.В.",
+            "room": "324",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Финансовый учет (продвинутый уровень) (л) Фролова И.В., Овчаренко О.В. ауд.324"
+          }
+        },
+        {
+          "id": "14159-029",
+          "operation": "replace",
+          "page": 4,
+          "evidence": "Page 4 source cell: \"Финансовый учет (продвинутый уровень) (с) Фролова И.В., Овчаренко О.В. ауд.324\"; preserves the full source teacher string \"Фролова И.В., Овчаренко О.В.\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Учетные технологии и аудит"
+            },
+            "weekday": 0,
+            "pair_number": 6,
+            "starts_at": "18:25:00",
+            "ends_at": "20:00:00",
+            "subject": "Финансовый учет (продвинутый уровень)",
+            "lesson_kind": "seminar",
+            "teacher": "Фролова И.В.",
+            "room": "324",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Финансовый учет (продвинутый уровень) (с) Фролова И.В., Овчаренко О.В. ауд.324"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Учетные технологии и аудит"
+            },
+            "weekday": 0,
+            "pair_number": 6,
+            "starts_at": "18:25:00",
+            "ends_at": "20:00:00",
+            "subject": "Финансовый учет (продвинутый уровень)",
+            "lesson_kind": "seminar",
+            "teacher": "Фролова И.В., Овчаренко О.В.",
+            "room": "324",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Финансовый учет (продвинутый уровень) (с) Фролова И.В., Овчаренко О.В. ауд.324"
+          }
+        },
+        {
+          "id": "14159-030",
+          "operation": "replace",
+          "page": 4,
+          "evidence": "Page 4 source cell: \"Финансовый учет (продвинутый уровень) (с) Фролова И.В., Овчаренко О.В. ауд.324\"; preserves the full source teacher string \"Фролова И.В., Овчаренко О.В.\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Учетные технологии и аудит"
+            },
+            "weekday": 0,
+            "pair_number": 7,
+            "starts_at": "20:05:00",
+            "ends_at": "21:40:00",
+            "subject": "Финансовый учет (продвинутый уровень)",
+            "lesson_kind": "seminar",
+            "teacher": "Фролова И.В.",
+            "room": "324",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Финансовый учет (продвинутый уровень) (с) Фролова И.В., Овчаренко О.В. ауд.324"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Учетные технологии и аудит"
+            },
+            "weekday": 0,
+            "pair_number": 7,
+            "starts_at": "20:05:00",
+            "ends_at": "21:40:00",
+            "subject": "Финансовый учет (продвинутый уровень)",
+            "lesson_kind": "seminar",
+            "teacher": "Фролова И.В., Овчаренко О.В.",
+            "room": "324",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Финансовый учет (продвинутый уровень) (с) Фролова И.В., Овчаренко О.В. ауд.324"
+          }
+        },
+        {
+          "id": "14159-031",
+          "operation": "replace",
+          "page": 4,
+          "evidence": "Page 4 source cell: \"Аудит (продвинутый уровень) (л) Фролова И.В., Овчаренко О.В. ауд.325\"; preserves the full source teacher string \"Фролова И.В., Овчаренко О.В.\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Учетные технологии и аудит"
+            },
+            "weekday": 4,
+            "pair_number": 5,
+            "starts_at": "16:40:00",
+            "ends_at": "18:20:00",
+            "subject": "Аудит (продвинутый уровень)",
+            "lesson_kind": "lecture",
+            "teacher": "Фролова И.В.",
+            "room": "325",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Аудит (продвинутый уровень) (л) Фролова И.В., Овчаренко О.В. ауд.325"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Учетные технологии и аудит"
+            },
+            "weekday": 4,
+            "pair_number": 5,
+            "starts_at": "16:40:00",
+            "ends_at": "18:20:00",
+            "subject": "Аудит (продвинутый уровень)",
+            "lesson_kind": "lecture",
+            "teacher": "Фролова И.В., Овчаренко О.В.",
+            "room": "325",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Аудит (продвинутый уровень) (л) Фролова И.В., Овчаренко О.В. ауд.325"
+          }
+        },
+        {
+          "id": "14159-032",
+          "operation": "replace",
+          "page": 4,
+          "evidence": "Page 4 source cell: \"Аудит (продвинутый уровень) (с) Фролова И.В., Овчаренко О.В. ауд.325\"; preserves the full source teacher string \"Фролова И.В., Овчаренко О.В.\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Учетные технологии и аудит"
+            },
+            "weekday": 4,
+            "pair_number": 6,
+            "starts_at": "18:25:00",
+            "ends_at": "20:00:00",
+            "subject": "Аудит (продвинутый уровень)",
+            "lesson_kind": "seminar",
+            "teacher": "Фролова И.В.",
+            "room": "325",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Аудит (продвинутый уровень) (с) Фролова И.В., Овчаренко О.В. ауд.325"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Учетные технологии и аудит"
+            },
+            "weekday": 4,
+            "pair_number": 6,
+            "starts_at": "18:25:00",
+            "ends_at": "20:00:00",
+            "subject": "Аудит (продвинутый уровень)",
+            "lesson_kind": "seminar",
+            "teacher": "Фролова И.В., Овчаренко О.В.",
+            "room": "325",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Аудит (продвинутый уровень) (с) Фролова И.В., Овчаренко О.В. ауд.325"
+          }
+        },
+        {
+          "id": "14159-033",
+          "operation": "replace",
+          "page": 4,
+          "evidence": "Page 4 source cell: \"Аудит (продвинутый уровень) (с) Фролова И.В., Овчаренко О.В. ауд.325\"; preserves the full source teacher string \"Фролова И.В., Овчаренко О.В.\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Учетные технологии и аудит"
+            },
+            "weekday": 4,
+            "pair_number": 7,
+            "starts_at": "20:05:00",
+            "ends_at": "21:40:00",
+            "subject": "Аудит (продвинутый уровень)",
+            "lesson_kind": "seminar",
+            "teacher": "Фролова И.В.",
+            "room": "325",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Аудит (продвинутый уровень) (с) Фролова И.В., Овчаренко О.В. ауд.325"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Учетные технологии и аудит"
+            },
+            "weekday": 4,
+            "pair_number": 7,
+            "starts_at": "20:05:00",
+            "ends_at": "21:40:00",
+            "subject": "Аудит (продвинутый уровень)",
+            "lesson_kind": "seminar",
+            "teacher": "Фролова И.В., Овчаренко О.В.",
+            "room": "325",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Аудит (продвинутый уровень) (с) Фролова И.В., Овчаренко О.В. ауд.325"
+          }
+        },
+        {
+          "id": "14159-034",
+          "operation": "replace",
+          "page": 7,
+          "evidence": "Page 7 source cell: \"Управление персоналом: продвинутый уровень (с) Костенко Е.П., Несоленая О.В., Постникова В.П. ауд.311\"; preserves the full source teacher string \"Костенко Е.П., Несоленая О.В., Постникова В.П.\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Экономика труда и управление персоналом"
+            },
+            "weekday": 2,
+            "pair_number": 7,
+            "starts_at": "20:05:00",
+            "ends_at": "21:40:00",
+            "subject": "Управление персоналом: продвинутый уровень",
+            "lesson_kind": "seminar",
+            "teacher": "Костенко Е.П.",
+            "room": "311",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Управление персоналом: продвинутый уровень (с) Костенко Е.П., Несоленая О.В., Постникова В.П. ауд.311"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Экономика труда и управление персоналом"
+            },
+            "weekday": 2,
+            "pair_number": 7,
+            "starts_at": "20:05:00",
+            "ends_at": "21:40:00",
+            "subject": "Управление персоналом: продвинутый уровень",
+            "lesson_kind": "seminar",
+            "teacher": "Костенко Е.П., Несоленая О.В., Постникова В.П.",
+            "room": "311",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Управление персоналом: продвинутый уровень (с) Костенко Е.П., Несоленая О.В., Постникова В.П. ауд.311"
+          }
+        },
+        {
+          "id": "14159-035",
+          "operation": "replace",
+          "page": 2,
+          "evidence": "Page 2 source cell: \"Институциональная экономика и право (л) Вольчик В.В., Ширяев И.М. ауд.118\"; preserves the full source teacher string \"Вольчик В.В., Ширяев И.М.\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Экономика, управление и право"
+            },
+            "weekday": 4,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Институциональная экономика и право",
+            "lesson_kind": "lecture",
+            "teacher": "Вольчик В.В.",
+            "room": "118",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Институциональная экономика и право (л) Вольчик В.В., Ширяев И.М. ауд.118"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Экономика, управление и право"
+            },
+            "weekday": 4,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Институциональная экономика и право",
+            "lesson_kind": "lecture",
+            "teacher": "Вольчик В.В., Ширяев И.М.",
+            "room": "118",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Институциональная экономика и право (л) Вольчик В.В., Ширяев И.М. ауд.118"
+          }
+        },
+        {
+          "id": "14159-036",
+          "operation": "replace",
+          "page": 3,
+          "evidence": "Page 3 source cell: \"Анализ данных в R и Python (л) / (с) Маслюкова Е.В., Головачева М.М. ауд.325\"; preserves the full source teacher string \"Маслюкова Е.В., Головачева М.М.\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Экономическая аналитика"
+            },
+            "weekday": 1,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Анализ данных в R и Python",
+            "lesson_kind": null,
+            "teacher": "Маслюкова Е.В.",
+            "room": "325",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Анализ данных в R и Python (л) / (с) Маслюкова Е.В., Головачева М.М. ауд.325"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Экономическая аналитика"
+            },
+            "weekday": 1,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Анализ данных в R и Python",
+            "lesson_kind": null,
+            "teacher": "Маслюкова Е.В., Головачева М.М.",
+            "room": "325",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Анализ данных в R и Python (л) / (с) Маслюкова Е.В., Головачева М.М. ауд.325"
+          }
+        },
+        {
+          "id": "14159-037",
+          "operation": "replace",
+          "page": 3,
+          "evidence": "Page 3 source cell: \"Анализ данных в R и Python (л) / (с) Маслюкова Е.В., Головачева М.М. ауд.325\"; preserves the full source teacher string \"Маслюкова Е.В., Головачева М.М.\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Экономическая аналитика"
+            },
+            "weekday": 1,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "21:40:00",
+            "subject": "Анализ данных в R и Python",
+            "lesson_kind": null,
+            "teacher": "Маслюкова Е.В.",
+            "room": "325",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Анализ данных в R и Python (л) / (с) Маслюкова Е.В., Головачева М.М. ауд.325"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Экономическая аналитика"
+            },
+            "weekday": 1,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "21:40:00",
+            "subject": "Анализ данных в R и Python",
+            "lesson_kind": null,
+            "teacher": "Маслюкова Е.В., Головачева М.М.",
+            "room": "325",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Анализ данных в R и Python (л) / (с) Маслюкова Е.В., Головачева М.М. ауд.325"
+          }
+        },
+        {
+          "id": "14159-038",
+          "operation": "replace",
+          "page": 3,
+          "evidence": "Page 3 source cell: \"Институциональная экономика и право (л) Вольчик В.В., Ширяев И.М. ауд.118\"; preserves the full source teacher string \"Вольчик В.В., Ширяев И.М.\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Экономическая аналитика"
+            },
+            "weekday": 4,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Институциональная экономика и право",
+            "lesson_kind": "lecture",
+            "teacher": "Вольчик В.В.",
+            "room": "118",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Институциональная экономика и право (л) Вольчик В.В., Ширяев И.М. ауд.118"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Экономическая аналитика"
+            },
+            "weekday": 4,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Институциональная экономика и право",
+            "lesson_kind": "lecture",
+            "teacher": "Вольчик В.В., Ширяев И.М.",
+            "room": "118",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Институциональная экономика и право (л) Вольчик В.В., Ширяев И.М. ауд.118"
+          }
+        },
+        {
+          "id": "14159-039",
+          "operation": "replace",
+          "page": 3,
+          "evidence": "Page 3 source cell: \"Институциональная экономика и право (с) Вольчик В.В., Ширяев И.М. ауд.118\"; preserves the full source teacher string \"Вольчик В.В., Ширяев И.М.\".",
+          "expected_before": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Экономическая аналитика"
+            },
+            "weekday": 4,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Институциональная экономика и право",
+            "lesson_kind": "seminar",
+            "teacher": "Вольчик В.В.",
+            "room": "118",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Институциональная экономика и право (с) Вольчик В.В., Ширяев И.М. ауд.118"
+          },
+          "after": {
+            "p_doc_id": "14159",
+            "group": {
+              "level": "master",
+              "course": 1,
+              "number": null,
+              "program": "Экономическая аналитика"
+            },
+            "weekday": 4,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Институциональная экономика и право",
+            "lesson_kind": "seminar",
+            "teacher": "Вольчик В.В., Ширяев И.М.",
+            "room": "118",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Институциональная экономика и право (с) Вольчик В.В., Ширяев И.М. ауд.118"
+          }
+        }
+      ]
+    },
+    {
+      "p_doc_id": "14160",
+      "sha256": "005fb3145527fd51821823203af05fd3de8841ae5bb4994de7172f062c6afdf8",
+      "operations": [
+        {
+          "id": "14160-001",
+          "operation": "replace",
+          "page": 2,
+          "evidence": "Page 2, Monday pair 6: source lists Кот В.В., Стрельченко Е.А. as the full teacher string.",
+          "expected_before": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономика, управление и право"
+            },
+            "weekday": 0,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "По выбору: Экономическая политика и государственное и муниципальное управление",
+            "lesson_kind": "lecture",
+            "teacher": "Кот В.В.",
+            "room": "219",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "По выбору:\nЭкономическая политика и государственное и муниципальное управление (л) Кот В.В., Стрельченко Е.А. а.219\nГосударственные и корпоративные закупки (л) Гуцелюк Е.Ф. ауд.311"
+          },
+          "after": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономика, управление и право"
+            },
+            "weekday": 0,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "По выбору: Экономическая политика и государственное и муниципальное управление",
+            "lesson_kind": "lecture",
+            "teacher": "Кот В.В., Стрельченко Е.А.",
+            "room": "219",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "По выбору:\nЭкономическая политика и государственное и муниципальное управление (л) Кот В.В., Стрельченко Е.А. а.219\nГосударственные и корпоративные закупки (л) Гуцелюк Е.Ф. ауд.311"
+          }
+        },
+        {
+          "id": "14160-002",
+          "operation": "replace",
+          "page": 2,
+          "evidence": "Page 2, Monday pair 7: source lists Кот В.В., Стрельченко Е.А. as the full teacher string.",
+          "expected_before": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономика, управление и право"
+            },
+            "weekday": 0,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Экономическая политика и государственное и муниципальное управление",
+            "lesson_kind": "seminar",
+            "teacher": "Кот В.В.",
+            "room": "219",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Экономическая политика и государственное и муниципальное управление (с) Кот В.В., Стрельченко Е.А. а.219\nГосударственные и корпоративные закупки (с) Гуцелюк Е.Ф. ауд.311"
+          },
+          "after": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономика, управление и право"
+            },
+            "weekday": 0,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Экономическая политика и государственное и муниципальное управление",
+            "lesson_kind": "seminar",
+            "teacher": "Кот В.В., Стрельченко Е.А.",
+            "room": "219",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Экономическая политика и государственное и муниципальное управление (с) Кот В.В., Стрельченко Е.А. а.219\nГосударственные и корпоративные закупки (с) Гуцелюк Е.Ф. ауд.311"
+          }
+        },
+        {
+          "id": "14160-003",
+          "operation": "replace",
+          "page": 3,
+          "evidence": "Page 3, Monday pair 6: source lists Кот В.В., Стрельченко Е.А. as the full teacher string.",
+          "expected_before": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономическая аналитика"
+            },
+            "weekday": 0,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Экономическая политика и государственное и муниципальное управление",
+            "lesson_kind": "lecture",
+            "teacher": "Кот В.В.",
+            "room": "219",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Экономическая политика и государственное и муниципальное управление (л) Кот В.В., Стрельченко Е.А. ауд.219"
+          },
+          "after": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономическая аналитика"
+            },
+            "weekday": 0,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Экономическая политика и государственное и муниципальное управление",
+            "lesson_kind": "lecture",
+            "teacher": "Кот В.В., Стрельченко Е.А.",
+            "room": "219",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Экономическая политика и государственное и муниципальное управление (л) Кот В.В., Стрельченко Е.А. ауд.219"
+          }
+        },
+        {
+          "id": "14160-004",
+          "operation": "replace",
+          "page": 3,
+          "evidence": "Page 3, Monday pair 7: source lists Кот В.В., Стрельченко Е.А. as the full teacher string.",
+          "expected_before": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономическая аналитика"
+            },
+            "weekday": 0,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Экономическая политика и государственное и муниципальное управление",
+            "lesson_kind": "seminar",
+            "teacher": "Кот В.В.",
+            "room": "219",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Экономическая политика и государственное и муниципальное управление (с) Кот В.В., Стрельченко Е.А. ауд.219"
+          },
+          "after": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономическая аналитика"
+            },
+            "weekday": 0,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Экономическая политика и государственное и муниципальное управление",
+            "lesson_kind": "seminar",
+            "teacher": "Кот В.В., Стрельченко Е.А.",
+            "room": "219",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Экономическая политика и государственное и муниципальное управление (с) Кот В.В., Стрельченко Е.А. ауд.219"
+          }
+        },
+        {
+          "id": "14160-005",
+          "operation": "replace",
+          "page": 3,
+          "evidence": "Page 3, Thursday pair 6: В.Н. is the upper-week marker, not part of the Data Science subject.",
+          "expected_before": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономическая аналитика"
+            },
+            "weekday": 3,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "В.Н. Инструменты Data Science",
+            "lesson_kind": "seminar",
+            "teacher": "Головачева М.М.",
+            "room": "324",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": "С 15.10",
+            "valid_from": "2026-10-15",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "С 15.10 В.Н. Инструменты Data Science (с) Головачева М.М. ауд.324"
+          },
+          "after": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономическая аналитика"
+            },
+            "weekday": 3,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Инструменты Data Science",
+            "lesson_kind": "seminar",
+            "teacher": "Головачева М.М.",
+            "room": "324",
+            "week_type": "upper",
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": "С 15.10",
+            "valid_from": "2026-10-15",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "С 15.10 В.Н. Инструменты Data Science (с) Головачева М.М. ауд.324"
+          }
+        },
+        {
+          "id": "14160-006",
+          "operation": "replace",
+          "page": 3,
+          "evidence": "Page 3, Thursday pair 6: Н.Н. is the lower-week marker, not part of the Data Science subject.",
+          "expected_before": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономическая аналитика"
+            },
+            "weekday": 3,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "20:00:00",
+            "subject": "Н.Н. Инструменты Data Science",
+            "lesson_kind": "lecture",
+            "teacher": "Маслюкова Е.В.",
+            "room": "324",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": "С 08.10",
+            "valid_from": "2026-10-08",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "С 08.10 Н.Н. Инструменты Data Science (л) Маслюкова Е.В. ауд. 324"
+          },
+          "after": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономическая аналитика"
+            },
+            "weekday": 3,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "20:00:00",
+            "subject": "Инструменты Data Science",
+            "lesson_kind": "lecture",
+            "teacher": "Маслюкова Е.В.",
+            "room": "324",
+            "week_type": "lower",
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": "С 08.10",
+            "valid_from": "2026-10-08",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "С 08.10 Н.Н. Инструменты Data Science (л) Маслюкова Е.В. ауд. 324"
+          }
+        },
+        {
+          "id": "14160-007",
+          "operation": "replace",
+          "page": 3,
+          "evidence": "Page 3, Thursday pair 7: В.Н. is the upper-week marker, not part of the Data Science subject.",
+          "expected_before": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономическая аналитика"
+            },
+            "weekday": 3,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "В.Н. Инструменты Data Science",
+            "lesson_kind": "seminar",
+            "teacher": "Головачева М.М.",
+            "room": "324",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": "С 15.10",
+            "valid_from": "2026-10-15",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "С 15.10 В.Н. Инструменты Data Science (с) Головачева М.М. ауд. 324"
+          },
+          "after": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономическая аналитика"
+            },
+            "weekday": 3,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Инструменты Data Science",
+            "lesson_kind": "seminar",
+            "teacher": "Головачева М.М.",
+            "room": "324",
+            "week_type": "upper",
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": "С 15.10",
+            "valid_from": "2026-10-15",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "С 15.10 В.Н. Инструменты Data Science (с) Головачева М.М. ауд. 324"
+          }
+        },
+        {
+          "id": "14160-008",
+          "operation": "replace",
+          "page": 3,
+          "evidence": "Page 3, Saturday pair 1: МУАМ is a heading; source combined (л)/(с) keeps lesson kind unspecified.",
+          "expected_before": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономическая аналитика"
+            },
+            "weekday": 5,
+            "pair_number": 1,
+            "starts_at": "08:00:00",
+            "ends_at": "09:35:00",
+            "subject": "МУАМ Теория игр и стратегии бизнеса",
+            "lesson_kind": null,
+            "teacher": "Алехин В.В.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "МУАМ\nТеория игр и стратегии бизнеса (л)/(с) Алехин В.В."
+          },
+          "after": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономическая аналитика"
+            },
+            "weekday": 5,
+            "pair_number": 1,
+            "starts_at": "08:00:00",
+            "ends_at": "09:35:00",
+            "subject": "Теория игр и стратегии бизнеса",
+            "lesson_kind": null,
+            "teacher": "Алехин В.В.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "МУАМ\nТеория игр и стратегии бизнеса (л)/(с) Алехин В.В."
+          }
+        },
+        {
+          "id": "14160-009",
+          "operation": "replace",
+          "page": 6,
+          "evidence": "Page 6, Monday pair 6: source lists Маличенко И.П., Постникова В.П., Осипова И.В.; combined (л)/(с) keeps lesson kind unspecified.",
+          "expected_before": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономика труда и управление персоналом"
+            },
+            "weekday": 0,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Управление талантами",
+            "lesson_kind": null,
+            "teacher": "Маличенко И.П.",
+            "room": "306",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Управление талантами (л) / (с) Маличенко И.П., Постникова В.П., Осипова И.В. ауд.306"
+          },
+          "after": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономика труда и управление персоналом"
+            },
+            "weekday": 0,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Управление талантами",
+            "lesson_kind": null,
+            "teacher": "Маличенко И.П., Постникова В.П., Осипова И.В.",
+            "room": "306",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Управление талантами (л) / (с) Маличенко И.П., Постникова В.П., Осипова И.В. ауд.306"
+          }
+        },
+        {
+          "id": "14160-010",
+          "operation": "replace",
+          "page": 6,
+          "evidence": "Page 6, Monday pair 7: source lists Маличенко И.П., Постникова В.П., Осипова И.В. as the full teacher string.",
+          "expected_before": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономика труда и управление персоналом"
+            },
+            "weekday": 0,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Управление талантами",
+            "lesson_kind": "seminar",
+            "teacher": "Маличенко И.П.",
+            "room": "306",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Управление талантами (с) Маличенко И.П., Постникова В.П., Осипова И.В. ауд.306"
+          },
+          "after": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономика труда и управление персоналом"
+            },
+            "weekday": 0,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Управление талантами",
+            "lesson_kind": "seminar",
+            "teacher": "Маличенко И.П., Постникова В.П., Осипова И.В.",
+            "room": "306",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Управление талантами (с) Маличенко И.П., Постникова В.П., Осипова И.В. ауд.306"
+          }
+        },
+        {
+          "id": "14160-011",
+          "operation": "replace",
+          "page": 6,
+          "evidence": "Page 6, Tuesday pair 6: ауд. is an empty room label, not part of Щетинина Д.П.; combined (л)/(с) keeps lesson kind unspecified.",
+          "expected_before": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономика труда и управление персоналом"
+            },
+            "weekday": 1,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Персонал-технологии",
+            "lesson_kind": null,
+            "teacher": "Щетинина Д.П. ауд.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Персонал-технологии (л) / (с) Щетинина Д.П. ауд."
+          },
+          "after": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономика труда и управление персоналом"
+            },
+            "weekday": 1,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Персонал-технологии",
+            "lesson_kind": null,
+            "teacher": "Щетинина Д.П.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Персонал-технологии (л) / (с) Щетинина Д.П. ауд."
+          }
+        },
+        {
+          "id": "14160-012",
+          "operation": "replace",
+          "page": 6,
+          "evidence": "Page 6, Tuesday pair 7: ауд. is an empty room label, not part of Щетинина Д.П.",
+          "expected_before": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономика труда и управление персоналом"
+            },
+            "weekday": 1,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Персонал-технологии",
+            "lesson_kind": "seminar",
+            "teacher": "Щетинина Д.П. ауд.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Персонал-технологии (c) Щетинина Д.П. ауд."
+          },
+          "after": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономика труда и управление персоналом"
+            },
+            "weekday": 1,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Персонал-технологии",
+            "lesson_kind": "seminar",
+            "teacher": "Щетинина Д.П.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Персонал-технологии (c) Щетинина Д.П. ауд."
+          }
+        },
+        {
+          "id": "14160-013",
+          "operation": "replace",
+          "page": 6,
+          "evidence": "Page 6, Wednesday pair 6: МУАМ is a heading, not part of the Имиджелогия subject.",
+          "expected_before": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономика труда и управление персоналом"
+            },
+            "weekday": 2,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "МУАМ Имиджелогия",
+            "lesson_kind": "lecture",
+            "teacher": "Зинченко Е.В.",
+            "room": "Онлайн",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "МУАМ\nИмиджелогия (л) Зинченко Е.В. Онлайн"
+          },
+          "after": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономика труда и управление персоналом"
+            },
+            "weekday": 2,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Имиджелогия",
+            "lesson_kind": "lecture",
+            "teacher": "Зинченко Е.В.",
+            "room": "Онлайн",
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "МУАМ\nИмиджелогия (л) Зинченко Е.В. Онлайн"
+          }
+        },
+        {
+          "id": "14160-014",
+          "operation": "replace",
+          "page": 7,
+          "evidence": "Page 7, Friday pair 6: МУАМ is a heading and ауд. is an empty room label, not part of Некрасова И.В.",
+          "expected_before": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 4,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "МУАМ Финансовый риск-менеджмент",
+            "lesson_kind": "lecture",
+            "teacher": "Некрасова И.В. ауд.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "МУАМ\nФинансовый риск-менеджмент (л) Некрасова И.В. ауд."
+          },
+          "after": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 4,
+            "pair_number": 6,
+            "starts_at": "17:35:00",
+            "ends_at": "19:10:00",
+            "subject": "Финансовый риск-менеджмент",
+            "lesson_kind": "lecture",
+            "teacher": "Некрасова И.В.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "МУАМ\nФинансовый риск-менеджмент (л) Некрасова И.В. ауд."
+          }
+        },
+        {
+          "id": "14160-015",
+          "operation": "replace",
+          "page": 7,
+          "evidence": "Page 7, Friday pair 7: ауд. is an empty room label, not part of Некрасова И.В.",
+          "expected_before": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 4,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Финансовый риск-менеджмент",
+            "lesson_kind": "seminar",
+            "teacher": "Некрасова И.В. ауд.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Финансовый риск-менеджмент (с) Некрасова И.В. ауд."
+          },
+          "after": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 4,
+            "pair_number": 7,
+            "starts_at": "19:15:00",
+            "ends_at": "20:50:00",
+            "subject": "Финансовый риск-менеджмент",
+            "lesson_kind": "seminar",
+            "teacher": "Некрасова И.В.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Финансовый риск-менеджмент (с) Некрасова И.В. ауд."
+          }
+        },
+        {
+          "id": "14160-016",
+          "operation": "add",
+          "page": 2,
+          "evidence": "Page 2, Saturday pair 1 extracted cell: Теория игр и стратегии бизнеса (л) Алехин В.В.",
+          "after": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономика, управление и право"
+            },
+            "weekday": 5,
+            "pair_number": 1,
+            "starts_at": "08:00:00",
+            "ends_at": "09:35:00",
+            "subject": "Теория игр и стратегии бизнеса",
+            "lesson_kind": "lecture",
+            "teacher": "Алехин В.В.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "МУАМ\nТеория игр и стратегии бизнеса (л) Алехин В.В.\nПрава на результаты интеллектуальной деятельности и их защита (л) Юхнова Ю.И."
+          }
+        },
+        {
+          "id": "14160-017",
+          "operation": "add",
+          "page": 2,
+          "evidence": "Page 2, Saturday pair 1 rendered source: Права на результаты интеллектуальной деятельности и их защита (л) Юхнова Ю.И.; cell_raw preserves extracted text.",
+          "after": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономика, управление и право"
+            },
+            "weekday": 5,
+            "pair_number": 1,
+            "starts_at": "08:00:00",
+            "ends_at": "09:35:00",
+            "subject": "Права на результаты интеллектуальной деятельности и их защита",
+            "lesson_kind": "lecture",
+            "teacher": "Юхнова Ю.И.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "МУАМ\nТеория игр и стратегии бизнеса (л) Алехин В.В.\nПрава на результаты интеллектуальной деятельности и их защита (л) Юхнова Ю.И."
+          }
+        },
+        {
+          "id": "14160-018",
+          "operation": "add",
+          "page": 2,
+          "evidence": "Page 2, Saturday pair 2 extracted cell: Теория игр и стратегии бизнеса (с) Алехин В.В.",
+          "after": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономика, управление и право"
+            },
+            "weekday": 5,
+            "pair_number": 2,
+            "starts_at": "09:50:00",
+            "ends_at": "11:25:00",
+            "subject": "Теория игр и стратегии бизнеса",
+            "lesson_kind": "seminar",
+            "teacher": "Алехин В.В.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Теория игр и стратегии бизнеса (с) Алехин В.В.\nПрава на результаты интеллектуальной деятельности и их защита (с) Юхнова Ю.И."
+          }
+        },
+        {
+          "id": "14160-019",
+          "operation": "add",
+          "page": 2,
+          "evidence": "Page 2, Saturday pair 2 rendered source: Права на результаты интеллектуальной деятельности и их защита (с) Юхнова Ю.И.; cell_raw preserves extracted text.",
+          "after": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Экономика, управление и право"
+            },
+            "weekday": 5,
+            "pair_number": 2,
+            "starts_at": "09:50:00",
+            "ends_at": "11:25:00",
+            "subject": "Права на результаты интеллектуальной деятельности и их защита",
+            "lesson_kind": "seminar",
+            "teacher": "Юхнова Ю.И.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Теория игр и стратегии бизнеса (с) Алехин В.В.\nПрава на результаты интеллектуальной деятельности и их защита (с) Юхнова Ю.И."
+          }
+        },
+        {
+          "id": "14160-020",
+          "operation": "replace",
+          "page": 7,
+          "evidence": "Page 7, Tuesday pair 5 source cell: Внутрикорпоративный финансовый контроль и комплаенс (л) Давыденко И.Г., Войтенко М.С. ауд.",
+          "expected_before": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 1,
+            "pair_number": 5,
+            "starts_at": "17:35:00",
+            "ends_at": "18:20:00",
+            "subject": "Внутрикорпоративный финансовый контроль и комплаенс",
+            "lesson_kind": "lecture",
+            "teacher": "Давыденко И.Г.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Внутрикорпоративный финансовый контроль и комплаенс (л) Давыденко И.Г., Войтенко М.С. ауд."
+          },
+          "after": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 1,
+            "pair_number": 5,
+            "starts_at": "17:35:00",
+            "ends_at": "18:20:00",
+            "subject": "Внутрикорпоративный финансовый контроль и комплаенс",
+            "lesson_kind": "lecture",
+            "teacher": "Давыденко И.Г., Войтенко М.С.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Внутрикорпоративный финансовый контроль и комплаенс (л) Давыденко И.Г., Войтенко М.С. ауд."
+          }
+        },
+        {
+          "id": "14160-021",
+          "operation": "replace",
+          "page": 7,
+          "evidence": "Page 7, Tuesday pair 6 source cell: Внутрикорпоративный финансовый контроль и комплаенс (с) Давыденко И.Г., Войтенко М.С. ауд.",
+          "expected_before": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 1,
+            "pair_number": 6,
+            "starts_at": "18:25:00",
+            "ends_at": "20:00:00",
+            "subject": "Внутрикорпоративный финансовый контроль и комплаенс",
+            "lesson_kind": "seminar",
+            "teacher": "Давыденко И.Г.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Внутрикорпоративный финансовый контроль и комплаенс (с) Давыденко И.Г., Войтенко М.С. ауд."
+          },
+          "after": {
+            "p_doc_id": "14160",
+            "group": {
+              "level": "master",
+              "course": 2,
+              "number": null,
+              "program": "Корпоративные финансы"
+            },
+            "weekday": 1,
+            "pair_number": 6,
+            "starts_at": "18:25:00",
+            "ends_at": "20:00:00",
+            "subject": "Внутрикорпоративный финансовый контроль и комплаенс",
+            "lesson_kind": "seminar",
+            "teacher": "Давыденко И.Г., Войтенко М.С.",
+            "room": null,
+            "week_type": null,
+            "subgroup": 0,
+            "module": {
+              "date_from": "2026-09-01",
+              "date_to": "2026-11-01"
+            },
+            "date_constraint_raw": null,
+            "valid_from": "2026-09-01",
+            "valid_to": "2026-11-01",
+            "specific_dates": [],
+            "cell_raw": "Внутрикорпоративный финансовый контроль и комплаенс (с) Давыденко И.Г., Войтенко М.С. ауд."
+          }
+        }
+      ]
+    }
+  ]
+}

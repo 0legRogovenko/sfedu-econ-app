@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import hashlib
 import io
+import json
 import logging
 import re
 import tempfile
@@ -61,6 +62,12 @@ from src.schedule.extract_pdf import extract_pdf
 from src.schedule.fetch import Fetcher
 from src.schedule.grid import Grid
 from src.schedule.programs import canonical_program
+from src.schedule.reviewed_schedule import (
+    ReviewBundle,
+    ReviewValidationError,
+    lesson_state,
+    state_signature,
+)
 from src.schedule.source import parse_index
 from src.schedule.structure import (
     PAIR_HALVES,
@@ -405,6 +412,24 @@ def _row_signature(row) -> tuple:
     return (row.subject, row.lesson_kind, row.date_constraint_raw, row.room)
 
 
+_MAX_IMPORT_DIFF_DETAIL_LINES = 42
+_MAX_IMPORT_DIFF_DETAIL_BYTES = 8 * 1024
+_IMPORT_DIFF_LINE_ESCAPES = str.maketrans(
+    {
+        "\r": r"\r",
+        "\n": r"\n",
+        "\v": r"\v",
+        "\f": r"\f",
+        "\x1c": r"\u001c",
+        "\x1d": r"\u001d",
+        "\x1e": r"\u001e",
+        "\x85": r"\u0085",
+        "\u2028": r"\u2028",
+        "\u2029": r"\u2029",
+    }
+)
+
+
 @dataclass
 class DocumentDiff:
     added: tuple[str, ...]
@@ -415,8 +440,46 @@ class DocumentDiff:
         return not self.added and not self.removed
 
     def details(self) -> str:
-        lines = [f"− было: {item}" for item in self.removed]
-        lines += [f"+ стало: {item}" for item in self.added]
+        total = len(self.removed) + len(self.added)
+        if total == 0:
+            return ""
+
+        lines: list[str] = []
+        bytes_used = 0
+        emitted = 0
+
+        def omission_line(omitted: int) -> str:
+            return f"… пропущено изменений: {omitted}"
+
+        def append_entry(line: str, *, emitted_after: int) -> bool:
+            nonlocal bytes_used
+            remaining = total - emitted_after
+            reserved = omission_line(remaining) if remaining else None
+            line_bytes = len(line.encode("utf-8"))
+            candidate_bytes = bytes_used + (1 if lines else 0) + line_bytes
+            candidate_lines = len(lines) + 1
+            if reserved is not None:
+                candidate_bytes += 1 + len(reserved.encode("utf-8"))
+                candidate_lines += 1
+            if (
+                candidate_lines > _MAX_IMPORT_DIFF_DETAIL_LINES
+                or candidate_bytes > _MAX_IMPORT_DIFF_DETAIL_BYTES
+            ):
+                return False
+            lines.append(line)
+            bytes_used += (1 if len(lines) > 1 else 0) + line_bytes
+            return True
+
+        for prefix, items in (("− было: ", self.removed), ("+ стало: ", self.added)):
+            for item in items:
+                display = item.translate(_IMPORT_DIFF_LINE_ESCAPES)
+                if not append_entry(
+                    f"{prefix}{display}",
+                    emitted_after=emitted + 1,
+                ):
+                    lines.append(omission_line(total - emitted))
+                    return "\n".join(lines)
+                emitted += 1
         return "\n".join(lines)
 
 
@@ -433,6 +496,11 @@ class DocumentReport:
     ledger: Ledger = field(default_factory=Ledger)
     diff: DocumentDiff | None = None
     error: str | None = None
+
+
+@dataclass
+class _ImportLinkContext:
+    doc_type: DocType = DocType.UNKNOWN
 
 
 @dataclass
@@ -467,15 +535,82 @@ class ImportReport:
         )
 
 
-def import_all(session, fetcher, links=None, *, atomic: bool = False) -> ImportReport:
+def _canonical_link_document_id(p_doc_id: str | int) -> str:
+    if isinstance(p_doc_id, bool):
+        raise ReviewValidationError(f"invalid link document id {p_doc_id!r}")
+    if isinstance(p_doc_id, int):
+        if p_doc_id <= 0:
+            raise ReviewValidationError(f"invalid link document id {p_doc_id!r}")
+        return str(p_doc_id)
+    if isinstance(p_doc_id, str) and re.fullmatch(r"[1-9][0-9]*", p_doc_id):
+        return p_doc_id
+    raise ReviewValidationError(f"invalid link document id {p_doc_id!r}")
+
+
+def _preflight_links(links) -> list:
+    normalized = []
+    seen: set[str] = set()
+    for link in links:
+        p_doc_id = _canonical_link_document_id(link.p_doc_id)
+        if p_doc_id in seen:
+            raise ReviewValidationError(
+                f"duplicate schedule document id {p_doc_id}"
+            )
+        seen.add(p_doc_id)
+        normalized.append(
+            link if link.p_doc_id == p_doc_id else replace(link, p_doc_id=p_doc_id)
+        )
+    return normalized
+
+
+def _require_complete_review_input(review_bundle: ReviewBundle, links) -> None:
+    linked = {_canonical_link_document_id(link.p_doc_id) for link in links}
+    managed = set(review_bundle.corrections.documents)
+    missing = sorted(managed - linked, key=int)
+    if missing:
+        raise ReviewValidationError(
+            "managed documents missing from import links: " + ", ".join(missing)
+        )
+
+
+def _require_clean_review_import_session(session) -> None:
+    if session.new or session.dirty or session.deleted:
+        raise ReviewValidationError(
+            "reviewed import requires a clean session boundary"
+        )
+    if session.in_transaction():
+        raise ReviewValidationError(
+            "reviewed import requires no active transaction"
+        )
+
+
+def import_all(
+    session,
+    fetcher,
+    links=None,
+    *,
+    atomic: bool = False,
+    review_bundle: ReviewBundle | None = None,
+) -> ImportReport:
     """Полный цикл импорта. `fetcher` — Fetcher или его тестовый двойник.
 
     Суточный live-импорт по умолчанию фиксирует каждый файл отдельно: обрыв
     одного ответа ЮФУ не должен отменять уже скачанные документы. Явный
     ``atomic=True`` предназначен для заранее проверенного локального набора:
     любое исключение выходит вызывающему коду, который откатывает всю пачку.
+    ``review_bundle`` опционален: управляемые им документы всегда заново
+    разбираются и проходят точную проверку перед snapshot/diff и commit.
+    Reviewed-импорт владеет входной границей транзакции: вызывающий код обязан
+    передать свежую Session без pending-состояния и без active transaction.
+    SQLAlchemy начинает транзакцию даже после простого SELECT, поэтому такую
+    read-only транзакцию вызывающий код тоже должен завершить заранее.
     """
+    if review_bundle is not None:
+        _require_clean_review_import_session(session)
     links = list(links) if links is not None else parse_index(fetcher.fetch_index())
+    links = _preflight_links(links)
+    if review_bundle is not None:
+        _require_complete_review_input(review_bundle, links)
     report = ImportReport()
 
     known = set(session.scalars(select(ScheduleDocument.p_doc_id)).all())
@@ -492,26 +627,54 @@ def import_all(session, fetcher, links=None, *, atomic: bool = False) -> ImportR
 
     for link in links:
         if atomic:
-            report.documents.append(_import_link(session, fetcher, link))
+            report.documents.append(
+                _import_link(
+                    session,
+                    fetcher,
+                    link,
+                    review_bundle=review_bundle,
+                )
+            )
             session.flush()
             continue
         try:
-            report.documents.append(_import_link(session, fetcher, link))
+            context = _ImportLinkContext()
+            report.documents.append(
+                _import_link(
+                    session,
+                    fetcher,
+                    link,
+                    review_bundle=review_bundle,
+                    _context=context,
+                )
+            )
             session.commit()
         except Exception as exc:  # noqa: BLE001 — один файл не роняет цикл
             session.rollback()
             logger.exception("Импорт %s упал", link.p_doc_id)
+            previous_doc_type = session.scalar(
+                select(ScheduleDocument.doc_type).where(
+                    ScheduleDocument.p_doc_id == int(link.p_doc_id)
+                )
+            )
             report.documents.append(
                 DocumentReport(
                     p_doc_id=link.p_doc_id,
                     section=link.section,
                     label=link.label,
-                    doc_type=DocType.UNKNOWN,
+                    doc_type=previous_doc_type or context.doc_type,
                     status=STATUS_FAILED,
                     error=str(exc),
                 )
             )
     return report
+
+
+def _default_review_bundle() -> ReviewBundle | None:
+    """Authenticate the committed bundle lazily to avoid an import cycle."""
+    from src.schedule.validated_snapshot import validate_snapshot
+
+    return validate_snapshot().review_bundle
 
 
 def run_schedule_import(
@@ -521,7 +684,14 @@ def run_schedule_import(
     """Точка входа для планировщика и CLI. Ошибки — в Telegram, как у новостей."""
     session = session_factory()
     try:
-        report = import_all(session, fetcher or Fetcher())
+        review_bundle = _default_review_bundle()
+        report = import_all(
+            session,
+            fetcher or Fetcher(),
+            review_bundle=review_bundle,
+            atomic=review_bundle is not None,
+        )
+        session.commit()
         logger.info("Импорт расписания завершён: %s", report.summary())
         return {
             "summary": report.summary(),
@@ -537,9 +707,26 @@ def run_schedule_import(
         session.close()
 
 
-def _import_link(session, fetcher, link) -> DocumentReport:
+def _import_link(
+    session,
+    fetcher,
+    link,
+    *,
+    review_bundle: ReviewBundle | None = None,
+    _context: _ImportLinkContext | None = None,
+) -> DocumentReport:
     fetched = fetcher.fetch_document(link.p_doc_id)
+    actual_sha256 = hashlib.sha256(fetched.content).hexdigest()
+    if fetched.sha256 != actual_sha256:
+        raise ReviewValidationError(
+            f"document {link.p_doc_id}: fetched content SHA-256 mismatch"
+        )
+    if review_bundle is not None:
+        review_bundle.guard_source(link.p_doc_id, actual_sha256)
+    managed = review_bundle is not None and review_bundle.manages(link.p_doc_id)
     doc_type = _DOC_TYPE[_classify(fetched.content)]
+    if _context is not None:
+        _context.doc_type = doc_type
 
     document = session.scalar(
         select(ScheduleDocument).where(ScheduleDocument.p_doc_id == int(link.p_doc_id))
@@ -552,7 +739,7 @@ def _import_link(session, fetcher, link) -> DocumentReport:
         status=STATUS_IMPORTED,
     )
 
-    if document is not None and document.sha256 == fetched.sha256:
+    if document is not None and document.sha256 == actual_sha256 and not managed:
         report.status = STATUS_UNCHANGED
         return report
 
@@ -565,7 +752,7 @@ def _import_link(session, fetcher, link) -> DocumentReport:
             section=link.section,
             label=link.label,
             doc_type=doc_type,
-            sha256=fetched.sha256,
+            sha256=actual_sha256,
             source_url=fetched.source_url,
         )
         session.add(document)
@@ -575,7 +762,7 @@ def _import_link(session, fetcher, link) -> DocumentReport:
         document.section = link.section
         document.label = link.label
         document.doc_type = doc_type
-        document.sha256 = fetched.sha256
+        document.sha256 = actual_sha256
         document.source_url = fetched.source_url
         document.fetched_at = datetime.now()
         report.status = STATUS_REIMPORTED
@@ -611,6 +798,14 @@ def _import_link(session, fetcher, link) -> DocumentReport:
             f"{deficit} из {report.ledger.total} ячеек — возможна тихая потеря "
             "пар (сменилась вёрстка sfedu.ru?). Нужна проверка."
         )
+    if review_bundle is not None and managed:
+        # apply_and_validate требует чистую границу и владеет savepoint'ом
+        # финальной проверки. prove() обязан видеть parser-only результат,
+        # поэтому ручные исправления идут строго после него.
+        session.flush()
+        correction_result = review_bundle.apply_and_validate(session, document)
+        report.lessons += correction_result.added - correction_result.removed
+        session.flush()
     if report.status == STATUS_REIMPORTED:
         after = _snapshot(session, document)
         diff = _diff(before, after)
@@ -620,7 +815,7 @@ def _import_link(session, fetcher, link) -> DocumentReport:
                 ImportDiff(
                     document_id=document.id,
                     sha256_before=sha_before or "",
-                    sha256_after=fetched.sha256,
+                    sha256_after=actual_sha256,
                     added=len(diff.added),
                     removed=len(diff.removed),
                     details=diff.details(),
@@ -1496,23 +1691,46 @@ def _snapshot(session, document) -> tuple[str, ...]:
     exams = session.scalars(
         select(ExamEvent).where(ExamEvent.document_id == document.id)
     ).all()
+    p_doc_id = str(document.p_doc_id)
     items = [
-        f"пара: группа {lesson.group_id}, день {lesson.weekday}, пара "
-        f"{lesson.pair_number}, подгруппа {lesson.subgroup} — {lesson.subject} "
-        f"({lesson.room})"
+        state_signature(lesson_state(lesson, p_doc_id=p_doc_id))
         for lesson in lessons
-    ] + [
-        f"экзамен: группа {exam.group_id} — {exam.subject} ({exam.exam_at})"
-        for exam in exams
-    ]
+    ] + [_exam_snapshot_signature(exam, p_doc_id=p_doc_id) for exam in exams]
     return tuple(sorted(items))
 
 
+def _exam_snapshot_signature(exam: ExamEvent, *, p_doc_id: str) -> str:
+    group = exam.group
+    payload = {
+        "document": p_doc_id,
+        "group": {
+            "level": group.level.value,
+            "course": group.course,
+            "number": group.number,
+            "program": group.program,
+        },
+        "subject": exam.subject,
+        "teacher": exam.teacher,
+        "consultation_at": (
+            exam.consultation_at.isoformat() if exam.consultation_at else None
+        ),
+        "exam_at": exam.exam_at.isoformat() if exam.exam_at else None,
+        "room": exam.room,
+        "kind": exam.kind,
+    }
+    return "экзамен:" + json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+
+
 def _diff(before: tuple[str, ...], after: tuple[str, ...]) -> DocumentDiff:
-    was, now = set(before), set(after)
+    was, now = Counter(before), Counter(after)
     return DocumentDiff(
-        added=tuple(sorted(now - was)),
-        removed=tuple(sorted(was - now)),
+        added=tuple(sorted((now - was).elements())),
+        removed=tuple(sorted((was - now).elements())),
     )
 
 
