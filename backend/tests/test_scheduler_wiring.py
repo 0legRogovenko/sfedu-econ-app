@@ -61,10 +61,20 @@ class _FakeSession:
         self.closed = True
 
 
-def test_default_v1_snapshot_keeps_scheduler_in_legacy_mode():
+def test_default_snapshot_uses_reviewed_atomic_mode():
     from src.schedule import importer
 
-    assert importer._default_review_bundle() is None
+    bundle = importer._default_review_bundle()
+
+    assert bundle is not None
+    assert set(bundle.corrections.documents) == {
+        "14159",
+        "14160",
+        "14175",
+        "14176",
+        "14177",
+        "14178",
+    }
 
 
 def test_schedule_import_failure_alerts_admin_and_does_not_raise(monkeypatch):
