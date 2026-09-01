@@ -86,7 +86,13 @@ def _default_fetch(url: str) -> str:
 def _rows(section: str, people: list[Person], start_order: int) -> list[Contact]:
     return [
         Contact(
-            section=section,
+            # Один человек может одновременно работать на кафедре и входить
+            # в деканат. Для единого справочника деканат — основная секция;
+            # это правило должно работать и в штатном импорте кафедр, а не
+            # только в резервном реестре ЮФУ.
+            section=(
+                DEANERY_SECTION if person.name in _DEANERY_NAMES else section
+            ),
             name=person.name,
             role=person.role or None,
             # Телефон с сайта НЕ сохраняем: у деканата это общий коммутатор с

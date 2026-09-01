@@ -35,6 +35,22 @@ def test_fills_deanery_and_departments(db_session):
     assert "Экономическая теория" in sections
 
 
+def test_dean_is_moved_from_department_to_deanery():
+    rows = econ_staff_runner._rows(
+        "Экономическая кибернетика",
+        [
+            econ_staff.Person(
+                name="Косолапова Наталья Алексеевна",
+                role="д.э.н., декан",
+                profile_url="https://sfedu.ru/s7/person/ru/nakosolapova",
+            )
+        ],
+        start_order=100,
+    )
+
+    assert rows[0].section == "Деканат"
+
+
 def test_head_goes_first_in_department(db_session):
     econ_staff_runner.sync(db_session, fetch=_fetch_ok, with_emails=False)
 
