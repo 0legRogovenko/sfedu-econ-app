@@ -225,7 +225,9 @@ def test_group_level_defaults_to_bachelor(db_session):
 def test_duplicate_master_program_rejected(db_session):
     def master():
         return Group(
-            course=1, number=None, level=EducationLevel.MASTER,
+            course=1,
+            number=None,
+            level=EducationLevel.MASTER,
             program="Экономика, управление и право",
         )
 
@@ -243,7 +245,9 @@ def test_same_program_different_course_allowed(db_session):
     for course in (1, 2):
         db_session.add(
             Group(
-                course=course, number=None, level=EducationLevel.MASTER,
+                course=course,
+                number=None,
+                level=EducationLevel.MASTER,
                 program="Экономика, управление и право",
             )
         )
@@ -257,10 +261,18 @@ def test_same_slot_different_module_allowed(db_session):
     gid = _make_group(db_session)
     did = _make_document(db_session)
     modules = [
-        Module(document_id=did, name="I модуль",
-               date_from=date(2025, 9, 1), date_to=date(2025, 11, 2)),
-        Module(document_id=did, name="2 модуль",
-               date_from=date(2025, 11, 3), date_to=date(2025, 11, 23)),
+        Module(
+            document_id=did,
+            name="I модуль",
+            date_from=date(2025, 9, 1),
+            date_to=date(2025, 11, 2),
+        ),
+        Module(
+            document_id=did,
+            name="2 модуль",
+            date_from=date(2025, 11, 3),
+            date_to=date(2025, 11, 23),
+        ),
     ]
     db_session.add_all(modules)
     db_session.flush()
@@ -274,8 +286,12 @@ def test_same_slot_different_module_allowed(db_session):
 def test_duplicate_slot_within_module_rejected(db_session):
     gid = _make_group(db_session)
     did = _make_document(db_session)
-    module = Module(document_id=did, name="I модуль",
-                    date_from=date(2025, 9, 1), date_to=date(2025, 11, 2))
+    module = Module(
+        document_id=did,
+        name="I модуль",
+        date_from=date(2025, 9, 1),
+        date_to=date(2025, 11, 2),
+    )
     db_session.add(module)
     db_session.flush()
 

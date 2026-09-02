@@ -22,9 +22,7 @@ from src.schedule.grid import Grid
 
 # Дефисы двух видов вперемешку в одном файле: '-' (U+002D) и '–' (U+2013).
 # Пробелы вокруг плавают, поэтому \s*, а не литерал.
-_RANGE = re.compile(
-    r"^(\d\d)\.(\d\d)\.(\d\d)\s*[-–]\s*(\d\d)\.(\d\d)\.(\d\d)$"
-)
+_RANGE = re.compile(r"^(\d\d)\.(\d\d)\.(\d\d)\s*[-–]\s*(\d\d)\.(\d\d)\.(\d\d)$")
 
 _WEEK_TYPES = {
     "верхняя неделя": WeekType.UPPER,

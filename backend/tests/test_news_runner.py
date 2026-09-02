@@ -259,6 +259,9 @@ def test_faculty_news_second_run_deduplicates(db_session, session_factory):
     result = run_news_parsers(session_factory=session_factory, fetch=FakeFetch(pages))
 
     assert result["econ"] == {"new": 0}
-    assert len(
-        db_session.scalars(select(News).where(News.source == NewsSource.ECON)).all()
-    ) == 1
+    assert (
+        len(
+            db_session.scalars(select(News).where(News.source == NewsSource.ECON)).all()
+        )
+        == 1
+    )

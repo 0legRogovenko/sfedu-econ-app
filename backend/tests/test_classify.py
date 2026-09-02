@@ -70,7 +70,9 @@ class TestCorpus:
         assert set(EXPECTED) == {e["id"] for e in MANIFEST}
 
     def test_every_file_classified_as_expected(self, actual):
-        wrong = {i: (actual[i], EXPECTED[i]) for i in EXPECTED if actual[i] != EXPECTED[i]}
+        wrong = {
+            i: (actual[i], EXPECTED[i]) for i in EXPECTED if actual[i] != EXPECTED[i]
+        }
         assert not wrong, f"расхождения файл → (получено, ожидалось): {wrong}"
 
     def test_no_unknown(self, actual):

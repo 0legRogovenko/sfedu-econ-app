@@ -7,7 +7,6 @@ import ssl
 
 from src.sfedu_tls import SFEDU_INTERMEDIATE_CERT, make_sfedu_ssl_context
 
-
 EXPECTED_INTERMEDIATE_SHA256 = (
     "a883559231f8388daf35ce41c8101040ae8fd9b656434247b9475af592cc08ca"
 )

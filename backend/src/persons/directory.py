@@ -51,8 +51,8 @@ def decode_id(person_id: str) -> tuple[str, str, str] | None:
 @dataclass
 class PersonRow:
     key: tuple[str, str, str]
-    short_name: str          # «Фамилия И.О.» — для списка и поиска
-    full_name: str           # «Фамилия Имя Отчество» — для карточки
+    short_name: str  # «Фамилия И.О.» — для списка и поиска
+    full_name: str  # «Фамилия Имя Отчество» — для карточки
     sections: list[str] = field(default_factory=list)  # деканат / кафедры
     roles: list[str] = field(default_factory=list)
     email: str | None = None
@@ -213,12 +213,10 @@ def lessons_for_person(db: Session, key: tuple[str, str, str]) -> list[Lesson]:
     # /api/persons/{id}/schedule делал бы по SELECT на каждую пару (N+1) —
     # у занятого преподавателя это ~150 запросов на один ответ. Как в
     # get_schedule.
-    lessons = db.scalars(
-        select(Lesson).options(joinedload(Lesson.teacher))
-    ).all()
+    lessons = db.scalars(select(Lesson).options(joinedload(Lesson.teacher))).all()
     links = link_lessons(lessons, registry)
     linked_ids = {lid for lid, keys in links.items() if key in keys}
-    return [l for l in lessons if l.id in linked_ids]
+    return [lesson for lesson in lessons if lesson.id in linked_ids]
 
 
 def exams_for_person(db: Session, key: tuple[str, str, str]) -> list[ExamEvent]:

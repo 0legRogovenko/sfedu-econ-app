@@ -41,14 +41,26 @@ def test_groups_sorted_by_level_course_then_number_or_program(client, db_session
     """
     db_session.add_all(
         [
-            Group(course=2, number=None, program="Экономическая аналитика",
-                  level=EducationLevel.MASTER),
+            Group(
+                course=2,
+                number=None,
+                program="Экономическая аналитика",
+                level=EducationLevel.MASTER,
+            ),
             Group(course=1, number="1.2"),
-            Group(course=1, number=None, program="Корпоративные финансы",
-                  level=EducationLevel.MASTER),
+            Group(
+                course=1,
+                number=None,
+                program="Корпоративные финансы",
+                level=EducationLevel.MASTER,
+            ),
             Group(course=1, number="1.1"),
-            Group(course=1, number=None, program="Учетные технологии и аудит",
-                  level=EducationLevel.MASTER),
+            Group(
+                course=1,
+                number=None,
+                program="Учетные технологии и аудит",
+                level=EducationLevel.MASTER,
+            ),
         ]
     )
     db_session.flush()
@@ -114,9 +126,7 @@ def test_groups_etag_changes_with_data(client, db_session):
     db_session.add(Group(course=3, number="3.1"))
     db_session.flush()
 
-    second = client.get(
-        "/api/groups", headers={"If-None-Match": first.headers["etag"]}
-    )
+    second = client.get("/api/groups", headers={"If-None-Match": first.headers["etag"]})
     assert second.status_code == 200
     assert second.headers["etag"] != first.headers["etag"]
 

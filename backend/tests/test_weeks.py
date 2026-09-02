@@ -76,8 +76,11 @@ def test_read_by_column_pairs_not_by_rows(autumn):
     dates = [w.date_from for w in weeks]
     assert dates == sorted(dates), "диапазоны идут по возрастанию дат"
 
-    gaps = [(a.date_to, b.date_from) for a, b in zip(weeks, weeks[1:])
-            if (b.date_from - a.date_to).days != 1]
+    gaps = [
+        (a.date_to, b.date_from)
+        for a, b in zip(weeks, weeks[1:])
+        if (b.date_from - a.date_to).days != 1
+    ]
     assert gaps == [], "цепочка недель непрерывна: каждая начинается назавтра"
 
 
@@ -176,10 +179,12 @@ def test_iso_mismatch_is_anomaly_not_failure():
 
 
 def test_unparsable_range_becomes_anomaly():
-    grid = synthetic([
-        ("01.09.25 - 07.09.25", "Верхняя неделя"),
-        ("сентябрь", "Нижняя неделя"),
-    ])
+    grid = synthetic(
+        [
+            ("01.09.25 - 07.09.25", "Верхняя неделя"),
+            ("сентябрь", "Нижняя неделя"),
+        ]
+    )
 
     parsed = parse_week_calendar(grid)
 

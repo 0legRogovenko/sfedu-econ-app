@@ -7,7 +7,6 @@
 import hashlib
 
 import pytest
-import requests
 
 from src.schedule.fetch import CRAWL_DELAY_SECONDS, Fetcher
 from src.sfedu_tls import SfeduTLSAdapter

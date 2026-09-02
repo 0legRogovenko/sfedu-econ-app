@@ -82,7 +82,9 @@ _MASTER_PROGRAM = re.compile(r"Магистерск\w*\s*программ\w*\s*�
 _TITLE_WITH_GROUP = re.compile(r"«(.+?)»\s*(\d+\.\d+)")
 _COURSE = re.compile(r"(\d)\s*курс", re.IGNORECASE)
 _FORM = re.compile(r"Очная\s*форма", re.IGNORECASE)
-_WEEK_HEADING = re.compile(r"(ВЕРХНЯЯ|НИЖНЯЯ)\s*НЕДЕЛЯ|НЕДЕЛЯ\s*:\s*(ВЕРХНЯЯ|НИЖНЯЯ)", re.IGNORECASE)
+_WEEK_HEADING = re.compile(
+    r"(ВЕРХНЯЯ|НИЖНЯЯ)\s*НЕДЕЛЯ|НЕДЕЛЯ\s*:\s*(ВЕРХНЯЯ|НИЖНЯЯ)", re.IGNORECASE
+)
 
 REASON_TIME_OFF_GRID = "время вне сетки пар"
 REASON_DAY_UNKNOWN = "день недели не распознан"
@@ -303,9 +305,7 @@ class CellPlacement:
 
 def find_time_column(grid: Grid) -> int | None:
     """Колонка времени — та, где больше всего ячеек вида '800-845'."""
-    counts = Counter(
-        cell.col_start for cell in grid.cells if _SLOT.search(cell.text)
-    )
+    counts = Counter(cell.col_start for cell in grid.cells if _SLOT.search(cell.text))
     if not counts:
         return None
     return counts.most_common(1)[0][0]
@@ -464,7 +464,9 @@ def parse_rows(
             continue
 
         day_cells = [
-            cell for cell in cells if cell.col_start < header.time_col and not cell.is_empty
+            cell
+            for cell in cells
+            if cell.col_start < header.time_col and not cell.is_empty
         ]
         reason = None
         if day_cells:
@@ -474,8 +476,11 @@ def parse_rows(
             found = decode_weekday(" ".join(cell.text for cell in day_cells))
             if found is None:
                 found = next(
-                    (d for d in map(decode_weekday, (c.text for c in day_cells))
-                     if d is not None),
+                    (
+                        d
+                        for d in map(decode_weekday, (c.text for c in day_cells))
+                        if d is not None
+                    ),
                     None,
                 )
             if found is not None:

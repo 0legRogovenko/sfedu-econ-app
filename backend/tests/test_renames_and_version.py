@@ -85,34 +85,28 @@ class TestSubjectRenames:
         db_session.flush()
 
         subjects = [
-            l["subject"]
-            for l in client.get(f"/api/schedule?group_id={g.id}").json()["lessons"]
+            lesson["subject"]
+            for lesson in client.get(f"/api/schedule?group_id={g.id}").json()["lessons"]
         ]
         assert subjects == ["Институциональная экономика"]
 
     def test_unmatched_subject_untouched(self, client, db_session):
         g = _group(db_session)
         db_session.add(_lesson(g.id, "Матанализ"))
-        db_session.add(
-            SubjectRename(match_subject="Другое", display_subject="Иное")
-        )
+        db_session.add(SubjectRename(match_subject="Другое", display_subject="Иное"))
         db_session.flush()
 
         subjects = [
-            l["subject"]
-            for l in client.get(f"/api/schedule?group_id={g.id}").json()["lessons"]
+            lesson["subject"]
+            for lesson in client.get(f"/api/schedule?group_id={g.id}").json()["lessons"]
         ]
         assert subjects == ["Матанализ"]
 
     def test_exams_renamed_too(self, client, db_session):
         g = _group(db_session)
+        db_session.add(ExamEvent(group_id=g.id, subject="Data Sciience", teacher=None))
         db_session.add(
-            ExamEvent(group_id=g.id, subject="Data Sciience", teacher=None)
-        )
-        db_session.add(
-            SubjectRename(
-                match_subject="Data Sciience", display_subject="Data Science"
-            )
+            SubjectRename(match_subject="Data Sciience", display_subject="Data Science")
         )
         db_session.flush()
 
@@ -151,9 +145,7 @@ class TestVersionGate:
 class TestPersonExams:
     def test_person_exams_linked_by_teacher_text(self, client, db_session):
         g = _group(db_session)
-        db_session.add(
-            Contact(section="Кафедра", name="Ласкова Татьяна Сергеевна")
-        )
+        db_session.add(Contact(section="Кафедра", name="Ласкова Татьяна Сергеевна"))
         db_session.add(
             ExamEvent(
                 group_id=g.id,
@@ -163,9 +155,7 @@ class TestPersonExams:
             )
         )
         # чужой экзамен — не должен попасть
-        db_session.add(
-            ExamEvent(group_id=g.id, subject="Право", teacher="Иванов И.И.")
-        )
+        db_session.add(ExamEvent(group_id=g.id, subject="Право", teacher="Иванов И.И."))
         db_session.flush()
 
         pid = encode_id(key_of_full("Ласкова Татьяна Сергеевна"))
