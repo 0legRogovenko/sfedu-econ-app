@@ -1,4 +1,5 @@
 import re
+import subprocess
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
@@ -244,6 +245,30 @@ def _yaml_value_lines(block: str, key: str) -> list[str]:
             break
         values.append(raw_line.strip().strip("'\""))
     return values
+
+
+def test_branch_adds_no_internal_superpowers_docs() -> None:
+    result = subprocess.run(
+        [
+            "git",
+            "diff",
+            "--name-only",
+            "--diff-filter=A",
+            "origin/main...HEAD",
+            "--",
+            "docs/superpowers",
+        ],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    offenders = result.stdout.splitlines()
+
+    assert offenders == [], (
+        "branch adds internal docs under docs/superpowers relative to origin/main:\n"
+        + "\n".join(offenders)
+    )
 
 
 def test_runtime_requirements_exclude_development_tools() -> None:
