@@ -138,7 +138,7 @@ separate official exam timetable with exact dates and times.
 ## Разработка локально
 
     python3 -m venv venv && source venv/bin/activate
-    pip install -r requirements.txt
+    pip install -r requirements-dev.txt
     cp .env.example .env   # DATABASE_URL уже указывает на localhost:5433
     docker compose up -d db
     alembic upgrade head

@@ -24,8 +24,10 @@ jobs:
         with:
           python-version: '3.12'   # как в backend/Dockerfile
           cache: pip
-          cache-dependency-path: backend/requirements.txt
-      - run: pip install -r requirements.txt
+          cache-dependency-path: |
+            backend/requirements.txt
+            backend/requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
       # Тесты держат схему в памяти на SQLite (tests/conftest.py), поэтому
       # postgres здесь не нужен — он нужен соседней задаче.
       - run: pytest -q
