@@ -285,6 +285,14 @@ def test_backend_ci_runs_ruff_after_install_and_before_pytest() -> None:
     backend_job = jobs.get("backend")
     assert isinstance(backend_job, Mapping), "workflow is missing the 'backend' job"
 
+    workflow_defaults = document.get("defaults")
+    workflow_run_defaults = (
+        workflow_defaults.get("run") if isinstance(workflow_defaults, Mapping) else None
+    )
+    assert not (
+        isinstance(workflow_run_defaults, Mapping) and "shell" in workflow_run_defaults
+    ), "backend job must not inherit a workflow-level custom shell"
+
     defaults = backend_job.get("defaults")
     run_defaults = defaults.get("run") if isinstance(defaults, Mapping) else None
     assert (
@@ -696,6 +704,14 @@ def test_trusted_action_with_wrong_pin_is_rejected(
     ("target", "replacement"),
     (
         (
+            "jobs:",
+            "defaults:\n  run:\n    shell: bash -c 'exit 0' -- {0}\njobs:",
+        ),
+        (
+            "jobs:",
+            '"defaults": {"run": {"shell": "bash -c \'exit 0\' -- {0}"}}\njobs:',
+        ),
+        (
             "        working-directory: backend",
             "        working-directory: backend\n"
             "        shell: bash -c 'exit 0' -- {0}",
@@ -705,7 +721,12 @@ def test_trusted_action_with_wrong_pin_is_rejected(
             "      - run: ruff check .\n        shell: bash -c 'exit 0' -- {0}",
         ),
     ),
-    ids=("defaults-run-shell", "ruff-step-shell"),
+    ids=(
+        "workflow-defaults-run-shell",
+        "quoted-flow-workflow-defaults-run-shell",
+        "defaults-run-shell",
+        "ruff-step-shell",
+    ),
 )
 def test_backend_ruff_gate_rejects_custom_shell(
     tmp_path: Path,
