@@ -58,6 +58,8 @@ def _construct_unique_mapping(
     mapping = _MarkedMapping()
     for key_node, value_node in node.value:
         key = loader.construct_object(key_node, deep=deep)
+        if key is True and key_node.value == "on":
+            key = "on"
         try:
             duplicate = key in mapping
         except TypeError as exc:
@@ -177,6 +179,34 @@ def _permission_issues(document: _MarkedMapping) -> list[str]:
     return issues
 
 
+def _trigger_issues(document: _MarkedMapping) -> list[str]:
+    missing = object()
+    trigger = document.get("on", missing)
+    if trigger is missing:
+        return []
+
+    line = document.key_lines["on"] + 1
+    if isinstance(trigger, str):
+        trigger_names = (trigger,)
+        supported_shape = True
+    elif isinstance(trigger, list):
+        trigger_names = tuple(item for item in trigger if isinstance(item, str))
+        supported_shape = len(trigger_names) == len(trigger)
+    elif isinstance(trigger, Mapping):
+        trigger_names = tuple(key for key in trigger if isinstance(key, str))
+        supported_shape = len(trigger_names) == len(trigger)
+    else:
+        trigger_names = ()
+        supported_shape = False
+
+    issues: list[str] = []
+    if not supported_shape:
+        issues.append(f"line {line}: unsupported on trigger shape")
+    if "pull_request_target" in trigger_names:
+        issues.append(f"line {line}: pull_request_target is forbidden")
+    return issues
+
+
 def _load_guard(
     tmp_path: Path,
     workflows: dict[str, str],
@@ -239,6 +269,8 @@ def test_workflows_use_read_only_permissions_and_safe_triggers() -> None:
         path = workflow.relative_to(ROOT)
 
         for issue in _permission_issues(document):
+            issues.append(f"{path}: {issue}")
+        for issue in _trigger_issues(document):
             issues.append(f"{path}: {issue}")
         for _mapping, _value, line in _entries_for_key(document, "pull_request_target"):
             issues.append(f"{path}: line {line + 1}: pull_request_target is forbidden")
@@ -455,6 +487,91 @@ jobs: {}
     )
 
     with pytest.raises(AssertionError, match="pull_request_target"):
+        guard["test_workflows_use_read_only_permissions_and_safe_triggers"]()
+
+
+@pytest.mark.parametrize(
+    "trigger",
+    (
+        "on: pull_request_target",
+        "on: [push, pull_request_target]",
+        '"on": "pull_request_target"',
+        "'on': [push, 'pull_request_target']",
+    ),
+    ids=(
+        "scalar",
+        "list",
+        "quoted-scalar",
+        "quoted-list",
+    ),
+)
+def test_pull_request_target_trigger_values_are_rejected(
+    tmp_path: Path,
+    trigger: str,
+) -> None:
+    guard = _load_guard(
+        tmp_path,
+        {
+            "release.yml": f"""\
+permissions:
+  contents: read
+{trigger}
+jobs: {{}}
+"""
+        },
+    )
+
+    with pytest.raises(AssertionError, match="pull_request_target"):
+        guard["test_workflows_use_read_only_permissions_and_safe_triggers"]()
+
+
+@pytest.mark.parametrize(
+    ("trigger", "expected"),
+    (
+        ("push", "push"),
+        ("[push, pull_request]", ["push", "pull_request"]),
+    ),
+    ids=("scalar", "list"),
+)
+def test_safe_trigger_values_are_accepted_and_github_on_key_is_preserved(
+    tmp_path: Path,
+    trigger: str,
+    expected: object,
+) -> None:
+    guard = _load_guard(
+        tmp_path,
+        {
+            "release.yml": f"""\
+permissions:
+  contents: read
+on: {trigger}
+jobs: {{}}
+"""
+        },
+    )
+
+    guard["test_workflows_use_read_only_permissions_and_safe_triggers"]()
+    _text, document = guard["_load_workflow"](guard["WORKFLOWS"][0])
+
+    assert "on" in document
+    assert True not in document
+    assert document["on"] == expected
+
+
+def test_unsupported_trigger_shape_is_rejected(tmp_path: Path) -> None:
+    guard = _load_guard(
+        tmp_path,
+        {
+            "release.yml": """\
+permissions:
+  contents: read
+on: 42
+jobs: {}
+"""
+        },
+    )
+
+    with pytest.raises(AssertionError, match="unsupported on trigger shape"):
         guard["test_workflows_use_read_only_permissions_and_safe_triggers"]()
 
 
