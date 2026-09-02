@@ -7,23 +7,27 @@ Contact _c({
   String section = 'Деканат',
   String name = 'Иванова Елена Игоревна',
   String? role = 'Декан',
-}) =>
-    Contact(
-      id: id,
-      section: section,
-      name: name,
-      role: role,
-      office: '203',
-      email: 'dekan@sfedu.ru',
-      phone: null,
-      officeHours: 'Пн–Пт 10:00–12:00',
-    );
+}) => Contact(
+  id: id,
+  section: section,
+  name: name,
+  role: role,
+  office: '203',
+  email: 'dekan@sfedu.ru',
+  phone: null,
+  officeHours: 'Пн–Пт 10:00–12:00',
+);
 
 void main() {
   group('filterContacts', () {
     final list = [
       _c(id: 1, name: 'Иванова Елена Игоревна', role: 'Декан'),
-      _c(id: 2, name: 'Петров Андрей Сергеевич', section: 'Кафедра', role: 'Завкафедрой'),
+      _c(
+        id: 2,
+        name: 'Петров Андрей Сергеевич',
+        section: 'Кафедра',
+        role: 'Завкафедрой',
+      ),
       _c(id: 3, name: 'Сидорова Ольга', section: 'Деканат', role: 'Методист'),
     ];
 

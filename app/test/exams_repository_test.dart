@@ -5,15 +5,15 @@ import 'package:sfedu_econ/features/exams/exams_api.dart';
 import 'package:sfedu_econ/features/exams/exams_repository.dart';
 
 Map<String, dynamic> _examJson(int id) => {
-      'id': id,
-      'group_id': 3,
-      'subject': 'Предмет $id',
-      'teacher': 'Чернова О.А.',
-      'consultation_at': '2026-04-08T11:00:00',
-      'exam_at': '2026-04-09T09:00:00',
-      'room': '214',
-      'kind': 'устный',
-    };
+  'id': id,
+  'group_id': 3,
+  'subject': 'Предмет $id',
+  'teacher': 'Чернова О.А.',
+  'consultation_at': '2026-04-08T11:00:00',
+  'exam_at': '2026-04-09T09:00:00',
+  'room': '214',
+  'kind': 'устный',
+};
 
 class FakeExamsApi implements ExamsApi {
   FakeExamsApi(this.responses);

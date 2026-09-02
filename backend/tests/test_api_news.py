@@ -86,7 +86,5 @@ def test_news_etag_304(client, db_session):
     _add_news(db_session, 3)
 
     first = client.get("/api/news")
-    second = client.get(
-        "/api/news", headers={"If-None-Match": first.headers["etag"]}
-    )
+    second = client.get("/api/news", headers={"If-None-Match": first.headers["etag"]})
     assert second.status_code == 304

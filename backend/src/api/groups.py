@@ -11,9 +11,7 @@ router = APIRouter()
 
 
 @router.get("/groups", response_model=list[GroupOut])
-def list_groups(
-    request: Request, response: Response, db: Session = Depends(get_db)
-):
+def list_groups(request: Request, response: Response, db: Session = Depends(get_db)):
     # Порядок детерминированный: уровень → курс → номер (бакалавры) / программа
     # (магистры). level пишется значением ('bachelor' < 'master'), так что
     # бакалавры идут раньше магистров; внутри курса номер разводит бакалаврские
@@ -26,15 +24,11 @@ def list_groups(
         statement = statement.where(
             or_(
                 exists(select(Lesson.id).where(Lesson.group_id == Group.id)),
-                exists(
-                    select(ExamEvent.id).where(ExamEvent.group_id == Group.id)
-                ),
+                exists(select(ExamEvent.id).where(ExamEvent.group_id == Group.id)),
             )
         )
     groups = db.scalars(
-        statement.order_by(
-            Group.level, Group.course, Group.number, Group.program
-        )
+        statement.order_by(Group.level, Group.course, Group.number, Group.program)
     ).all()
     payload = [GroupOut.model_validate(g).model_dump(mode="json") for g in groups]
     return json_with_etag(request, response, payload)

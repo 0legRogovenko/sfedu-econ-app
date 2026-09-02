@@ -76,14 +76,11 @@ def ask(
         raise HTTPException(
             status_code=429,
             detail=(
-                "Помощник сейчас перегружен. Попробуйте позже или обратитесь "
-                "в деканат."
+                "Помощник сейчас перегружен. Попробуйте позже или обратитесь в деканат."
             ),
         )
 
-    contacts = db.scalars(
-        select(Contact).order_by(Contact.section, Contact.id)
-    ).all()
+    contacts = db.scalars(select(Contact).order_by(Contact.section, Contact.id)).all()
 
     # Ключа нет — вызова не будет, значит и оплаты тоже
     result = AskResult(text=None, billed=False)
@@ -120,8 +117,6 @@ def forget_device(
     """Удаляет все логи помощника этого устройства (кнопка «Удалить мои данные»
     в приложении, требование приватности). Идемпотентно: нет строк — deleted 0.
     """
-    result = db.execute(
-        delete(AssistantLog).where(AssistantLog.device_id == device_id)
-    )
+    result = db.execute(delete(AssistantLog).where(AssistantLog.device_id == device_id))
     db.commit()
     return {"deleted": result.rowcount}

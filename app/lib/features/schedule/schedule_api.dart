@@ -7,10 +7,7 @@ enum ScheduleApiStatus { ok, notModified, failure }
 class ScheduleApiResponse {
   const ScheduleApiResponse._(this.status, this.scheduleJson, this.etag);
 
-  factory ScheduleApiResponse.ok(
-    Map<String, dynamic> schedule,
-    String? etag,
-  ) =>
+  factory ScheduleApiResponse.ok(Map<String, dynamic> schedule, String? etag) =>
       ScheduleApiResponse._(ScheduleApiStatus.ok, schedule, etag);
 
   factory ScheduleApiResponse.notModified() =>
@@ -37,7 +34,9 @@ class DioScheduleApi implements ScheduleApi {
 
   @override
   Future<ScheduleApiResponse> fetchSchedule(
-      ScheduleScope scope, String? etag) async {
+    ScheduleScope scope,
+    String? etag,
+  ) async {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         '/api/schedule',

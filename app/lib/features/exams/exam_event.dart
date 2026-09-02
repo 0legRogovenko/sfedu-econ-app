@@ -28,13 +28,13 @@ class ExamEvent {
       raw == null ? null : DateTime.parse(raw as String);
 
   factory ExamEvent.fromJson(Map<String, dynamic> json) => ExamEvent(
-        id: json['id'] as int,
-        groupId: json['group_id'] as int,
-        subject: json['subject'] as String,
-        teacher: json['teacher'] as String?,
-        consultationAt: _parseDt(json['consultation_at']),
-        examAt: _parseDt(json['exam_at']),
-        room: json['room'] as String?,
-        kind: json['kind'] as String?,
-      );
+    id: json['id'] as int,
+    groupId: json['group_id'] as int,
+    subject: json['subject'] as String,
+    teacher: json['teacher'] as String?,
+    consultationAt: _parseDt(json['consultation_at']),
+    examAt: _parseDt(json['exam_at']),
+    room: json['room'] as String?,
+    kind: json['kind'] as String?,
+  );
 }

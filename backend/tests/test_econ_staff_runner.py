@@ -138,7 +138,9 @@ def test_empty_parse_does_not_wipe_directory(db_session, monkeypatch):
         econ_staff_runner, "notify_admin", lambda text: alerts.append(text)
     )
 
-    count = econ_staff_runner.sync(db_session, fetch=lambda url: "<html></html>", with_emails=False)
+    count = econ_staff_runner.sync(
+        db_session, fetch=lambda url: "<html></html>", with_emails=False
+    )
 
     assert count == 0
     survived = db_session.scalars(select(Contact.name)).all()
@@ -193,9 +195,7 @@ class TestEmails:
         return _fx("kafedra-teoria.html")
 
     def test_email_lands_in_contact(self, db_session):
-        econ_staff_runner.sync(
-            db_session, fetch=self._fetch, sleep=lambda _: None
-        )
+        econ_staff_runner.sync(db_session, fetch=self._fetch, sleep=lambda _: None)
 
         emails = db_session.scalars(
             select(Contact.email).where(Contact.email.is_not(None))
@@ -207,18 +207,14 @@ class TestEmails:
     def test_crawl_delay_is_respected(self, db_session):
         """robots.txt sfedu.ru просит 30 секунд между запросами."""
         pauses: list[float] = []
-        econ_staff_runner.sync(
-            db_session, fetch=self._fetch, sleep=pauses.append
-        )
+        econ_staff_runner.sync(db_session, fetch=self._fetch, sleep=pauses.append)
 
         assert pauses, "паузы между личными страницами не делались"
         assert all(p == econ_staff_runner.SFEDU_CRAWL_DELAY_SECONDS for p in pauses)
 
     def test_known_emails_are_not_refetched(self, db_session):
         """Суточный прогон не должен заново дёргать восемь десятков страниц."""
-        econ_staff_runner.sync(
-            db_session, fetch=self._fetch, sleep=lambda _: None
-        )
+        econ_staff_runner.sync(db_session, fetch=self._fetch, sleep=lambda _: None)
         db_session.flush()
 
         hits: list[str] = []
@@ -228,9 +224,7 @@ class TestEmails:
                 hits.append(url)
             return self._fetch(url)
 
-        econ_staff_runner.sync(
-            db_session, fetch=counting_fetch, sleep=lambda _: None
-        )
+        econ_staff_runner.sync(db_session, fetch=counting_fetch, sleep=lambda _: None)
         assert hits == []
 
     def test_person_page_failure_keeps_the_rest(self, db_session):
@@ -239,9 +233,7 @@ class TestEmails:
                 raise RuntimeError("страница недоступна")
             return self._fetch(url)
 
-        count = econ_staff_runner.sync(
-            db_session, fetch=flaky, sleep=lambda _: None
-        )
+        count = econ_staff_runner.sync(db_session, fetch=flaky, sleep=lambda _: None)
         assert count > 20  # справочник на месте, просто без почт
 
 
@@ -355,7 +347,9 @@ def test_only_personal_pages_are_fetched():
 
     urls = econ_staff_runner._person_page_urls(
         [
-            Person(name="А Б В", role="", profile_url="https://sfedu.ru/s7/person/ru/x"),
+            Person(
+                name="А Б В", role="", profile_url="https://sfedu.ru/s7/person/ru/x"
+            ),
             # Старый формат мёртв (404 у всех id) — за ним не ходим.
             Person(
                 name="Г Д Е",

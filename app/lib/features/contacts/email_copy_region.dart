@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class EmailCopyRegion extends StatelessWidget {
-  const EmailCopyRegion({
-    super.key,
-    required this.email,
-    required this.child,
-  });
+  const EmailCopyRegion({super.key, required this.email, required this.child});
 
   final String email;
   final Widget child;
@@ -27,8 +23,8 @@ class EmailCopyRegion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onLongPress: () => _copy(context),
-        child: child,
-      );
+    behavior: HitTestBehavior.opaque,
+    onLongPress: () => _copy(context),
+    child: child,
+  );
 }

@@ -42,25 +42,33 @@ void main() {
     // Версионный гейт сравнивает appBuild с серверным min_build; если забыть
     // поднять константу при релизе, гейт будет резать не те версии.
     final pubspec = File('pubspec.yaml').readAsStringSync();
-    final match =
-        RegExp(r'^version:\s*\S+\+(\d+)', multiLine: true).firstMatch(pubspec)!;
-    expect(appBuild, int.parse(match.group(1)!),
-        reason: 'поднимите appBuild в core/app_version.dart вместе с pubspec');
+    final match = RegExp(
+      r'^version:\s*\S+\+(\d+)',
+      multiLine: true,
+    ).firstMatch(pubspec)!;
+    expect(
+      appBuild,
+      int.parse(match.group(1)!),
+      reason: 'поднимите appBuild в core/app_version.dart вместе с pubspec',
+    );
   });
 
   Future<ProviderContainer> container({required int? minBuild}) async {
     SharedPreferences.setMockInitialValues({'selected_group_id': 3});
     final prefs = await SharedPreferences.getInstance();
-    return ProviderContainer(overrides: [
-      sharedPreferencesProvider.overrideWithValue(prefs),
-      minBuildProvider.overrideWith((ref) async => minBuild),
-      groupsProvider.overrideWith((ref) async => const <Group>[]),
-      scheduleDataProvider
-          .overrideWith((ref) => Stream.value(const ScheduleData.empty())),
-      syncStatusProvider.overrideWith(_FakeSync.new),
-      newsFeedProvider.overrideWith(_FakeNewsFeed.new),
-      contactsFeedProvider.overrideWith(_FakeContactsFeed.new),
-    ]);
+    return ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        minBuildProvider.overrideWith((ref) async => minBuild),
+        groupsProvider.overrideWith((ref) async => const <Group>[]),
+        scheduleDataProvider.overrideWith(
+          (ref) => Stream.value(const ScheduleData.empty()),
+        ),
+        syncStatusProvider.overrideWith(_FakeSync.new),
+        newsFeedProvider.overrideWith(_FakeNewsFeed.new),
+        contactsFeedProvider.overrideWith(_FakeContactsFeed.new),
+      ],
+    );
   }
 
   testWidgets('сервер требует новее — блокирующий экран', (tester) async {

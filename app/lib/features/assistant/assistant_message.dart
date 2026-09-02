@@ -12,20 +12,20 @@ class AssistantMessage {
   });
 
   const AssistantMessage.user(String text)
-      : this(role: AssistantRole.user, text: text);
+    : this(role: AssistantRole.user, text: text);
 
   const AssistantMessage.answer(String text, {bool fallback = false})
-      : this(role: AssistantRole.assistant, text: text, fallback: fallback);
+    : this(role: AssistantRole.assistant, text: text, fallback: fallback);
 
   /// Отказ по нашей вине (нет сети, исчерпан лимит) — не ответ модели,
   /// поэтому без дисклеймера.
   const AssistantMessage.error(String text)
-      : this(role: AssistantRole.assistant, text: text, isError: true);
+    : this(role: AssistantRole.assistant, text: text, isError: true);
 
   /// Плейсхолдер «печатает» на время запроса: он же флаг ожидания —
   /// пока такой есть в ленте, новый вопрос не отправляется.
   const AssistantMessage.pending()
-      : this(role: AssistantRole.assistant, text: '', pending: true);
+    : this(role: AssistantRole.assistant, text: '', pending: true);
 
   final AssistantRole role;
   final String text;
@@ -36,8 +36,7 @@ class AssistantMessage {
   final bool fallback;
 
   /// Чип контактов уместен под любым ответом, включая заглушку.
-  bool get isAnswer =>
-      role == AssistantRole.assistant && !pending && !isError;
+  bool get isAnswer => role == AssistantRole.assistant && !pending && !isError;
 
   /// Подпись «Ответ AI» — только там, где отвечала модель. Под заглушкой
   /// бэкенда модель не участвовала вообще: такая подпись прямо врёт.

@@ -10,11 +10,10 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy import select
-from sqlalchemy.orm import joinedload
 
 from src.api.etag import json_with_etag
 from src.database import get_db
-from src.models import Lesson, Module, WeekCalendar
+from src.models import Module, WeekCalendar
 from src.persons.directory import (
     build_directory,
     decode_id,
@@ -48,18 +47,20 @@ def person_schedule(
     lessons = lessons_for_person(db, key)
     # Детерминированный порядок => стабильный ETag (как в /api/schedule).
     lessons.sort(
-        key=lambda l: (
-            l.weekday,
-            l.pair_number,
-            l.subgroup,
-            l.week_type.value if l.week_type else "",
-            l.id,
+        key=lambda lesson: (
+            lesson.weekday,
+            lesson.pair_number,
+            lesson.subgroup,
+            lesson.week_type.value if lesson.week_type else "",
+            lesson.id,
         )
     )
     # teacher у пар подгружен заранее (joinedload в lessons_for_person):
     # LessonOut его сериализует, иначе был бы N+1 по SELECT на каждую пару.
 
-    document_ids = sorted({l.document_id for l in lessons if l.document_id})
+    document_ids = sorted(
+        {lesson.document_id for lesson in lessons if lesson.document_id}
+    )
     modules: list[Module] = []
     calendar: list[WeekCalendar] = []
     if document_ids:
@@ -75,7 +76,7 @@ def person_schedule(
         ).all()
 
     payload = ScheduleOut(
-        lessons=[LessonOut.model_validate(l) for l in lessons],
+        lessons=[LessonOut.model_validate(lesson) for lesson in lessons],
         modules=[ModuleOut.model_validate(m) for m in modules],
         week_calendar=[WeekCalendarOut.model_validate(w) for w in calendar],
     ).model_dump(mode="json")

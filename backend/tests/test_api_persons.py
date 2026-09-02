@@ -3,7 +3,7 @@
 Юнит-тесты на клиенте с синтетикой + golden на живом корпусе.
 """
 
-from datetime import date, time
+from datetime import time
 
 import pytest
 from sqlalchemy import create_engine, select
@@ -68,9 +68,7 @@ class TestDirectoryEndpoint:
 
     def test_garbage_is_not_a_person(self, client, db_session):
         db_session.add(Teacher(full_name="Беликова С.А. Г-217 АКТРУ"))
-        db_session.add(
-            _lesson(cell_raw="Учёт (л) Беликова С.А. Г-217 АКТРУ ауд.214")
-        )
+        db_session.add(_lesson(cell_raw="Учёт (л) Беликова С.А. Г-217 АКТРУ ауд.214"))
         db_session.flush()
 
         names = {p["short_name"] for p in client.get("/api/persons").json()}
@@ -125,7 +123,9 @@ class TestPersonSchedule:
     ):
         # Ради этого линкер и читает cell_raw: человека НЕТ в teachers, но пары
         # есть. Через /api/schedule?teacher_id их было бы не достать.
-        db_session.add(Contact(section="Кафедра", name="Погорелова Татьяна Геннадьевна"))
+        db_session.add(
+            Contact(section="Кафедра", name="Погорелова Татьяна Геннадьевна")
+        )
         db_session.add(
             _lesson(
                 subject="Учёт",
@@ -187,7 +187,9 @@ class TestGoldenLiveDirectory:
         shorts = {p.short_name for p in people}
 
         assert 100 <= len(people) <= 200
-        assert not [p for p in people if p.short_name.startswith(("Акт ", "Дисциплины"))]
+        assert not [
+            p for p in people if p.short_name.startswith(("Акт ", "Дисциплины"))
+        ]
         # скрытые правкой отсутствуют
         assert "Погорелова Т.Г." not in shorts
         assert "Патракеева О.Ю." not in shorts
@@ -210,7 +212,9 @@ class TestDirectoryOverrides:
     def test_hidden_person_disappears(self, client, db_session):
         from src.models import DirectoryOverride
 
-        db_session.add(Contact(section="Кафедра", name="Погорелова Татьяна Геннадьевна"))
+        db_session.add(
+            Contact(section="Кафедра", name="Погорелова Татьяна Геннадьевна")
+        )
         db_session.add(DirectoryOverride(match_name="Погорелова Т.Г.", hidden=True))
         db_session.flush()
 
@@ -229,7 +233,8 @@ class TestDirectoryOverrides:
         db_session.flush()
 
         person = next(
-            p for p in client.get("/api/persons").json()
+            p
+            for p in client.get("/api/persons").json()
             if p["short_name"] == "Фролова И.В."
         )
         assert person["email"] == "ifrolova@sfedu.ru"
@@ -250,7 +255,8 @@ class TestDirectoryOverrides:
         db_session.flush()
 
         person = next(
-            p for p in client.get("/api/persons").json()
+            p
+            for p in client.get("/api/persons").json()
             if p["short_name"] == "Вольчик В.В."
         )
         assert person["email"] == "volchik@sfedu.ru"
@@ -270,15 +276,26 @@ class TestDirectoryOverrides:
 class TestDeanerySectionPriority:
     def test_deanery_is_primary_section(self, client, db_session):
         # Декан читает на кафедре, но в справочнике должна стоять в деканате.
-        db_session.add_all([
-            Contact(section="Экономическая кибернетика",
-                    name="Косолапова Наталья Алексеевна", role="профессор"),
-            Contact(section="Деканат",
-                    name="Косолапова Наталья Алексеевна", role="Декан факультета"),
-        ])
+        db_session.add_all(
+            [
+                Contact(
+                    section="Экономическая кибернетика",
+                    name="Косолапова Наталья Алексеевна",
+                    role="профессор",
+                ),
+                Contact(
+                    section="Деканат",
+                    name="Косолапова Наталья Алексеевна",
+                    role="Декан факультета",
+                ),
+            ]
+        )
         db_session.flush()
 
-        person = next(p for p in client.get("/api/persons").json()
-                      if p["short_name"] == "Косолапова Н.А.")
+        person = next(
+            p
+            for p in client.get("/api/persons").json()
+            if p["short_name"] == "Косолапова Н.А."
+        )
         assert person["sections"][0] == "Деканат"
         assert "Экономическая кибернетика" in person["sections"]

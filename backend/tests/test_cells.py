@@ -28,7 +28,9 @@ def grids_13469():
 def only(parse: CellParse):
     """Единственное занятие ячейки — с внятным сообщением, если их не одно."""
     assert parse.reason is None, f"ячейка не разобрана: {parse.reason}"
-    assert len(parse.lessons) == 1, f"ожидалось одно занятие, вышло {len(parse.lessons)}"
+    assert len(parse.lessons) == 1, (
+        f"ожидалось одно занятие, вышло {len(parse.lessons)}"
+    )
     return parse.lessons[0]
 
 
@@ -83,9 +85,7 @@ def test_lesson_without_room_is_a_source_hole_too():
 
 def test_inline_start_time_is_not_part_of_subject():
     """14177 p3: красное «С 8:50» задаёт начало, а не название пары."""
-    lesson = only(
-        parse_cell("С 850 Анализ и моделирование БП (л) Калачев В.Ю. онлайн")
-    )
+    lesson = only(parse_cell("С 850 Анализ и моделирование БП (л) Калачев В.Ю. онлайн"))
 
     assert lesson.subject == "Анализ и моделирование БП"
     assert lesson.starts_at_override == time(8, 50)
@@ -138,7 +138,9 @@ def test_latin_c_typo_is_still_a_seminar():
 
 def test_subject_with_parenthesised_part_keeps_it():
     """'(часть 2)' — часть названия, а не вид занятия (23 вхождения)."""
-    text = "Информационно- коммуникационные технологии (часть 2) (с) Цыганков С.С. ауд.407"
+    text = (
+        "Информационно- коммуникационные технологии (часть 2) (с) Цыганков С.С. ауд.407"
+    )
     lesson = only(parse_cell(text))
     assert lesson.subject == "Информационно- коммуникационные технологии (часть 2)"
     assert lesson.lesson_kind is LessonKind.SEMINAR
@@ -156,7 +158,9 @@ def test_date_prefix_without_space_before_subject():
 
 
 def test_date_prefix_with_enumeration():
-    text = "08.11,  15.11   Основы российской государственности (л) Абросимов Д.В. ауд.118"
+    text = (
+        "08.11,  15.11   Основы российской государственности (л) Абросимов Д.В. ауд.118"
+    )
     lesson = only(parse_cell(text))
     # пробелы внутри префикса схлопнуты: разбор идёт по нормализованному тексту,
     # а исходное написание целиком лежит в cell_raw
@@ -209,7 +213,9 @@ def test_week_type_inside_cell_does_not_leak_into_subject():
     ],
 )
 def test_short_week_marker_is_parsed_and_removed_from_subject(
-    text, expected_week, expected_subject,
+    text,
+    expected_week,
+    expected_subject,
 ):
     """PDF пишет тип недели сокращённо; маркер не является названием курса."""
     lesson = only(parse_cell(text))
@@ -220,9 +226,7 @@ def test_short_week_marker_is_parsed_and_removed_from_subject(
 
 def test_teacher_initials_are_not_mistaken_for_a_short_week_marker():
     lesson = only(
-        parse_cell(
-            "Аналоговая и цифровая схемотехника (с) Пуховский В.Н. Онлайн"
-        )
+        parse_cell("Аналоговая и цифровая схемотехника (с) Пуховский В.Н. Онлайн")
     )
 
     assert lesson.week_type is None
@@ -284,9 +288,7 @@ def test_clear_lesson_without_kind_marker_is_kept_with_unknown_kind():
     пару из-за отсутствующего вида нельзя; сам вид при этом не угадываем.
     """
     lesson = only(
-        parse_cell(
-            "История экономики и экономических учений Грищенко И.В. ауд.405"
-        )
+        parse_cell("История экономики и экономических учений Грищенко И.В. ауд.405")
     )
 
     assert lesson.subject == "История экономики и экономических учений"
@@ -299,8 +301,7 @@ def test_clear_lesson_without_kind_marker_is_kept_with_unknown_kind():
 def test_clear_lesson_without_kind_keeps_its_date_constraint():
     lesson = only(
         parse_cell(
-            "До 19.12 История экономики и экономических учений "
-            "Грищенко И.В. ауд.401"
+            "До 19.12 История экономики и экономических учений Грищенко И.В. ауд.401"
         )
     )
 
@@ -465,7 +466,9 @@ def test_muam_electives_without_rooms_are_split_by_kind_markers():
         "МУАМ — Современные платформы для построения корп. инф. систем",
         "МУАМ — Цифровые системы интеграции и управления бизнесом",
     ]
-    assert all(lesson.teachers == () and lesson.room is None for lesson in parse.lessons)
+    assert all(
+        lesson.teachers == () and lesson.room is None for lesson in parse.lessons
+    )
 
 
 def test_muam_electives_with_teachers_and_rooms_use_room_boundaries():
@@ -494,5 +497,11 @@ def test_muam_electives_with_teachers_and_rooms_use_room_boundaries():
 
 
 def test_split_lessons_returns_none_when_boundary_is_unknown():
-    assert split_lessons("Прикладной анализ данных на Python (л) Сайтостроение (л)") is None
-    assert len(split_lessons("Иностранный язык (с) Онлайн Русский язык (с) И.Ю. ауд.222")) == 2
+    assert (
+        split_lessons("Прикладной анализ данных на Python (л) Сайтостроение (л)")
+        is None
+    )
+    assert (
+        len(split_lessons("Иностранный язык (с) Онлайн Русский язык (с) И.Ю. ауд.222"))
+        == 2
+    )

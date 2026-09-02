@@ -1,0 +1,41 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:20"
+      timezone: "Europe/Moscow"
+    open-pull-requests-limit: 3
+    groups:
+      actions-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    schedule:
+      interval: "monthly"
+      time: "06:40"
+      timezone: "Europe/Moscow"
+    open-pull-requests-limit: 3
+    groups:
+      python-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "pub"
+    directory: "/app"
+    schedule:
+      interval: "monthly"
+      time: "07:00"
+      timezone: "Europe/Moscow"
+    open-pull-requests-limit: 3
+    groups:
+      flutter-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"

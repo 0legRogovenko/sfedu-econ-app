@@ -38,9 +38,7 @@ def _sync_sfedu(session, fetch: Callable[[str], str]) -> int:
         return 0
 
     existing = set(
-        session.scalars(
-            select(News.url).where(News.source == NewsSource.SFEDU)
-        ).all()
+        session.scalars(select(News.url).where(News.source == NewsSource.SFEDU)).all()
     )
 
     new_count = 0
@@ -88,9 +86,7 @@ def _sync_econ(session, fetch: Callable[[str], str]) -> int:
         return 0
 
     existing = set(
-        session.scalars(
-            select(News.url).where(News.source == NewsSource.ECON)
-        ).all()
+        session.scalars(select(News.url).where(News.source == NewsSource.ECON)).all()
     )
     new_count = 0
     for candidate in candidates:

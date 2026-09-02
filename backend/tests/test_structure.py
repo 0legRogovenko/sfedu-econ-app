@@ -411,7 +411,12 @@ def test_rotated_time_header_still_defines_bachelor_groups(grids_14178):
     assert header.time_col == 2
     assert header.level is EducationLevel.BACHELOR
     assert {group.number for group in header.groups} == {
-        "4.1", "4.2", "4.3", "4.4", "4.5", "4.6",
+        "4.1",
+        "4.2",
+        "4.3",
+        "4.4",
+        "4.5",
+        "4.6",
     }
 
 
@@ -506,7 +511,9 @@ def test_tuesday_language_block_is_recovered(grids_13470):
 
     grid = page(grids_13470, 2)
     header = parse_header(grid)
-    tuesday = [r for r in parse_rows(grid, header) if r.weekday == 1 and not r.is_separator]
+    tuesday = [
+        r for r in parse_rows(grid, header) if r.weekday == 1 and not r.is_separator
+    ]
 
     assert tuesday, "вторник на странице обязан быть"
     assert all(r.reason is None for r in tuesday), "блоки больше не «вне сетки»"
@@ -530,9 +537,7 @@ def test_phantom_subgroup_from_column_bleed_is_rejected(grids_13470):
     grid = page(grids_13470, 3)
     header = parse_header(grid)
     row = next(
-        r.row
-        for r in parse_rows(grid, header)
-        if r.weekday == 2 and r.pair_number == 2
+        r.row for r in parse_rows(grid, header) if r.weekday == 2 and r.pair_number == 2
     )
     by_group = {}
     for p in place_row(grid, row, header):
@@ -545,7 +550,10 @@ def test_phantom_subgroup_from_column_bleed_is_rejected(grids_13470):
     assert g23[0].subgroup == 0, "занятие всей группы, а не подгруппа"
 
     # соседи тоже получают ровно по одному своему занятию, без чужих кусков
-    assert len(by_group["2.4"]) == 1 and "Теория и практика" in by_group["2.4"][0].cell.text
+    assert (
+        len(by_group["2.4"]) == 1
+        and "Теория и практика" in by_group["2.4"][0].cell.text
+    )
     assert len(by_group["2.5"]) == 1 and "Анализ данных" in by_group["2.5"][0].cell.text
 
 
@@ -560,7 +568,14 @@ def test_lecture_for_the_whole_stream_lands_on_every_group(grids_13469):
 
     lecture = [p for p in placements if "История России (л)" in p.cell.text]
     assert len(lecture) == 6
-    assert {p.group.number for p in lecture} == {"1.1", "1.2", "1.3", "1.4", "1.5", "1.6"}
+    assert {p.group.number for p in lecture} == {
+        "1.1",
+        "1.2",
+        "1.3",
+        "1.4",
+        "1.5",
+        "1.6",
+    }
     assert all(p.subgroup == 0 for p in lecture), "вся группа, а не подгруппа"
 
 
@@ -620,9 +635,9 @@ def test_headerless_page_inherits_header_from_previous(grids_13472):
 
     assert cont.n_cols == prev.n_cols
     assert cont.col_bounds is not None and prev.col_bounds is not None
-    assert all(
-        abs(a - b) < 1.0 for a, b in zip(cont.col_bounds, prev.col_bounds)
-    ), "геометрия колонок разошлась — наследовать шапку нельзя"
+    assert all(abs(a - b) < 1.0 for a, b in zip(cont.col_bounds, prev.col_bounds)), (
+        "геометрия колонок разошлась — наследовать шапку нельзя"
+    )
 
     # разрыв страницы проходит ПОСРЕДИ дня: p2 кончается 'СРЕДА 800-845',
     # p3 начинается '850-935' — той же среды. День приносим с собой.
@@ -644,8 +659,12 @@ def test_pair_split_across_page_break_is_not_guessed(grids_13472):
     по себе она в сетку не ложится, и склеивать половины через разрыв страницы
     мы не беремся — строка уедет в очередь админа с честной причиной.
     """
-    rows = parse_rows(page(grids_13472, 3), parse_header(page(grids_13472, 2)),
-                      first_row=0, carry_day=2)
+    rows = parse_rows(
+        page(grids_13472, 3),
+        parse_header(page(grids_13472, 2)),
+        first_row=0,
+        carry_day=2,
+    )
     assert rows[0].time_raw.strip() == "850-935"
     assert rows[0].pair_number is None
     assert rows[0].reason == REASON_TIME_OFF_GRID

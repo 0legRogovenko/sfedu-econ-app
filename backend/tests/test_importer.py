@@ -166,7 +166,9 @@ class TestCorpus:
 
     def test_no_unknown_document_type(self, corpus):
         _, report = corpus
-        unknown = [d.p_doc_id for d in report.documents if d.doc_type == DocType.UNKNOWN]
+        unknown = [
+            d.p_doc_id for d in report.documents if d.doc_type == DocType.UNKNOWN
+        ]
         assert unknown == []
 
     def test_atomic_import_rolls_back_every_document_when_one_fails(self):
@@ -264,16 +266,18 @@ class TestCorpus:
         # слияние должно было отдать ей и то, и другое из обоих источников.
         for group in masters:
             lessons = session.scalar(
-                select(func.count()).select_from(Lesson).where(
-                    Lesson.group_id == group.id
-                )
+                select(func.count())
+                .select_from(Lesson)
+                .where(Lesson.group_id == group.id)
             )
             exams = session.scalar(
-                select(func.count()).select_from(ExamEvent).where(
-                    ExamEvent.group_id == group.id
-                )
+                select(func.count())
+                .select_from(ExamEvent)
+                .where(ExamEvent.group_id == group.id)
             )
-            assert lessons or exams, f"пустая магистерская группа: к{group.course} {group.program}"
+            assert lessons or exams, (
+                f"пустая магистерская группа: к{group.course} {group.program}"
+            )
 
     def test_no_master_exams_lost_to_canonicalization(self, corpus):
         """Канонизация сливает группы, но не теряет экзамены магистров.
@@ -290,7 +294,6 @@ class TestCorpus:
             .where(Group.level == EducationLevel.MASTER)
         )
         assert master_exams == 49, master_exams
-
 
     def test_muam_seminar_continuation_uses_previous_lecture_options(self):
         """13471: строка семинара продолжает МУАМ, но не повторяет заголовок.
@@ -411,9 +414,7 @@ class TestCorpus:
             (m.document_id, m.name, str(m.date_from), str(m.date_to))
             for m in session.scalars(select(Module)).all()
             if not session.scalar(
-                select(func.count())
-                .select_from(Lesson)
-                .where(Lesson.module_id == m.id)
+                select(func.count()).select_from(Lesson).where(Lesson.module_id == m.id)
             )
         ]
         assert empty == [], f"модули без единой пары: {empty}"
@@ -566,7 +567,9 @@ class TestGoldenCorpus:
         for p_doc_id, _doc in docs:
             expected = golden[p_doc_id]
             # Фикстуру не правили руками: оба хэша обязаны сойтись со строками.
-            assert goldens.signatures_hash(expected["signatures"]) == expected["hash"], (
+            assert (
+                goldens.signatures_hash(expected["signatures"]) == expected["hash"]
+            ), (
                 f"{p_doc_id}: golden.json внутренне противоречив — сигнатуры пар "
                 "правлены в обход scripts/regen_golden.py"
             )
@@ -587,15 +590,19 @@ class TestGoldenCorpus:
                 continue
             diff = "\n".join(
                 difflib.unified_diff(
-                    expected["signatures"], actual["signatures"],
-                    fromfile=f"{p_doc_id}: эталон пар", tofile=f"{p_doc_id}: импорт пар",
+                    expected["signatures"],
+                    actual["signatures"],
+                    fromfile=f"{p_doc_id}: эталон пар",
+                    tofile=f"{p_doc_id}: импорт пар",
                     lineterm="",
                 )
             )
             exam_diff = "\n".join(
                 difflib.unified_diff(
-                    expected["exam_signatures"], actual["exam_signatures"],
-                    fromfile=f"{p_doc_id}: эталон экз", tofile=f"{p_doc_id}: импорт экз",
+                    expected["exam_signatures"],
+                    actual["exam_signatures"],
+                    fromfile=f"{p_doc_id}: эталон экз",
+                    tofile=f"{p_doc_id}: импорт экз",
                     lineterm="",
                 )
             )
@@ -606,8 +613,8 @@ class TestGoldenCorpus:
                 f"unparsed {expected['unparsed']}→{actual['unparsed']}\n"
                 f"{body or '(сигнатуры совпали — разошлись счётчики)'}"
             )
-        assert not problems, (
-            "импорт разошёлся с золотым эталоном:\n\n" + "\n\n".join(problems)
+        assert not problems, "импорт разошёлся с золотым эталоном:\n\n" + "\n\n".join(
+            problems
         )
 
 
@@ -673,7 +680,11 @@ class TestCategoryMustBeProvenNotJustAssigned:
         doc = self._document(session)
         ledger = importer.Ledger()
         ledger._total = 1
-        ledger.mark(0, self._cell("Философия (л) Иванов И.И. ауд.301"), importer.CELL_PLACEHOLDER)
+        ledger.mark(
+            0,
+            self._cell("Философия (л) Иванов И.И. ауд.301"),
+            importer.CELL_PLACEHOLDER,
+        )
         ledger.prove(session, doc)
         assert ledger.accounted == 0, "заглушка-ложь принята за учтённую ячейку"
         session.close()
@@ -698,7 +709,9 @@ class TestCategoryMustBeProvenNotJustAssigned:
         doc = self._document(session)
         ledger = importer.Ledger()
         ledger._total = 1
-        ledger.mark(0, self._cell("Философия (л) Иванов И.И. ауд.301"), importer.CELL_STRUCTURAL)
+        ledger.mark(
+            0, self._cell("Философия (л) Иванов И.И. ауд.301"), importer.CELL_STRUCTURAL
+        )
         ledger.prove(session, doc)
         assert ledger.accounted == 0, "структура без позиции принята за учтённую ячейку"
         session.close()
@@ -714,7 +727,10 @@ class TestCategoryMustBeProvenNotJustAssigned:
         # доказывает ИМЕННО эту ячейку, а не «где-то есть такой текст».
         session.add(
             UnparsedCell(
-                document_id=doc.id, page=1, raw_text=unparsed_text, reason="r",
+                document_id=doc.id,
+                page=1,
+                raw_text=unparsed_text,
+                reason="r",
                 cell_key="0:3:3",
             )
         )
@@ -792,8 +808,10 @@ class TestExamRowLedger:
             grids = extract_pdf(FILES[p_doc_id].read_bytes())
             result = parse_exams(grids)
             payload = sum(1 for kind in row_kinds(grids).values() if kind == "payload")
-            assert payload == result.subject_rows_seen == len(result.exams) + len(
-                result.unparsed
+            assert (
+                payload
+                == result.subject_rows_seen
+                == len(result.exams) + len(result.unparsed)
             ), f"{p_doc_id}: строки сессии разошлись с исходами"
 
 
@@ -821,10 +839,10 @@ class TestPageHeadingIsTakenOutsideTheTable:
         случай» целиком — значит потерять их и сломать 13471/13472.
         """
         expected = {
-            ("13471", 10): WeekType.UPPER,   # 'ВЕРХНЯЯ НЕДЕЛЯ'
-            ("13471", 11): WeekType.LOWER,   # 'НИЖНЯЯ НЕДЕЛЯ'
-            ("13472", 14): WeekType.UPPER,   # 'НЕДЕЛЯ: ВЕРХНЯЯ'
-            ("13472", 15): WeekType.LOWER,   # 'НЕДЕЛЯ: НИЖНЯЯ'
+            ("13471", 10): WeekType.UPPER,  # 'ВЕРХНЯЯ НЕДЕЛЯ'
+            ("13471", 11): WeekType.LOWER,  # 'НИЖНЯЯ НЕДЕЛЯ'
+            ("13472", 14): WeekType.UPPER,  # 'НЕДЕЛЯ: ВЕРХНЯЯ'
+            ("13472", 15): WeekType.LOWER,  # 'НЕДЕЛЯ: НИЖНЯЯ'
         }
         for (p_doc_id, page), want in expected.items():
             texts = importer._pdf_page_texts(FILES[p_doc_id].read_bytes())
@@ -857,9 +875,7 @@ class TestPageHeadingIsTakenOutsideTheTable:
         # Проверяем по cell_raw, а не по названию предмета: 'Воображение…' идёт
         # ещё и семинарами в других ячейках, и те еженедельные законно.
         marked = [
-            lesson
-            for lesson in lessons
-            if "Верхняя неделя" in (lesson.cell_raw or "")
+            lesson for lesson in lessons if "Верхняя неделя" in (lesson.cell_raw or "")
         ]
         assert marked, "маркированная пара пропала"
         assert all(m.week_type == WeekType.UPPER for m in marked)
@@ -898,9 +914,7 @@ class TestSemesterHeadingIsNotAModule:
         modules = self._modules("13471")
         assert ("I модуль", "2025-09-01", "2025-11-02") in modules
         assert ("2 модуль", "2025-11-04", "2026-01-11") in modules
-        assert len(modules) == 2, (
-            f"подпись семестра стала модулем: {modules}"
-        )
+        assert len(modules) == 2, f"подпись семестра стала модулем: {modules}"
 
     def test_page_without_a_module_does_not_inherit_a_foreign_one(self):
         """13471 T7 — семестровая страница группы 3.7: модуля у неё нет.
@@ -981,8 +995,7 @@ class TestSemesterHeadingIsNotAModule:
         )
         weekly = [lesson for lesson in lessons if lesson.module_id is None]
         assert all(
-            lesson.valid_from is None and lesson.valid_to is None
-            for lesson in weekly
+            lesson.valid_from is None and lesson.valid_to is None for lesson in weekly
         )
         session.close()
 
@@ -1026,7 +1039,11 @@ class TestIdempotency:
             d.status == importer.STATUS_UNCHANGED
             for d in second.documents
             if d.doc_type
-            in (DocType.SEMESTER_GRID_BACHELOR, DocType.SEMESTER_GRID_MASTER, DocType.EXAM_SESSION)
+            in (
+                DocType.SEMESTER_GRID_BACHELOR,
+                DocType.SEMESTER_GRID_MASTER,
+                DocType.EXAM_SESSION,
+            )
         )
         assert first.documents[0].p_doc_id == second.documents[0].p_doc_id
         session.close()
@@ -1047,11 +1064,7 @@ def _import_reviewed_master(
     content: bytes | None = None,
     atomic: bool = False,
 ):
-    source = (
-        content
-        if content is not None
-        else (FIXTURES / "14159.pdf").read_bytes()
-    )
+    source = content if content is not None else (FIXTURES / "14159.pdf").read_bytes()
     return importer.import_all(
         session,
         FakeFetcher(overrides={_REVIEWED_DOCUMENT_ID: source}),
@@ -1069,14 +1082,11 @@ def _reviewed_document_and_states(session):
     )
     assert document is not None
     lessons = session.scalars(
-        select(Lesson)
-        .where(Lesson.document_id == document.id)
-        .order_by(Lesson.id)
+        select(Lesson).where(Lesson.document_id == document.id).order_by(Lesson.id)
     ).all()
     assert lessons
     states = tuple(
-        lesson_state(lesson, p_doc_id=_REVIEWED_DOCUMENT_ID)
-        for lesson in lessons
+        lesson_state(lesson, p_doc_id=_REVIEWED_DOCUMENT_ID) for lesson in lessons
     )
     return document, lessons, states
 
@@ -1112,9 +1122,7 @@ def _review_bundle(
         operations=tuple(operations),
     )
     return ReviewBundle(
-        corrections=CorrectionRegistry(
-            documents={str(document.p_doc_id): corrections}
-        ),
+        corrections=CorrectionRegistry(documents={str(document.p_doc_id): corrections}),
         reviewed_documents={str(document.p_doc_id): reviewed},
     )
 
@@ -1500,8 +1508,9 @@ class TestReviewedImporterIntegration:
             document_report = _document_report(report)
 
             assert document_report.lessons == len(states) + delta
-            assert reviewed_document_output(session, document) == (
-                bundle.reviewed_documents[_REVIEWED_DOCUMENT_ID]
+            assert (
+                reviewed_document_output(session, document)
+                == (bundle.reviewed_documents[_REVIEWED_DOCUMENT_ID])
             )
         finally:
             session.close()
@@ -1680,9 +1689,7 @@ class TestReviewedImporterIntegration:
                 _REVIEWED_LINK,
             ]
             fetcher = FakeFetcher(
-                overrides={
-                    _REVIEWED_DOCUMENT_ID: b"%PDF-1.4\nchanged-reviewed-source"
-                }
+                overrides={_REVIEWED_DOCUMENT_ID: b"%PDF-1.4\nchanged-reviewed-source"}
             )
             session.rollback()
 
@@ -1696,9 +1703,12 @@ class TestReviewedImporterIntegration:
                 )
             session.rollback()
 
-            assert session.scalar(
-                select(ScheduleDocument).where(ScheduleDocument.p_doc_id == 13469)
-            ) is None
+            assert (
+                session.scalar(
+                    select(ScheduleDocument).where(ScheduleDocument.p_doc_id == 13469)
+                )
+                is None
+            )
             assert reviewed_document_output(session, document) == expected
         finally:
             session.close()
@@ -1776,9 +1786,9 @@ class TestReviewedImporterIntegration:
             assert failed.status == importer.STATUS_FAILED
             assert failed.doc_type == DocType.SEMESTER_GRID_MASTER
             assert "reviewed schedule mismatch" in (failed.error or "")
-            assert session.scalar(
-                select(func.count()).select_from(ScheduleDocument)
-            ) == 0
+            assert (
+                session.scalar(select(func.count()).select_from(ScheduleDocument)) == 0
+            )
         finally:
             session.close()
 
@@ -1834,12 +1844,8 @@ def test_import_diff_details_are_bounded_without_losing_complete_counts():
 
     details = diff.details()
     lines = details.splitlines()
-    emitted = sum(
-        line.startswith(("+ стало: ", "− было: ")) for line in lines
-    )
-    summary = next(
-        line for line in lines if line.startswith("… пропущено изменений: ")
-    )
+    emitted = sum(line.startswith(("+ стало: ", "− было: ")) for line in lines)
+    summary = next(line for line in lines if line.startswith("… пропущено изменений: "))
     omitted = int(summary.rsplit(" ", 1)[-1])
 
     assert len(lines) <= 42
@@ -1875,9 +1881,7 @@ def test_import_diff_details_escape_every_other_splitlines_separator(
     details = diff.details()
     lines = details.splitlines()
     emitted = sum(line.startswith("+ стало: ") for line in lines)
-    summary = next(
-        line for line in lines if line.startswith("… пропущено изменений: ")
-    )
+    summary = next(line for line in lines if line.startswith("… пропущено изменений: "))
     omitted = int(summary.rsplit(" ", 1)[-1])
 
     assert len(lines) <= 42
@@ -1961,14 +1965,10 @@ class TestChangedFile:
         session = make_session()
         # 13984.docx — сессия из 3 экзаменов, самый маленький разобранный файл
         importer.import_all(session, FakeFetcher())
-        before = session.scalar(
-            select(func.count()).select_from(ExamEvent)
-        )
+        before = session.scalar(select(func.count()).select_from(ExamEvent))
 
         changed = _mutated_docx(FILES["13984"].read_bytes())
-        report = importer.import_all(
-            session, FakeFetcher(overrides={"13984": changed})
-        )
+        report = importer.import_all(session, FakeFetcher(overrides={"13984": changed}))
 
         doc = next(d for d in report.documents if d.p_doc_id == "13984")
         assert doc.status == importer.STATUS_REIMPORTED
@@ -1976,9 +1976,9 @@ class TestChangedFile:
         assert doc.diff.removed or doc.diff.added, "diff «было/стало» пуст"
 
         stored = session.scalars(
-            select(ImportDiff).join(ScheduleDocument).where(
-                ScheduleDocument.p_doc_id == 13984
-            )
+            select(ImportDiff)
+            .join(ScheduleDocument)
+            .where(ScheduleDocument.p_doc_id == 13984)
         ).all()
         assert len(stored) == 1, "diff не сохранён для админа"
         assert stored[0].details.strip()
@@ -1991,7 +1991,9 @@ class TestChangedFile:
         importer.import_all(session, FakeFetcher())
         docs = session.scalar(select(func.count()).select_from(ScheduleDocument))
         importer.import_all(session, FakeFetcher())
-        assert session.scalar(select(func.count()).select_from(ScheduleDocument)) == docs
+        assert (
+            session.scalar(select(func.count()).select_from(ScheduleDocument)) == docs
+        )
         session.close()
 
 
@@ -2010,12 +2012,17 @@ class TestVanishedFile:
 
         assert "13469" in report.missing
         assert any("13469" in text for text in alerts), "админ не получил сигнал"
-        assert session.scalar(select(func.count()).select_from(Lesson)) >= lessons_before
-        assert session.scalar(
-            select(func.count()).select_from(ScheduleDocument).where(
-                ScheduleDocument.p_doc_id == 13469
+        assert (
+            session.scalar(select(func.count()).select_from(Lesson)) >= lessons_before
+        )
+        assert (
+            session.scalar(
+                select(func.count())
+                .select_from(ScheduleDocument)
+                .where(ScheduleDocument.p_doc_id == 13469)
             )
-        ) == 1, "данные исчезнувшего файла удалены — так нельзя"
+            == 1
+        ), "данные исчезнувшего файла удалены — так нельзя"
         session.close()
 
 
@@ -2036,7 +2043,8 @@ def _snapshot(session) -> dict:
             for lesson in session.scalars(select(Lesson)).all()
         ),
         "exams": sorted(
-            (e.group_id, e.subject, str(e.exam_at)) for e in session.scalars(select(ExamEvent)).all()
+            (e.group_id, e.subject, str(e.exam_at))
+            for e in session.scalars(select(ExamEvent)).all()
         ),
         "unparsed": sorted(
             (c.document_id, c.raw_text, c.reason)
@@ -2136,8 +2144,7 @@ class TestScheduleParseFixes:
             for lesson in continuation
         )
         unconstrained = [
-            lesson for lesson in continuation
-            if lesson.date_constraint_raw is None
+            lesson for lesson in continuation if lesson.date_constraint_raw is None
         ]
         assert unconstrained, "нет пар без датовых ограничений для проверки"
         assert all(
@@ -2181,7 +2188,9 @@ class TestScheduleParseFixes:
         g23_wed2 = [
             lesson
             for lesson in lessons
-            if lesson.group.number == "2.3" and lesson.weekday == 2 and lesson.pair_number == 2
+            if lesson.group.number == "2.3"
+            and lesson.weekday == 2
+            and lesson.pair_number == 2
         ]
         subjects = {lesson.subject for lesson in g23_wed2}
         assert not any("Безопасность" in s for s in subjects), (

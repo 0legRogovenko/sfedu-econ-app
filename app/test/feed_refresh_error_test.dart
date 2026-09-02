@@ -44,37 +44,45 @@ class _ThrowingExamsRepo implements ExamsRepository {
 }
 
 void main() {
-  test('битый ответ новостей не стирает кэш, а помечает offline (не тишина)',
-      () async {
-    // Регрессия #8: битый JSON при refresh НЕ должен ронять уже показанную
-    // ленту в full-screen ошибку без retry. Кэш сохраняется, лента помечается
-    // offline — сработает баннер/кнопка «Обновить». И это не «тишина»:
-    // исключение из Future.microtask в build() обработано, а не улетело мимо.
-    final c = ProviderContainer(overrides: [
-      newsRepositoryProvider.overrideWithValue(_ThrowingNewsRepo()),
-    ]);
-    addTearDown(c.dispose);
+  test(
+    'битый ответ новостей не стирает кэш, а помечает offline (не тишина)',
+    () async {
+      // Регрессия #8: битый JSON при refresh НЕ должен ронять уже показанную
+      // ленту в full-screen ошибку без retry. Кэш сохраняется, лента помечается
+      // offline — сработает баннер/кнопка «Обновить». И это не «тишина»:
+      // исключение из Future.microtask в build() обработано, а не улетело мимо.
+      final c = ProviderContainer(
+        overrides: [
+          newsRepositoryProvider.overrideWithValue(_ThrowingNewsRepo()),
+        ],
+      );
+      addTearDown(c.dispose);
 
-    await c.read(newsFeedProvider.future);
-    await c.read(newsFeedProvider.notifier).refresh();
+      await c.read(newsFeedProvider.future);
+      await c.read(newsFeedProvider.notifier).refresh();
 
-    final state = c.read(newsFeedProvider);
-    expect(state, isA<AsyncData<NewsFeed>>()); // не ошибка на весь экран
-    expect(state.value!.offline, isTrue); // помечено offline → есть retry
-    expect(state.value!.items, [_cachedItem]); // кэш НЕ стёрт
-  });
+      final state = c.read(newsFeedProvider);
+      expect(state, isA<AsyncData<NewsFeed>>()); // не ошибка на весь экран
+      expect(state.value!.offline, isTrue); // помечено offline → есть retry
+      expect(state.value!.items, [_cachedItem]); // кэш НЕ стёрт
+    },
+  );
 
-  test('битый ответ экзаменов переводит экран в ошибку, а не в тишину',
-      () async {
-    final c = ProviderContainer(overrides: [
-      selectedGroupIdProvider.overrideWith(() => FakeSelectedGroupId(3)),
-      examsRepositoryProvider.overrideWithValue(_ThrowingExamsRepo()),
-    ]);
-    addTearDown(c.dispose);
+  test(
+    'битый ответ экзаменов переводит экран в ошибку, а не в тишину',
+    () async {
+      final c = ProviderContainer(
+        overrides: [
+          selectedGroupIdProvider.overrideWith(() => FakeSelectedGroupId(3)),
+          examsRepositoryProvider.overrideWithValue(_ThrowingExamsRepo()),
+        ],
+      );
+      addTearDown(c.dispose);
 
-    await c.read(examsFeedProvider.future);
-    await c.read(examsFeedProvider.notifier).refresh();
+      await c.read(examsFeedProvider.future);
+      await c.read(examsFeedProvider.notifier).refresh();
 
-    expect(c.read(examsFeedProvider), isA<AsyncError<ExamsFeed>>());
-  });
+      expect(c.read(examsFeedProvider), isA<AsyncError<ExamsFeed>>());
+    },
+  );
 }

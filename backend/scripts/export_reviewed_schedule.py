@@ -18,7 +18,6 @@ from sqlalchemy import create_engine, func, select  # noqa: E402
 from sqlalchemy.orm import Session, sessionmaker  # noqa: E402
 from sqlalchemy.pool import StaticPool  # noqa: E402
 
-from src.schedule import validated_snapshot as snapshot_validation  # noqa: E402
 from src.database import Base  # noqa: E402
 from src.models import (  # noqa: E402
     ExamEvent,
@@ -28,6 +27,7 @@ from src.models import (  # noqa: E402
     UnparsedCell,
     WeekCalendar,
 )
+from src.schedule import validated_snapshot as snapshot_validation  # noqa: E402
 from src.schedule.fetch import FetchedDocument  # noqa: E402
 from src.schedule.importer import import_all  # noqa: E402
 from src.schedule.reviewed_schedule import (  # noqa: E402
@@ -44,7 +44,6 @@ from src.schedule.validated_snapshot import (  # noqa: E402
     SnapshotValidationError,
     ValidatedSnapshot,
 )
-
 
 CONFIRMATION = "I_REVIEWED_EVERY_RENDERED_GROUP"
 _REVIEWED_FILENAME = "reviewed_schedule.json"
@@ -277,8 +276,7 @@ def _validate_draft_v2(
     missing = sorted(declared_names - actual_names)
     if extras or missing:
         raise SnapshotValidationError(
-            "draft snapshot contains undeclared files: "
-            + ", ".join(extras or missing)
+            "draft snapshot contains undeclared files: " + ", ".join(extras or missing)
         )
 
     try:

@@ -5,10 +5,12 @@ List<Contact> filterContacts(List<Contact> all, String query) {
   final q = query.trim().toLowerCase();
   if (q.isEmpty) return all;
   return all
-      .where((c) =>
-          c.name.toLowerCase().contains(q) ||
-          (c.role?.toLowerCase().contains(q) ?? false) ||
-          c.section.toLowerCase().contains(q))
+      .where(
+        (c) =>
+            c.name.toLowerCase().contains(q) ||
+            (c.role?.toLowerCase().contains(q) ?? false) ||
+            c.section.toLowerCase().contains(q),
+      )
       .toList();
 }
 

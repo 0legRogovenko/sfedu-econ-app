@@ -7,7 +7,6 @@ import pytest
 from sqlalchemy import select
 
 from scripts import export_reviewed_schedule as exporter
-
 from src.models import (
     DocType,
     EducationLevel,
@@ -22,19 +21,13 @@ from src.models import (
 from src.schedule.importer import import_all
 from src.schedule.reviewed_schedule import CorrectionRegistry
 
-
 DRAFT_SNAPSHOT_DIR = (
-    Path(__file__).resolve().parents[1]
-    / "data"
-    / "schedule_snapshot"
-    / "2026-08-30"
+    Path(__file__).resolve().parents[1] / "data" / "schedule_snapshot" / "2026-08-30"
 )
 
 
 def _import_draft_document(db_session, p_doc_id):
-    snapshot_dir = Path(
-        os.environ.get("SFEDU_TEST_SNAPSHOT_DIR", DRAFT_SNAPSHOT_DIR)
-    )
+    snapshot_dir = Path(os.environ.get("SFEDU_TEST_SNAPSHOT_DIR", DRAFT_SNAPSHOT_DIR))
     loaded = exporter._load_export_snapshot(
         snapshot_dir.resolve(),
         allow_existing_reviewed=False,
@@ -44,9 +37,7 @@ def _import_draft_document(db_session, p_doc_id):
         item for item in loaded.snapshot.documents if item.link.p_doc_id == p_doc_id
     )
     corrections = CorrectionRegistry(
-        documents=MappingProxyType(
-            {p_doc_id: loaded.corrections.documents[p_doc_id]}
-        )
+        documents=MappingProxyType({p_doc_id: loaded.corrections.documents[p_doc_id]})
     )
     report = import_all(
         db_session,
@@ -77,9 +68,7 @@ def imported_14160_draft(db_session):
 
 
 def _master_schedule(client, imported_draft, program):
-    response = client.get(
-        f"/api/schedule?group_id={imported_draft[program]}"
-    )
+    response = client.get(f"/api/schedule?group_id={imported_draft[program]}")
     assert response.status_code == 200
     return response.json()
 
@@ -383,8 +372,7 @@ def test_reviewed_master_blank_room_labels_do_not_pollute_teacher_names(
         polluted.extend(
             lesson["teacher"]["full_name"]
             for lesson in data["lessons"]
-            if lesson["teacher"]
-            and lesson["teacher"]["full_name"].endswith(" ауд.")
+            if lesson["teacher"] and lesson["teacher"]["full_name"].endswith(" ауд.")
         )
 
     assert polluted == []
@@ -425,8 +413,7 @@ def test_reviewed_corporate_finance_lessons_use_rendered_module_window(
     module = next(
         item
         for item in data["modules"]
-        if item["date_from"] == "2026-09-01"
-        and item["date_to"] == "2026-11-01"
+        if item["date_from"] == "2026-09-01" and item["date_to"] == "2026-11-01"
     )
     lessons = data["lessons"]
 
@@ -434,9 +421,7 @@ def test_reviewed_corporate_finance_lessons_use_rendered_module_window(
     assert {lesson["module_id"] for lesson in lessons} == {module["id"]}
     assert {lesson["valid_from"] for lesson in lessons} == {"2026-09-01"}
     assert [
-        lesson["subject"]
-        for lesson in lessons
-        if lesson["valid_to"] == "2026-10-01"
+        lesson["subject"] for lesson in lessons if lesson["valid_to"] == "2026-10-01"
     ] == ["Методы и инструменты исследований в профессиональной деятельности"]
     assert sum(lesson["valid_to"] == "2026-11-01" for lesson in lessons) == 11
 
@@ -834,10 +819,12 @@ def test_reviewed_second_year_master_keeps_full_multi_teacher_strings(
         "Маличенко И.П., Постникова В.П., Осипова И.В.",
     ]
     talent_rows = db_session.scalars(
-        select(Lesson).where(
+        select(Lesson)
+        .where(
             Lesson.group_id == imported_14160_draft[labor_program],
             Lesson.subject == "Управление талантами",
-        ).order_by(Lesson.pair_number)
+        )
+        .order_by(Lesson.pair_number)
     ).all()
     assert [
         (lesson.pair_number, lesson.lesson_kind.value if lesson.lesson_kind else None)
@@ -867,10 +854,12 @@ def test_reviewed_corporate_control_keeps_full_multi_teacher_string(
         (1, 6, "Давыденко И.Г., Войтенко М.С."),
     ]
     rows = db_session.scalars(
-        select(Lesson).where(
+        select(Lesson)
+        .where(
             Lesson.group_id == imported_14160_draft[program],
             Lesson.subject == subject,
-        ).order_by(Lesson.pair_number)
+        )
+        .order_by(Lesson.pair_number)
     ).all()
     assert [
         (
@@ -970,24 +959,25 @@ def test_reviewed_second_year_master_muam_headings_are_not_subjects(
         matching = [
             lesson
             for lesson in data["lessons"]
-            if lesson["weekday"] == weekday
-            and lesson["pair_number"] == pair_number
+            if lesson["weekday"] == weekday and lesson["pair_number"] == pair_number
         ]
         assert subject in {lesson["subject"] for lesson in matching}
         assert all(not lesson["subject"].startswith("МУАМ ") for lesson in matching)
 
     analytics_group = imported_14160_draft["Экономическая аналитика"]
     game_theory = db_session.scalars(
-        select(Lesson).where(
+        select(Lesson)
+        .where(
             Lesson.group_id == analytics_group,
             Lesson.weekday == 5,
             Lesson.subject == "Теория игр и стратегии бизнеса",
-        ).order_by(Lesson.pair_number)
+        )
+        .order_by(Lesson.pair_number)
     ).all()
-    assert [
-        (lesson.pair_number, lesson.lesson_kind)
-        for lesson in game_theory
-    ] == [(1, None), (2, None)]
+    assert [(lesson.pair_number, lesson.lesson_kind) for lesson in game_theory] == [
+        (1, None),
+        (2, None),
+    ]
 
 
 def test_reviewed_second_year_master_blank_room_labels_do_not_pollute_teachers(
@@ -1014,18 +1004,18 @@ def test_reviewed_second_year_master_blank_room_labels_do_not_pollute_teachers(
     ]
 
     assert {
-        (lesson["teacher"]["full_name"], lesson["room"])
-        for lesson in personnel
+        (lesson["teacher"]["full_name"], lesson["room"]) for lesson in personnel
     } == {("Щетинина Д.П.", None)}
-    assert {
-        (lesson["teacher"]["full_name"], lesson["room"])
-        for lesson in risk
-    } == {("Некрасова И.В.", None)}
+    assert {(lesson["teacher"]["full_name"], lesson["room"]) for lesson in risk} == {
+        ("Некрасова И.В.", None)
+    }
     personnel_rows = db_session.scalars(
-        select(Lesson).where(
+        select(Lesson)
+        .where(
             Lesson.group_id == imported_14160_draft[labor_program],
             Lesson.subject == "Персонал-технологии",
-        ).order_by(Lesson.pair_number)
+        )
+        .order_by(Lesson.pair_number)
     ).all()
     assert [
         (lesson.pair_number, lesson.lesson_kind.value if lesson.lesson_kind else None)

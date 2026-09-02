@@ -126,9 +126,7 @@ class ClaudeClient:
         # меньше 60s, которые ждёт приложение (см. assistant_providers.dart).
         # Запас нужен, чтобы студент увидел честную заглушку, а не «нужен
         # интернет» из-за того, что клиент сдался раньше сервера.
-        self._client = anthropic.Anthropic(
-            api_key=api_key, timeout=20.0, max_retries=1
-        )
+        self._client = anthropic.Anthropic(api_key=api_key, timeout=20.0, max_retries=1)
 
     def ask(self, system_prompt: str, question: str) -> AskResult:
         try:
@@ -157,9 +155,7 @@ class ClaudeClient:
             logger.warning("Claude отказался отвечать")
             return AskResult(text=None, billed=True)
 
-        text = next(
-            (b.text for b in message.content if b.type == "text"), ""
-        ).strip()
+        text = next((b.text for b in message.content if b.type == "text"), "").strip()
         return AskResult(text=text or None, billed=True)
 
 

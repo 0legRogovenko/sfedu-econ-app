@@ -61,8 +61,9 @@ Future<Widget> _app(_FakeApi api) async {
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       selectedGroupIdProvider.overrideWith(() => FakeSelectedGroupId(3)),
-      scheduleDataProvider
-          .overrideWith((ref) => Stream.value(const ScheduleData.empty())),
+      scheduleDataProvider.overrideWith(
+        (ref) => Stream.value(const ScheduleData.empty()),
+      ),
       syncStatusProvider.overrideWith(_FakeSync.new),
       newsFeedProvider.overrideWith(_FakeFeed.new),
       contactsFeedProvider.overrideWith(_FakeContactsFeed.new),
@@ -89,11 +90,15 @@ Future<void> _send(WidgetTester tester, String question) async {
   await tester.pumpAndSettle();
 }
 
-const _answer = AskAnswer(text: 'Справку берут в 305 кабинете', fallback: false);
+const _answer = AskAnswer(
+  text: 'Справку берут в 305 кабинете',
+  fallback: false,
+);
 
 void main() {
-  testWidgets('пустой чат показывает подсказки типовых вопросов',
-      (tester) async {
+  testWidgets('пустой чат показывает подсказки типовых вопросов', (
+    tester,
+  ) async {
     await _openAssistant(tester, _answer);
 
     expect(find.text('Задайте вопрос о факультете'), findsOneWidget);
@@ -109,7 +114,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(api.questions, [assistantSuggestions.first]);
-    expect(find.text(assistantSuggestions.first), findsOneWidget); // уже в ленте
+    expect(
+      find.text(assistantSuggestions.first),
+      findsOneWidget,
+    ); // уже в ленте
   });
 
   testWidgets('отправленный вопрос и ответ видны в ленте', (tester) async {
@@ -121,8 +129,9 @@ void main() {
     expect(find.text('Справку берут в 305 кабинете'), findsOneWidget);
   });
 
-  testWidgets('под ответом есть дисклеймер и чип «Контакты деканата»',
-      (tester) async {
+  testWidgets('под ответом есть дисклеймер и чип «Контакты деканата»', (
+    tester,
+  ) async {
     await _openAssistant(tester, _answer);
 
     await _send(tester, 'Где взять справку?');
@@ -131,24 +140,28 @@ void main() {
     expect(find.text('Контакты деканата'), findsOneWidget);
   });
 
-  testWidgets('под заглушкой бэкенда нет подписи «Ответ AI»: модели там не было',
-      (tester) async {
-    await _openAssistant(
-      tester,
-      const AskAnswer(
-        text: 'Сейчас не могу ответить. Обратитесь в деканат',
-        fallback: true,
-      ),
-    );
+  testWidgets(
+    'под заглушкой бэкенда нет подписи «Ответ AI»: модели там не было',
+    (tester) async {
+      await _openAssistant(
+        tester,
+        const AskAnswer(
+          text: 'Сейчас не могу ответить. Обратитесь в деканат',
+          fallback: true,
+        ),
+      );
 
-    await _send(tester, 'Где взять справку?');
+      await _send(tester, 'Где взять справку?');
 
-    expect(find.text('Сейчас не могу ответить. Обратитесь в деканат'),
-        findsOneWidget);
-    expect(find.text(assistantDisclaimer), findsNothing);
-    // а вот чип контактов под заглушкой как раз к месту
-    expect(find.text('Контакты деканата'), findsOneWidget);
-  });
+      expect(
+        find.text('Сейчас не могу ответить. Обратитесь в деканат'),
+        findsOneWidget,
+      );
+      expect(find.text(assistantDisclaimer), findsNothing);
+      // а вот чип контактов под заглушкой как раз к месту
+      expect(find.text('Контакты деканата'), findsOneWidget);
+    },
+  );
 
   testWidgets('у сообщения пользователя дисклеймера нет', (tester) async {
     await _openAssistant(tester, const AskFailed());
@@ -169,8 +182,7 @@ void main() {
     expect(find.text('Справочник пуст'), findsOneWidget);
   });
 
-  testWidgets('при ошибке сети видно честное «нужен интернет»',
-      (tester) async {
+  testWidgets('при ошибке сети видно честное «нужен интернет»', (tester) async {
     await _openAssistant(tester, const AskFailed());
 
     await _send(tester, 'Где взять справку?');
@@ -178,8 +190,9 @@ void main() {
     expect(find.textContaining('Нужен интернет'), findsOneWidget);
   });
 
-  testWidgets('при исчерпанном лимите видно текст лимита от сервера',
-      (tester) async {
+  testWidgets('при исчерпанном лимите видно текст лимита от сервера', (
+    tester,
+  ) async {
     await _openAssistant(
       tester,
       const AskRateLimited(detail: 'Не больше 5 вопросов за 24 часа'),

@@ -52,7 +52,10 @@ void main() {
     expect(workflow, contains('workflow_dispatch:'));
     expect(workflow, contains("'beta-v*'"));
     expect(workflow, contains('contents: read'));
-    expect(workflow, contains('actions/setup-java@v4'));
+    expect(
+      workflow,
+      contains(RegExp(r'actions/setup-java@[0-9a-f]{40}(?=\s|$)')),
+    );
     expect(workflow, contains("java-version: '17'"));
     expect(workflow, contains('flutter-version: 3.44.6'));
     expect(workflow, contains(r'vars.BETA_API_BASE_URL'));
@@ -70,7 +73,10 @@ void main() {
     expect(workflow, contains('flutter build apk --release'));
     expect(workflow, contains('sha256sum'));
     expect(workflow, contains('beta-manifest.txt'));
-    expect(workflow, contains('actions/upload-artifact@v4'));
+    expect(
+      workflow,
+      contains(RegExp(r'actions/upload-artifact@[0-9a-f]{40}(?=\s|$)')),
+    );
     expect(workflow, isNot(contains('action-gh-release')));
     expect(workflow, isNot(contains('gh release')));
   });

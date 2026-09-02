@@ -85,18 +85,18 @@ class _FakeContactsFeed extends ContactsFeedNotifier {
 /// Пара нужной подгруппы: число чипов фильтра считается по самим парам,
 /// потому что Group.subgroupCount импорт не заполняет.
 Lesson _lesson(int subgroup) => Lesson(
-      id: subgroup,
-      groupId: 3,
-      weekday: 0,
-      pairNumber: 1,
-      startsAt: '09:00:00',
-      endsAt: '10:35:00',
-      subject: 'Английский',
-      room: '118',
-      weekType: null,
-      subgroup: subgroup,
-      teacherName: null,
-    );
+  id: subgroup,
+  groupId: 3,
+  weekday: 0,
+  pairNumber: 1,
+  startsAt: '09:00:00',
+  endsAt: '10:35:00',
+  subject: 'Английский',
+  room: '118',
+  weekType: null,
+  subgroup: subgroup,
+  teacherName: null,
+);
 
 Lesson _muamLesson(int id, String subject) => Lesson(
   id: id,
@@ -137,11 +137,15 @@ Future<ProviderContainer> _container({
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       groupsProvider.overrideWith((ref) async => _groups),
-      scheduleDataProvider.overrideWith((ref) => Stream.value(ScheduleData(
+      scheduleDataProvider.overrideWith(
+        (ref) => Stream.value(
+          ScheduleData(
             lessons: lessons,
             modules: const [],
             weekCalendar: const [],
-          ))),
+          ),
+        ),
+      ),
       syncStatusProvider.overrideWith(_FakeSync.new),
       newsFeedProvider.overrideWith(_FakeNewsFeed.new),
       contactsFeedProvider.overrideWith(_FakeContactsFeed.new),
@@ -158,16 +162,25 @@ Future<ProviderContainer> _container({
 /// чтобы новая секция не роняла чужие тесты.
 Future<void> _scrollTo(WidgetTester tester, Finder finder) async {
   if (finder.evaluate().isEmpty) {
-    await tester.scrollUntilVisible(finder, 200,
-        scrollable: find.byType(Scrollable).first);
+    await tester.scrollUntilVisible(
+      finder,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
   }
   await tester.ensureVisible(finder);
   await tester.pumpAndSettle();
 }
 
-Future<void> _pumpSettings(WidgetTester tester, ProviderContainer container) async {
+Future<void> _pumpSettings(
+  WidgetTester tester,
+  ProviderContainer container,
+) async {
   await tester.pumpWidget(
-    UncontrolledProviderScope(container: container, child: const SfeduEconApp()),
+    UncontrolledProviderScope(
+      container: container,
+      child: const SfeduEconApp(),
+    ),
   );
   await tester.pumpAndSettle();
   container.read(routerProvider).go('/settings');
@@ -183,8 +196,9 @@ void main() {
     expect(find.text('Текущая группа: 2.1'), findsOneWidget);
   });
 
-  testWidgets('смена группы обновляет провайдер и сохраняется в prefs',
-      (tester) async {
+  testWidgets('смена группы обновляет провайдер и сохраняется в prefs', (
+    tester,
+  ) async {
     final container = await _container();
     addTearDown(container.dispose);
     await _pumpSettings(tester, container);
@@ -197,11 +211,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(container.read(selectedGroupIdProvider), 1);
-    expect(container.read(sharedPreferencesProvider).getInt('selected_group_id'), 1);
+    expect(
+      container.read(sharedPreferencesProvider).getInt('selected_group_id'),
+      1,
+    );
   });
 
-  testWidgets('переключение темы обновляет провайдер и сохраняется в prefs',
-      (tester) async {
+  testWidgets('переключение темы обновляет провайдер и сохраняется в prefs', (
+    tester,
+  ) async {
     final container = await _container();
     addTearDown(container.dispose);
     await _pumpSettings(tester, container);
@@ -212,7 +230,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(container.read(themeModeProvider), ThemeMode.dark);
-    expect(container.read(sharedPreferencesProvider).getString('theme_mode'), 'dark');
+    expect(
+      container.read(sharedPreferencesProvider).getString('theme_mode'),
+      'dark',
+    );
   });
 
   testWidgets('есть кнопка «Сообщить об ошибке»', (tester) async {
@@ -225,8 +246,9 @@ void main() {
     expect(button, findsOneWidget);
   });
 
-  testWidgets('«Удалить мои данные» после подтверждения зовёт forget',
-      (tester) async {
+  testWidgets('«Удалить мои данные» после подтверждения зовёт forget', (
+    tester,
+  ) async {
     final api = _RecordingApi();
     final container = await _container(assistantApi: api);
     addTearDown(container.dispose);
@@ -248,10 +270,12 @@ void main() {
 
   group('избранные группы', () {
     testWidgets('секция показывает избранные с именами групп', (tester) async {
-      final container = await _container(prefsValues: {
-        'selected_group_id': 3,
-        'favorite_group_ids': ['3', '4'],
-      });
+      final container = await _container(
+        prefsValues: {
+          'selected_group_id': 3,
+          'favorite_group_ids': ['3', '4'],
+        },
+      );
       addTearDown(container.dispose);
       await _pumpSettings(tester, container);
 
@@ -283,10 +307,12 @@ void main() {
     });
 
     testWidgets('тап по избранной делает её активной', (tester) async {
-      final container = await _container(prefsValues: {
-        'selected_group_id': 3,
-        'favorite_group_ids': ['3', '4'],
-      });
+      final container = await _container(
+        prefsValues: {
+          'selected_group_id': 3,
+          'favorite_group_ids': ['3', '4'],
+        },
+      );
       addTearDown(container.dispose);
       await _pumpSettings(tester, container);
 
@@ -296,21 +322,26 @@ void main() {
       expect(container.read(selectedGroupIdProvider), 4);
     });
 
-    testWidgets('удаление активной переключает активную на первую оставшуюся',
-        (tester) async {
+    testWidgets('удаление активной переключает активную на первую оставшуюся', (
+      tester,
+    ) async {
       // Семантика зафиксирована в favorite_groups_test: активную удалить
       // МОЖНО, активной становится первая из оставшихся.
-      final container = await _container(prefsValues: {
-        'selected_group_id': 3,
-        'favorite_group_ids': ['3', '4'],
-      });
+      final container = await _container(
+        prefsValues: {
+          'selected_group_id': 3,
+          'favorite_group_ids': ['3', '4'],
+        },
+      );
       addTearDown(container.dispose);
       await _pumpSettings(tester, container);
 
-      await tester.tap(find.descendant(
-        of: find.widgetWithText(ListTile, '2.1'),
-        matching: find.byIcon(Icons.delete_outline),
-      ));
+      await tester.tap(
+        find.descendant(
+          of: find.widgetWithText(ListTile, '2.1'),
+          matching: find.byIcon(Icons.delete_outline),
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(container.read(favoriteGroupIdsProvider), [4]);
@@ -319,8 +350,9 @@ void main() {
   });
 
   group('моя подгруппа', () {
-    testWidgets('без пар по подгруппам фильтра нет, а не пустые чипы',
-        (tester) async {
+    testWidgets('без пар по подгруппам фильтра нет, а не пустые чипы', (
+      tester,
+    ) async {
       // В живом корпусе у большинства групп подгрупп нет вовсе. Показывать
       // им фильтр, который ничего не изменит, — обещать несуществующую
       // настройку.
@@ -333,8 +365,9 @@ void main() {
       expect(find.widgetWithText(ChoiceChip, 'Все'), findsNothing);
     });
 
-    testWidgets('чипов столько, сколько подгрупп в парах группы',
-        (tester) async {
+    testWidgets('чипов столько, сколько подгрупп в парах группы', (
+      tester,
+    ) async {
       // Регрессия: считать по Group.subgroupCount нельзя — импорт его не
       // заполняет (в живой базе он равен 1 у всех групп, включая те, где
       // реально есть пары второй подгруппы).
@@ -349,8 +382,9 @@ void main() {
     });
 
     testWidgets('разбиение на три подгруппы даёт три чипа', (tester) async {
-      final container =
-          await _container(lessons: [_lesson(1), _lesson(2), _lesson(3)]);
+      final container = await _container(
+        lessons: [_lesson(1), _lesson(2), _lesson(3)],
+      );
       addTearDown(container.dispose);
       await _pumpSettings(tester, container);
       await _scrollTo(tester, find.text('Моя подгруппа'));
@@ -368,18 +402,23 @@ void main() {
       // Проверяем именно ВЫБРАННОСТЬ чипа: сам по себе он есть всегда, и
       // ассерт на его наличие прошёл бы даже при selected: false.
       expect(
-        tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Все')).selected,
+        tester
+            .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Все'))
+            .selected,
         isTrue,
       );
       expect(
-        tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '1-я')).selected,
+        tester
+            .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '1-я'))
+            .selected,
         isFalse,
       );
       expect(container.read(activeSubgroupProvider), isNull);
     });
 
-    testWidgets('выбор подгруппы сохраняется для активной группы',
-        (tester) async {
+    testWidgets('выбор подгруппы сохраняется для активной группы', (
+      tester,
+    ) async {
       final container = await _container(lessons: [_lesson(1), _lesson(2)]);
       addTearDown(container.dispose);
       await _pumpSettings(tester, container);
@@ -391,8 +430,10 @@ void main() {
 
       // Активная группа — 3 (см. prefs по умолчанию).
       expect(container.read(activeSubgroupProvider), 2);
-      expect(container.read(sharedPreferencesProvider).getInt('subgroup_of_3'),
-          2);
+      expect(
+        container.read(sharedPreferencesProvider).getInt('subgroup_of_3'),
+        2,
+      );
     });
 
     testWidgets('«Все» снимает ранее выбранный фильтр', (tester) async {
@@ -410,8 +451,9 @@ void main() {
 
       expect(container.read(activeSubgroupProvider), isNull);
       expect(
-          container.read(sharedPreferencesProvider).containsKey('subgroup_of_3'),
-          isFalse);
+        container.read(sharedPreferencesProvider).containsKey('subgroup_of_3'),
+        isFalse,
+      );
     });
   });
 
