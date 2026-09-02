@@ -31,7 +31,7 @@ TRUSTED_ACTIONS = {
         "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a": "v7.0.1",
     },
     "aquasecurity/trivy-action": {
-        "b6643a29fecd7f34b3597bc6acb0a98b03d33ff8": "v0.33.1",
+        "ed142fd0673e97e23eac54620cfb913e5ce36c25": "v0.36.0",
     },
     "gitleaks/gitleaks-action": {
         "e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e": "v3.0.0",
@@ -570,8 +570,8 @@ def test_backend_ci_runs_ruff_after_install_and_before_pytest() -> None:
         ),
         (
             "aquasecurity/trivy-action",
-            "b6643a29fecd7f34b3597bc6acb0a98b03d33ff8",
-            "v0.33.1",
+            "ed142fd0673e97e23eac54620cfb913e5ce36c25",
+            "v0.36.0",
         ),
     ),
     ids=("gitleaks", "trivy"),
@@ -718,7 +718,7 @@ def test_trivy_uses_exact_filesystem_scan_and_report_settings() -> None:
     _text, document = _load_workflow(SECURITY_WORKFLOW)
     job = _workflow_job(document, "trivy")
     checkout = "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1"
-    trivy = "aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8"
+    trivy = "aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25"
     upload = "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"
     assert _action_uses(job) == [checkout, trivy, upload]
 

@@ -1,4 +1,3 @@
-[tool.ruff]
 target-version = "py312"
 line-length = 88
 extend-exclude = [
@@ -8,10 +7,10 @@ extend-exclude = [
   "src/schedule/reviewed_schedule.py",
 ]
 
-[tool.ruff.lint]
+[lint]
 select = ["E4", "E7", "E9", "F", "I"]
 
-[tool.ruff.format]
+[format]
 quote-style = "double"
 indent-style = "space"
 line-ending = "lf"
