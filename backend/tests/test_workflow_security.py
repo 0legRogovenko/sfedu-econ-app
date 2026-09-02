@@ -1,5 +1,6 @@
 import re
 import runpy
+import tomllib
 from collections.abc import Iterator, Mapping
 from pathlib import Path
 
@@ -12,6 +13,8 @@ ROOT = Path(__file__).resolve().parents[2]
 WORKFLOWS_DIR = ROOT / ".github" / "workflows"
 WORKFLOWS = sorted(set(WORKFLOWS_DIR.glob("*.yml")) | set(WORKFLOWS_DIR.glob("*.yaml")))
 CI_WORKFLOW = WORKFLOWS_DIR / "ci.yml"
+SECURITY_WORKFLOW = WORKFLOWS_DIR / "security.yml"
+GITLEAKS_CONFIG = ROOT / ".gitleaks.toml"
 
 TRUSTED_ACTIONS = {
     "actions/checkout": {
@@ -25,6 +28,12 @@ TRUSTED_ACTIONS = {
     },
     "actions/upload-artifact": {
         "ea165f8d65b6e75b540449e92b4886f43607fa02": "v4.6.2",
+    },
+    "aquasecurity/trivy-action": {
+        "b6643a29fecd7f34b3597bc6acb0a98b03d33ff8": "v0.33.1",
+    },
+    "gitleaks/gitleaks-action": {
+        "ff98106e4c7b2bc287b24eaf42907196329070c7": "v2.3.9",
     },
     "subosito/flutter-action": {
         "1a449444c387b1966244ae4d4f8c696479add0b2": "v2.23.0",
@@ -207,6 +216,47 @@ def _trigger_issues(document: _MarkedMapping) -> list[str]:
     return issues
 
 
+def _shell_issues(document: _MarkedMapping) -> list[str]:
+    issues: list[str] = []
+    for _mapping, value, line in _entries_for_key(document, "shell"):
+        if value != "bash":
+            issues.append(
+                f"line {line + 1}: shell override must use the trusted bash runner shell"
+            )
+    return issues
+
+
+def _workflow_job(document: _MarkedMapping, name: str) -> _MarkedMapping:
+    jobs = document.get("jobs")
+    assert isinstance(jobs, _MarkedMapping), (
+        "workflow is missing a top-level jobs mapping"
+    )
+    job = jobs.get(name)
+    assert isinstance(job, _MarkedMapping), f"workflow is missing the {name!r} job"
+    return job
+
+
+def _job_steps(job: _MarkedMapping) -> list[_MarkedMapping]:
+    steps = job.get("steps")
+    assert isinstance(steps, list), "workflow job must define a steps sequence"
+    assert all(isinstance(step, _MarkedMapping) for step in steps), (
+        "workflow steps must be mappings"
+    )
+    return steps
+
+
+def _named_step(job: _MarkedMapping, name: str) -> _MarkedMapping:
+    matches = [step for step in _job_steps(job) if step.get("name") == name]
+    assert len(matches) == 1, f"expected exactly one {name!r} step"
+    return matches[0]
+
+
+def _action_uses(job: _MarkedMapping) -> list[str]:
+    return [
+        uses for step in _job_steps(job) if isinstance((uses := step.get("uses")), str)
+    ]
+
+
 def _load_guard(
     tmp_path: Path,
     workflows: dict[str, str],
@@ -278,6 +328,19 @@ def test_workflows_use_read_only_permissions_and_safe_triggers() -> None:
     assert not issues, "workflow security issues:\n" + "\n".join(issues)
 
 
+def test_workflows_use_only_trusted_shell_overrides() -> None:
+    assert WORKFLOWS, "repository has no workflow files"
+    issues: list[str] = []
+
+    for workflow in WORKFLOWS:
+        _text, document = _load_workflow(workflow)
+        path = workflow.relative_to(ROOT)
+        for issue in _shell_issues(document):
+            issues.append(f"{path}: {issue}")
+
+    assert not issues, "workflow shell issues:\n" + "\n".join(issues)
+
+
 def test_backend_ci_runs_ruff_after_install_and_before_pytest() -> None:
     _text, document = _load_workflow(CI_WORKFLOW)
     jobs = document.get("jobs")
@@ -342,6 +405,179 @@ def test_backend_ci_runs_ruff_after_install_and_before_pytest() -> None:
         "backend job must install requirements-dev, run both Ruff gates, "
         "and then run pytest"
     )
+
+
+@pytest.mark.parametrize(
+    ("action", "sha", "version"),
+    (
+        (
+            "gitleaks/gitleaks-action",
+            "ff98106e4c7b2bc287b24eaf42907196329070c7",
+            "v2.3.9",
+        ),
+        (
+            "aquasecurity/trivy-action",
+            "b6643a29fecd7f34b3597bc6acb0a98b03d33ff8",
+            "v0.33.1",
+        ),
+    ),
+    ids=("gitleaks", "trivy"),
+)
+def test_security_scanner_action_pins_are_trusted(
+    action: str,
+    sha: str,
+    version: str,
+) -> None:
+    assert TRUSTED_ACTIONS.get(action) == {sha: version}
+
+
+def test_security_workflow_has_exact_triggers_permissions_and_concurrency() -> None:
+    _text, document = _load_workflow(SECURITY_WORKFLOW)
+
+    assert SECURITY_WORKFLOW in WORKFLOWS, (
+        "security workflow must be covered by the generic workflow guards"
+    )
+    assert document.get("name") == "Security checks"
+    assert document.get("permissions") == {"contents": "read"}
+    assert document.get("concurrency") == {
+        "group": "security-${{ github.ref }}",
+        "cancel-in-progress": True,
+    }
+
+    triggers = document.get("on")
+    assert isinstance(triggers, _MarkedMapping), (
+        "security workflow triggers must be a mapping"
+    )
+    assert set(triggers) == {
+        "push",
+        "pull_request",
+        "schedule",
+        "workflow_dispatch",
+    }
+    assert triggers["push"] == {"branches": ["main"]}
+    assert triggers["pull_request"] is None
+    assert triggers["schedule"] == [{"cron": "41 2 * * 1"}]
+    assert triggers["workflow_dispatch"] is None
+
+
+def test_security_workflow_has_exact_blocking_and_advisory_jobs() -> None:
+    _text, document = _load_workflow(SECURITY_WORKFLOW)
+    jobs = document.get("jobs")
+    assert isinstance(jobs, _MarkedMapping), (
+        "security workflow must define a jobs mapping"
+    )
+    assert set(jobs) == {"gitleaks", "semgrep", "trivy"}
+
+    for name, expected_advisory in {
+        "gitleaks": False,
+        "semgrep": True,
+        "trivy": True,
+    }.items():
+        job = _workflow_job(document, name)
+        assert job.get("continue-on-error", False) is expected_advisory
+        entries = _entries_for_key(job, "continue-on-error")
+        if expected_advisory:
+            assert len(entries) == 1
+            mapping, value, _line = entries[0]
+            assert mapping is job
+            assert value is True
+        else:
+            assert entries == []
+
+
+def test_gitleaks_uses_full_history_checkout_and_github_token() -> None:
+    _text, document = _load_workflow(SECURITY_WORKFLOW)
+    job = _workflow_job(document, "gitleaks")
+    checkout = "actions/checkout@11d5960a326750d5838078e36cf38b85af677262"
+    action = "gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7"
+    assert _action_uses(job) == [checkout, action]
+
+    steps = _job_steps(job)
+    assert steps[0].get("with") == {"fetch-depth": 0}
+    assert steps[1].get("env") == {"GITHUB_TOKEN": "${{ secrets.GITHUB_TOKEN }}"}
+
+
+def test_gitleaks_config_extends_only_default_rules_without_allowlist() -> None:
+    config = tomllib.loads(GITLEAKS_CONFIG.read_text(encoding="utf-8"))
+    assert config == {"extend": {"useDefault": True}}
+
+
+def test_semgrep_uses_exact_version_scopes_and_report_settings() -> None:
+    _text, document = _load_workflow(SECURITY_WORKFLOW)
+    job = _workflow_job(document, "semgrep")
+    checkout = "actions/checkout@11d5960a326750d5838078e36cf38b85af677262"
+    setup_python = "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065"
+    upload = "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02"
+    assert _action_uses(job) == [checkout, setup_python, upload]
+
+    steps = _job_steps(job)
+    assert steps[1].get("with") == {"python-version": "3.12", "cache": "pip"}
+    assert _named_step(job, "Install Semgrep").get("run") == (
+        "pip install semgrep==1.176.0"
+    )
+
+    scan = _named_step(job, "Scan supported source and configuration")
+    command = scan.get("run")
+    assert isinstance(command, str)
+    assert command.split() == [
+        "semgrep",
+        "scan",
+        "--config",
+        "p/security-audit",
+        "--config",
+        "p/owasp-top-ten",
+        "--config",
+        "p/secrets",
+        "--error",
+        "--json",
+        "--output",
+        "semgrep-results.json",
+        "backend/src",
+        "backend/scripts",
+        ".github",
+    ]
+
+    report = _named_step(job, "Upload Semgrep report")
+    assert report.get("if") == "always()"
+    assert report.get("uses") == upload
+    assert report.get("with") == {
+        "name": "semgrep-results",
+        "path": "semgrep-results.json",
+        "if-no-files-found": "warn",
+        "retention-days": 14,
+    }
+
+
+def test_trivy_uses_exact_filesystem_scan_and_report_settings() -> None:
+    _text, document = _load_workflow(SECURITY_WORKFLOW)
+    job = _workflow_job(document, "trivy")
+    checkout = "actions/checkout@11d5960a326750d5838078e36cf38b85af677262"
+    trivy = "aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8"
+    upload = "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02"
+    assert _action_uses(job) == [checkout, trivy, upload]
+
+    scan = _named_step(job, "Scan dependencies and configuration")
+    assert scan.get("uses") == trivy
+    assert scan.get("with") == {
+        "scan-type": "fs",
+        "scan-ref": ".",
+        "scanners": "vuln,secret,misconfig",
+        "severity": "CRITICAL,HIGH",
+        "ignore-unfixed": True,
+        "exit-code": "1",
+        "format": "json",
+        "output": "trivy-results.json",
+    }
+
+    report = _named_step(job, "Upload Trivy report")
+    assert report.get("if") == "always()"
+    assert report.get("uses") == upload
+    assert report.get("with") == {
+        "name": "trivy-results",
+        "path": "trivy-results.json",
+        "if-no-files-found": "warn",
+        "retention-days": 14,
+    }
 
 
 def test_workflow_collection_includes_yaml_and_is_sorted_without_duplicates(
@@ -461,6 +697,27 @@ jobs: {release: {permissions: {contents: write}}}
 
     with pytest.raises(AssertionError, match="nested permissions"):
         guard["test_workflows_use_read_only_permissions_and_safe_triggers"]()
+
+
+def test_custom_workflow_shell_override_is_rejected(tmp_path: Path) -> None:
+    guard = _load_guard(
+        tmp_path,
+        {
+            "release.yml": """\
+permissions:
+  contents: read
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo safe
+        shell: bash -c 'exit 0' -- {0}
+"""
+        },
+    )
+
+    with pytest.raises(AssertionError, match="trusted bash runner shell"):
+        guard["test_workflows_use_only_trusted_shell_overrides"]()
 
 
 def test_merge_injected_job_permissions_are_rejected(tmp_path: Path) -> None:
