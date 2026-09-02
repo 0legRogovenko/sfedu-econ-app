@@ -1,10 +1,56 @@
 import re
+from html.parser import HTMLParser
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[2]
 BACKEND = ROOT / "backend"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
 README = BACKEND / "README.md"
+PROJECT_README = ROOT / "README.md"
+SCREENSHOTS = {
+    "assets/readme/01-schedule.png",
+    "assets/readme/02-news.png",
+    "assets/readme/03-contacts.png",
+    "assets/readme/04-assistant.png",
+}
+
+
+class _HTMLTargetParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.targets: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        for name, value in attrs:
+            if name in {"href", "src"} and value:
+                self.targets.append(value)
+
+
+def _relative_targets(markdown: str) -> set[str]:
+    markdown_targets = [
+        match.group("angle") or match.group("plain")
+        for match in re.finditer(
+            r"!?\[[^\]]*\]\(\s*(?:<(?P<angle>[^>]+)>|(?P<plain>[^)\s]+))",
+            markdown,
+        )
+    ]
+    html_parser = _HTMLTargetParser()
+    html_parser.feed(markdown)
+
+    targets: set[str] = set()
+    for raw in [*markdown_targets, *html_parser.targets]:
+        target = unquote(raw.strip().strip("<>"))
+        if not target or target.startswith("#"):
+            continue
+        parsed = urlsplit(target)
+        if parsed.scheme.lower() in {"http", "https", "mailto"}:
+            continue
+        if parsed.netloc or parsed.path.startswith("/"):
+            continue
+        if parsed.path:
+            targets.add(parsed.path)
+    return targets
 
 
 def _requirement_names(path: Path) -> set[str]:
@@ -117,4 +163,74 @@ def test_local_development_installs_test_requirements() -> None:
     assert install_command in development
     assert readme.index(install_command, development_start) < readme.index(
         "pytest", tests_start
+    )
+
+
+def test_readme_target_parser_handles_markdown_and_html() -> None:
+    markdown = """
+    [Backend](backend/README.md?view=1#api)
+    ![Schedule](assets/readme/01%2Dschedule.png#full)
+    <a href="app/README.md#launch">App</a>
+    <img src="assets/readme/02-news.png?raw=1" alt="News">
+    [Web](https://example.com/readme)
+    <a href="http://example.com">HTTP</a>
+    <a href="mailto:author@example.com">Email</a>
+    <a href="#section">Section</a>
+    """
+
+    assert _relative_targets(markdown) == {
+        "app/README.md",
+        "assets/readme/01-schedule.png",
+        "assets/readme/02-news.png",
+        "backend/README.md",
+    }
+
+
+def test_readme_references_exact_showcase_screenshots_once() -> None:
+    text = PROJECT_README.read_text(encoding="utf-8")
+    showcase_targets = {
+        target
+        for target in _relative_targets(text)
+        if target.startswith("assets/readme/")
+    }
+
+    assert showcase_targets == SCREENSHOTS
+    assert "<table>" in text
+    for screenshot in SCREENSHOTS:
+        assert text.count(screenshot) == 1
+        assert f'<img src="{screenshot}"' in text
+
+
+def test_readme_has_public_sections_and_contact() -> None:
+    text = PROJECT_README.read_text(encoding="utf-8")
+    assert '<h1 align="center">Эконом ЮФУ</h1>' in text
+    assert text.count('<p align="center">') >= 2
+    assert "**Неофициальный проект.**" in text
+    assert "## Получить beta APK" in text
+    assert "080806oleg@gmail.com" in text
+
+
+def test_readme_relative_links_and_images_exist() -> None:
+    text = PROJECT_README.read_text(encoding="utf-8")
+    missing = sorted(
+        target for target in _relative_targets(text) if not (ROOT / target).exists()
+    )
+    assert missing == []
+
+
+def test_readme_does_not_expose_internal_planning_docs() -> None:
+    text = PROJECT_README.read_text(encoding="utf-8")
+    assert re.search(r"(?:docs/)?superpowers", text, re.IGNORECASE) is None
+
+
+def test_readme_author_contact_is_email_only() -> None:
+    text = PROJECT_README.read_text(encoding="utf-8")
+    author_heading = "## Автор"
+    assert author_heading in text
+    author = text[text.index(author_heading) :].strip()
+
+    assert author == (
+        "## Автор\n\n"
+        "**Олег Роговенко**\n\n"
+        "[080806oleg@gmail.com](mailto:080806oleg@gmail.com)"
     )
