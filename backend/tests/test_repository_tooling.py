@@ -29,13 +29,26 @@ def _workflow_job(text: str, name: str) -> str:
     return jobs_text[job.start() : end]
 
 
+def _workflow_step(job: str, name: str) -> str:
+    step = re.search(
+        rf"(?m)^(?P<indent> +)- name: {re.escape(name)}\s*$",
+        job,
+    )
+    assert step is not None
+    following = job[step.end() :]
+    step_prefix = " " * len(step.group("indent")) + "- "
+    next_step = re.search(rf"(?m)^{re.escape(step_prefix)}", following)
+    end = step.end() + next_step.start() if next_step else len(job)
+    return job[step.start() : end]
+
+
 def _yaml_value_lines(block: str, key: str) -> list[str]:
     match = re.search(
         rf"(?m)^(?P<indent> +){re.escape(key)}:\s*(?P<value>[^\n]*)$", block
     )
     assert match is not None
     value = match.group("value").strip()
-    if value not in {"", "|", ">"}:
+    if value not in {"", "|", "|-", "|+", ">", ">-", ">+"}:
         return [value.strip("'\"")]
 
     key_indent = len(match.group("indent"))
@@ -76,6 +89,22 @@ def test_backend_ci_cache_tracks_development_requirements() -> None:
     backend_job = _workflow_job(workflow, "backend")
     cache_paths = set(_yaml_value_lines(backend_job, "cache-dependency-path"))
     assert {"backend/requirements.txt", "backend/requirements-dev.txt"} <= cache_paths
+
+
+def test_flutter_ci_formats_every_tracked_manual_dart_file() -> None:
+    workflow = CI_WORKFLOW.read_text(encoding="utf-8")
+    flutter_job = _workflow_job(workflow, "flutter")
+    format_step = _workflow_step(flutter_job, "Check Dart formatting")
+    command = " ".join(_yaml_value_lines(format_step, "run"))
+
+    tracked_dart_command = "git ls-files -z -- '*.dart' ':!**/db.g.dart'"
+    assert tracked_dart_command in command
+    assert "find lib test" not in command
+    assert _yaml_value_lines(format_step, "shell") == ["bash"]
+    assert "set -o pipefail" in command
+    assert "xargs -0 dart format" in command
+    assert "--output=none" in command
+    assert "--set-exit-if-changed" in command
 
 
 def test_local_development_installs_test_requirements() -> None:

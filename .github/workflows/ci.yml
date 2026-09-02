@@ -81,8 +81,10 @@ jobs:
           cache: true
       - run: flutter pub get
       - name: Check Dart formatting
-        run: >-
-          find lib test -name '*.dart' ! -name 'db.g.dart' -print0
-          | xargs -0 dart format --output=none --set-exit-if-changed
+        shell: bash
+        run: |
+          set -o pipefail
+          git ls-files -z -- '*.dart' ':!**/db.g.dart' |
+            xargs -0 dart format --output=none --set-exit-if-changed
       - run: flutter analyze
       - run: flutter test
