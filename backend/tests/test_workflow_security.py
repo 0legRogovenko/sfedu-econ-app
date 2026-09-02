@@ -15,6 +15,7 @@ WORKFLOWS = sorted(set(WORKFLOWS_DIR.glob("*.yml")) | set(WORKFLOWS_DIR.glob("*.
 CI_WORKFLOW = WORKFLOWS_DIR / "ci.yml"
 SECURITY_WORKFLOW = WORKFLOWS_DIR / "security.yml"
 GITLEAKS_CONFIG = ROOT / ".gitleaks.toml"
+DEPENDABOT_CONFIG = ROOT / ".github" / "dependabot.yml"
 
 TRUSTED_ACTIONS = {
     "actions/checkout": {
@@ -109,6 +110,21 @@ def _load_workflow(workflow: Path) -> tuple[str, _MarkedMapping]:
         f"{path}: workflow root must be a mapping"
     )
     return text, document
+
+
+def _load_dependabot_config() -> _MarkedMapping:
+    path = DEPENDABOT_CONFIG.relative_to(ROOT)
+    assert DEPENDABOT_CONFIG.is_file(), f"{path} is missing"
+    text = DEPENDABOT_CONFIG.read_text(encoding="utf-8")
+    try:
+        document = yaml.load(text, Loader=_UniqueKeySafeLoader)
+    except yaml.YAMLError as exc:
+        raise AssertionError(f"{path}: invalid Dependabot YAML: {exc}") from exc
+
+    assert isinstance(document, _MarkedMapping), (
+        f"{path}: Dependabot root must be a mapping"
+    )
+    return document
 
 
 def _mapping_entries(
@@ -291,6 +307,87 @@ jobs:
       - run: ruff format --check .
       - run: pytest -q
 """
+
+
+def test_dependabot_declares_only_expected_update_scopes() -> None:
+    document = _load_dependabot_config()
+
+    assert set(document) == {"version", "updates"}
+    assert document["version"] == 2
+
+    updates = document["updates"]
+    assert isinstance(updates, list)
+    assert len(updates) == 3
+    assert all(isinstance(update, _MarkedMapping) for update in updates)
+
+    scopes = [
+        (update.get("package-ecosystem"), update.get("directory")) for update in updates
+    ]
+    assert len(scopes) == len(set(scopes)), "Dependabot update scopes must be unique"
+    assert set(scopes) == {
+        ("github-actions", "/"),
+        ("pip", "/backend"),
+        ("pub", "/app"),
+    }
+
+
+def test_dependabot_uses_exact_low_noise_update_policy() -> None:
+    document = _load_dependabot_config()
+    updates = document["updates"]
+    assert isinstance(updates, list)
+    assert all(isinstance(update, _MarkedMapping) for update in updates)
+
+    updates_by_scope = {
+        (update["package-ecosystem"], update["directory"]): update for update in updates
+    }
+    assert updates_by_scope == {
+        ("github-actions", "/"): {
+            "package-ecosystem": "github-actions",
+            "directory": "/",
+            "schedule": {
+                "interval": "weekly",
+                "day": "monday",
+                "time": "06:20",
+                "timezone": "Europe/Moscow",
+            },
+            "open-pull-requests-limit": 3,
+            "groups": {
+                "actions-minor-patch": {
+                    "update-types": ["minor", "patch"],
+                },
+            },
+        },
+        ("pip", "/backend"): {
+            "package-ecosystem": "pip",
+            "directory": "/backend",
+            "schedule": {
+                "interval": "monthly",
+                "time": "06:40",
+                "timezone": "Europe/Moscow",
+            },
+            "open-pull-requests-limit": 3,
+            "groups": {
+                "python-minor-patch": {
+                    "update-types": ["minor", "patch"],
+                },
+            },
+        },
+        ("pub", "/app"): {
+            "package-ecosystem": "pub",
+            "directory": "/app",
+            "schedule": {
+                "interval": "monthly",
+                "time": "07:00",
+                "timezone": "Europe/Moscow",
+            },
+            "open-pull-requests-limit": 3,
+            "groups": {
+                "flutter-minor-patch": {
+                    "update-types": ["minor", "patch"],
+                },
+            },
+        },
+    }
 
 
 def test_workflow_actions_are_pinned_to_versioned_commit_shas() -> None:
