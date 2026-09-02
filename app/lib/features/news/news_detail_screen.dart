@@ -19,13 +19,15 @@ class NewsDetailScreen extends StatelessWidget {
         mode: LaunchMode.externalApplication,
       );
       if (!ok && context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text(failure)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text(failure)));
       }
     } catch (_) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text(failure)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text(failure)));
       }
     }
   }

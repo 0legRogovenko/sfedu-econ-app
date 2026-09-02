@@ -17,11 +17,11 @@ class Module {
   final DateTime dateTo;
 
   factory Module.fromJson(Map<String, dynamic> json) => Module(
-        id: json['id'] as int,
-        name: json['name'] as String?,
-        dateFrom: DateTime.parse(json['date_from'] as String),
-        dateTo: DateTime.parse(json['date_to'] as String),
-      );
+    id: json['id'] as int,
+    name: json['name'] as String?,
+    dateFrom: DateTime.parse(json['date_from'] as String),
+    dateTo: DateTime.parse(json['date_to'] as String),
+  );
 }
 
 /// Запись календаря недель: диапазон дат → тип недели. Тип недели импортируется
@@ -56,9 +56,9 @@ class ScheduleData {
   });
 
   const ScheduleData.empty()
-      : lessons = const [],
-        modules = const [],
-        weekCalendar = const [];
+    : lessons = const [],
+      modules = const [],
+      weekCalendar = const [];
 
   final List<Lesson> lessons;
   final List<Module> modules;
@@ -66,14 +66,14 @@ class ScheduleData {
 
   /// Разбор ответа /api/schedule (объект с тремя массивами).
   factory ScheduleData.fromJson(Map<String, dynamic> json) => ScheduleData(
-        lessons: (json['lessons'] as List<dynamic>? ?? [])
-            .map((e) => Lesson.fromJson(e as Map<String, dynamic>))
-            .toList(),
-        modules: (json['modules'] as List<dynamic>? ?? [])
-            .map((e) => Module.fromJson(e as Map<String, dynamic>))
-            .toList(),
-        weekCalendar: (json['week_calendar'] as List<dynamic>? ?? [])
-            .map((e) => WeekCalendarEntry.fromJson(e as Map<String, dynamic>))
-            .toList(),
-      );
+    lessons: (json['lessons'] as List<dynamic>? ?? [])
+        .map((e) => Lesson.fromJson(e as Map<String, dynamic>))
+        .toList(),
+    modules: (json['modules'] as List<dynamic>? ?? [])
+        .map((e) => Module.fromJson(e as Map<String, dynamic>))
+        .toList(),
+    weekCalendar: (json['week_calendar'] as List<dynamic>? ?? [])
+        .map((e) => WeekCalendarEntry.fromJson(e as Map<String, dynamic>))
+        .toList(),
+  );
 }

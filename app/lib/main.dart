@@ -104,12 +104,17 @@ class UpdateRequiredScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.system_update_alt,
-                  size: 56, color: theme.colorScheme.primary),
+              Icon(
+                Icons.system_update_alt,
+                size: 56,
+                color: theme.colorScheme.primary,
+              ),
               const SizedBox(height: 16),
-              Text('Нужно обновление',
-                  style: theme.textTheme.headlineSmall,
-                  textAlign: TextAlign.center),
+              Text(
+                'Нужно обновление',
+                style: theme.textTheme.headlineSmall,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 8),
               const Text(
                 'Эта версия приложения устарела и больше не поддерживается. '

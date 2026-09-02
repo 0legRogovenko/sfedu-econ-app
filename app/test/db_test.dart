@@ -40,8 +40,13 @@ void main() {
       );
 
   test('replaceScheduleCache заменяет кэш скоупа целиком', () async {
-    await db.replaceScheduleCache('group:3', [row(1, 3), row(2, 3)],
-        [moduleRow('group:3')], [calRow('group:3')], 'etag-1');
+    await db.replaceScheduleCache(
+      'group:3',
+      [row(1, 3), row(2, 3)],
+      [moduleRow('group:3')],
+      [calRow('group:3')],
+      'etag-1',
+    );
     await db.replaceScheduleCache('group:3', [row(5, 3)], [], [], 'etag-2');
 
     final rows = await db.lessonsForScope('group:3');
@@ -55,8 +60,13 @@ void main() {
   });
 
   test('модули и календарь переживают в кэше', () async {
-    await db.replaceScheduleCache('group:3', [row(1, 3)],
-        [moduleRow('group:3')], [calRow('group:3')], 'a');
+    await db.replaceScheduleCache(
+      'group:3',
+      [row(1, 3)],
+      [moduleRow('group:3')],
+      [calRow('group:3')],
+      'a',
+    );
 
     expect((await db.modulesForScope('group:3')).single.moduleId, 1);
     expect((await db.weekCalendarForScope('group:3')).single.weekType, 'upper');
@@ -65,7 +75,12 @@ void main() {
   test('кэш другой группы не затрагивается', () async {
     await db.replaceScheduleCache('group:3', [row(1, 3)], [], [], 'a');
     await db.replaceScheduleCache(
-        'group:4', [row(2, 4, scope: 'group:4')], [], [], 'b');
+      'group:4',
+      [row(2, 4, scope: 'group:4')],
+      [],
+      [],
+      'b',
+    );
 
     expect((await db.lessonsForScope('group:3')).length, 1);
     expect((await db.lessonsForScope('group:4')).length, 1);
@@ -77,7 +92,12 @@ void main() {
     // id вторая запись затирала бы первую.
     await db.replaceScheduleCache('group:3', [row(1, 3)], [], [], 'a');
     await db.replaceScheduleCache(
-        'teacher:7', [row(1, 3, scope: 'teacher:7')], [], [], 'b');
+      'teacher:7',
+      [row(1, 3, scope: 'teacher:7')],
+      [],
+      [],
+      'b',
+    );
 
     expect((await db.lessonsForScope('group:3')).single.id, 1);
     expect((await db.lessonsForScope('teacher:7')).single.id, 1);
@@ -100,12 +120,14 @@ void main() {
     await db.replaceScheduleCache('group:3', [row(1, 3)], [], [], 'a');
     final stream = db.watchLessons('group:3');
 
-    expect(
-      stream.map((rows) => rows.length),
-      emitsInOrder([1, 2]),
-    );
+    expect(stream.map((rows) => rows.length), emitsInOrder([1, 2]));
     await db.replaceScheduleCache(
-        'group:3', [row(1, 3), row(2, 3)], [], [], 'b');
+      'group:3',
+      [row(1, 3), row(2, 3)],
+      [],
+      [],
+      'b',
+    );
   });
 
   group('экзамены', () {

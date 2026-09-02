@@ -25,13 +25,12 @@ class NewsFeed {
     bool? offline,
     bool? hasMore,
     bool? loadingMore,
-  }) =>
-      NewsFeed(
-        items: items ?? this.items,
-        offline: offline ?? this.offline,
-        hasMore: hasMore ?? this.hasMore,
-        loadingMore: loadingMore ?? this.loadingMore,
-      );
+  }) => NewsFeed(
+    items: items ?? this.items,
+    offline: offline ?? this.offline,
+    hasMore: hasMore ?? this.hasMore,
+    loadingMore: loadingMore ?? this.loadingMore,
+  );
 }
 
 class NewsRepository {
@@ -41,26 +40,26 @@ class NewsRepository {
   final AppDatabase _db;
 
   NewsItem _fromRow(CachedNew r) => NewsItem(
-        id: r.id,
-        title: r.title,
-        body: r.body,
-        source: r.source,
-        url: r.url,
-        imageUrl: r.imageUrl,
-        isImportant: r.isImportant,
-        publishedAt: r.publishedAt,
-      );
+    id: r.id,
+    title: r.title,
+    body: r.body,
+    source: r.source,
+    url: r.url,
+    imageUrl: r.imageUrl,
+    isImportant: r.isImportant,
+    publishedAt: r.publishedAt,
+  );
 
   CachedNewsCompanion _toRow(NewsItem n) => CachedNewsCompanion.insert(
-        id: Value(n.id),
-        title: n.title,
-        body: n.body,
-        source: n.source,
-        url: n.url,
-        imageUrl: Value(n.imageUrl),
-        isImportant: n.isImportant,
-        publishedAt: n.publishedAt,
-      );
+    id: Value(n.id),
+    title: n.title,
+    body: n.body,
+    source: n.source,
+    url: n.url,
+    imageUrl: Value(n.imageUrl),
+    isImportant: n.isImportant,
+    publishedAt: n.publishedAt,
+  );
 
   /// Начальное состояние из кэша (мгновенно, до первого refresh).
   Future<NewsFeed> loadCached() async {

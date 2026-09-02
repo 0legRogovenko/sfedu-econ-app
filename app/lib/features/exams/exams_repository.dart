@@ -6,11 +6,7 @@ import 'exams_api.dart';
 
 /// Состояние экрана экзаменов.
 class ExamsFeed {
-  const ExamsFeed({
-    required this.items,
-    required this.offline,
-    this.syncedAt,
-  });
+  const ExamsFeed({required this.items, required this.offline, this.syncedAt});
 
   final List<ExamEvent> items;
   final bool offline; // последний refresh не удался — показан кэш
@@ -27,27 +23,28 @@ class ExamsRepository {
   final AppDatabase _db;
 
   ExamEvent _fromRow(CachedExam r) => ExamEvent(
-        id: r.id,
-        groupId: r.groupId,
-        subject: r.subject,
-        teacher: r.teacher,
-        consultationAt:
-            r.consultationAt == null ? null : DateTime.parse(r.consultationAt!),
-        examAt: r.examAt == null ? null : DateTime.parse(r.examAt!),
-        room: r.room,
-        kind: r.kind,
-      );
+    id: r.id,
+    groupId: r.groupId,
+    subject: r.subject,
+    teacher: r.teacher,
+    consultationAt: r.consultationAt == null
+        ? null
+        : DateTime.parse(r.consultationAt!),
+    examAt: r.examAt == null ? null : DateTime.parse(r.examAt!),
+    room: r.room,
+    kind: r.kind,
+  );
 
   CachedExamsCompanion _toRow(ExamEvent e) => CachedExamsCompanion.insert(
-        id: Value(e.id),
-        groupId: e.groupId,
-        subject: e.subject,
-        teacher: Value(e.teacher),
-        consultationAt: Value(_iso(e.consultationAt)),
-        examAt: Value(_iso(e.examAt)),
-        room: Value(e.room),
-        kind: Value(e.kind),
-      );
+    id: Value(e.id),
+    groupId: e.groupId,
+    subject: e.subject,
+    teacher: Value(e.teacher),
+    consultationAt: Value(_iso(e.consultationAt)),
+    examAt: Value(_iso(e.examAt)),
+    room: Value(e.room),
+    kind: Value(e.kind),
+  );
 
   /// Начальное состояние из кэша (мгновенно, до первого refresh).
   Future<ExamsFeed> loadCached(int groupId) async {
@@ -84,7 +81,10 @@ class ExamsRepository {
       case ExamsApiStatus.ok:
         final items = response.examsJson!.map(ExamEvent.fromJson).toList();
         await _db.replaceGroupExams(
-            groupId, items.map(_toRow).toList(), response.etag);
+          groupId,
+          items.map(_toRow).toList(),
+          response.etag,
+        );
         return ExamsFeed(
           items: items,
           offline: false,

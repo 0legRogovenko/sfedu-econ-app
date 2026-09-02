@@ -19,26 +19,26 @@ class ContactsRepository {
   final AppDatabase _db;
 
   Contact _fromRow(CachedContact r) => Contact(
-        id: r.id,
-        section: r.section,
-        name: r.name,
-        role: r.role,
-        office: r.office,
-        email: r.email,
-        phone: r.phone,
-        officeHours: r.officeHours,
-      );
+    id: r.id,
+    section: r.section,
+    name: r.name,
+    role: r.role,
+    office: r.office,
+    email: r.email,
+    phone: r.phone,
+    officeHours: r.officeHours,
+  );
 
   CachedContactsCompanion _toRow(Contact c) => CachedContactsCompanion.insert(
-        id: Value(c.id),
-        section: c.section,
-        name: c.name,
-        role: Value(c.role),
-        office: Value(c.office),
-        email: Value(c.email),
-        phone: Value(c.phone),
-        officeHours: Value(c.officeHours),
-      );
+    id: Value(c.id),
+    section: c.section,
+    name: c.name,
+    role: Value(c.role),
+    office: Value(c.office),
+    email: Value(c.email),
+    phone: Value(c.phone),
+    officeHours: Value(c.officeHours),
+  );
 
   /// Начальное состояние из кэша (мгновенно, до первого refresh).
   Future<ContactsFeed> loadCached() async {

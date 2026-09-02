@@ -1,9 +1,4 @@
 # CI из §8 спеки: «pytest на каждый коммит».
-#
-# ВНИМАНИЕ: этот файл не проверен запуском — у репозитория нет удалённой
-# ветки, и GitHub Actions не на чем было выполнить. Команды внутри — ровно
-# те, что гоняются локально и зелены; непроверенной остаётся сама обвязка
-# (версии actions, установка Flutter). Первый push покажет.
 
 name: CI
 
@@ -85,5 +80,9 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      - name: Check Dart formatting
+        run: >-
+          find lib test -name '*.dart' ! -name 'db.g.dart' -print0
+          | xargs -0 dart format --output=none --set-exit-if-changed
       - run: flutter analyze
       - run: flutter test

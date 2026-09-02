@@ -7,12 +7,16 @@ import '../schedule/schedule_providers.dart' show databaseProvider;
 import 'contacts_api.dart';
 import 'contacts_repository.dart';
 
-final contactsApiProvider =
-    Provider<ContactsApi>((ref) => DioContactsApi(ref.watch(dioProvider)));
+final contactsApiProvider = Provider<ContactsApi>(
+  (ref) => DioContactsApi(ref.watch(dioProvider)),
+);
 
-final contactsRepositoryProvider = Provider<ContactsRepository>((ref) =>
-    ContactsRepository(
-        ref.watch(contactsApiProvider), ref.watch(databaseProvider)));
+final contactsRepositoryProvider = Provider<ContactsRepository>(
+  (ref) => ContactsRepository(
+    ref.watch(contactsApiProvider),
+    ref.watch(databaseProvider),
+  ),
+);
 
 /// Справочник контактов: мгновенно из кэша, затем фоновый refresh.
 class ContactsFeedNotifier extends AsyncNotifier<ContactsFeed> {
@@ -39,4 +43,5 @@ class ContactsFeedNotifier extends AsyncNotifier<ContactsFeed> {
 
 final contactsFeedProvider =
     AsyncNotifierProvider<ContactsFeedNotifier, ContactsFeed>(
-        ContactsFeedNotifier.new);
+      ContactsFeedNotifier.new,
+    );

@@ -6,17 +6,21 @@ import 'package:sfedu_econ/features/news/news_api.dart';
 import 'package:sfedu_econ/features/news/news_repository.dart';
 
 Map<String, dynamic> _json(int id, {String source = 'sfedu'}) => {
-      'id': id,
-      'title': 'Заголовок $id',
-      'body': 'Текст $id',
-      'source': source,
-      'url': 'https://sfedu.ru/news/$id',
-      'image_url': null,
-      'is_important': false,
-      // публикации по убыванию id
-      'published_at': DateTime(2026, 7, 15, 12).subtract(Duration(hours: id))
-          .toIso8601String(),
-    };
+  'id': id,
+  'title': 'Заголовок $id',
+  'body': 'Текст $id',
+  'source': source,
+  'url': 'https://sfedu.ru/news/$id',
+  'image_url': null,
+  'is_important': false,
+  // публикации по убыванию id
+  'published_at': DateTime(
+    2026,
+    7,
+    15,
+    12,
+  ).subtract(Duration(hours: id)).toIso8601String(),
+};
 
 class FakeNewsApi implements NewsApi {
   FakeNewsApi(this.pages);

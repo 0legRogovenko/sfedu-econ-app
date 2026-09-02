@@ -47,18 +47,17 @@ Person _person({
   String? email = 'volchik@sfedu.ru',
   bool hasSchedule = true,
   int lessonCount = 5,
-}) =>
-    Person(
-      id: id,
-      shortName: shortName,
-      fullName: fullName,
-      sections: sections,
-      roles: roles,
-      email: email,
-      hasSchedule: hasSchedule,
-      lessonCount: lessonCount,
-      examCount: 0,
-    );
+}) => Person(
+  id: id,
+  shortName: shortName,
+  fullName: fullName,
+  sections: sections,
+  roles: roles,
+  email: email,
+  hasSchedule: hasSchedule,
+  lessonCount: lessonCount,
+  examCount: 0,
+);
 
 Future<Widget> _app(List<Person> people, {Object? error}) async {
   SharedPreferences.setMockInitialValues({});
@@ -67,8 +66,9 @@ Future<Widget> _app(List<Person> people, {Object? error}) async {
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       selectedGroupIdProvider.overrideWith(() => FakeSelectedGroupId(3)),
-      scheduleDataProvider
-          .overrideWith((ref) => Stream.value(const ScheduleData.empty())),
+      scheduleDataProvider.overrideWith(
+        (ref) => Stream.value(const ScheduleData.empty()),
+      ),
       syncStatusProvider.overrideWith(_FakeSync.new),
       newsFeedProvider.overrideWith(_FakeNewsFeed.new),
       contactsFeedProvider.overrideWith(_FakeContactsFeed.new),
@@ -88,20 +88,25 @@ Future<void> _openContacts(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('справочник группирует по секциям, деканат первым',
-      (tester) async {
-    await tester.pumpWidget(await _app([
-      _person(
+  testWidgets('справочник группирует по секциям, деканат первым', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      await _app([
+        _person(
           id: '1',
           shortName: 'Белов Б.Б.',
           sections: const ['Бухгалтерский учет'],
-          hasSchedule: false),
-      _person(
+          hasSchedule: false,
+        ),
+        _person(
           id: '2',
           shortName: 'Деканов Д.Д.',
           sections: const ['Деканат'],
-          hasSchedule: false),
-    ]));
+          hasSchedule: false,
+        ),
+      ]),
+    );
     await _openContacts(tester);
 
     final deanery = tester.getTopLeft(find.text('Деканат')).dy;
@@ -117,21 +122,28 @@ void main() {
     expect(find.text('Вольчик Вячеслав Витальевич'), findsNothing);
   });
 
-  testWidgets('поиск находит внешнего преподавателя без контакта',
-      (tester) async {
+  testWidgets('поиск находит внешнего преподавателя без контакта', (
+    tester,
+  ) async {
     // Ключевое: ОДИН поиск. По пустому запросу внешних преподавателей не
     // видно, но по фамилии — находятся, хотя секции у них нет.
-    await tester.pumpWidget(await _app([
-      _person(id: '1', shortName: 'Деканов Д.Д.', sections: const ['Деканат']),
-      _person(
-        id: '2',
-        shortName: 'Груданова И.Ю.',
-        fullName: 'Груданова И.Ю.',
-        sections: const [],
-        roles: const [],
-        email: null,
-      ),
-    ]));
+    await tester.pumpWidget(
+      await _app([
+        _person(
+          id: '1',
+          shortName: 'Деканов Д.Д.',
+          sections: const ['Деканат'],
+        ),
+        _person(
+          id: '2',
+          shortName: 'Груданова И.Ю.',
+          fullName: 'Груданова И.Ю.',
+          sections: const [],
+          roles: const [],
+          email: null,
+        ),
+      ]),
+    );
     await _openContacts(tester);
 
     expect(find.text('Груданова И.Ю.'), findsNothing);
@@ -142,8 +154,9 @@ void main() {
     expect(find.text('Груданова И.Ю.'), findsOneWidget);
   });
 
-  testWidgets('тап по человеку открывает карточку с полным именем',
-      (tester) async {
+  testWidgets('тап по человеку открывает карточку с полным именем', (
+    tester,
+  ) async {
     await tester.pumpWidget(await _app([_person()]));
     await _openContacts(tester);
 
@@ -154,11 +167,18 @@ void main() {
     expect(find.widgetWithText(FilledButton, 'Расписание'), findsOneWidget);
   });
 
-  testWidgets('у человека без расписания кнопки расписания нет',
-      (tester) async {
-    await tester.pumpWidget(await _app([
-      _person(shortName: 'Методистов М.М.', hasSchedule: false, lessonCount: 0),
-    ]));
+  testWidgets('у человека без расписания кнопки расписания нет', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      await _app([
+        _person(
+          shortName: 'Методистов М.М.',
+          hasSchedule: false,
+          lessonCount: 0,
+        ),
+      ]),
+    );
     await _openContacts(tester);
     await tester.tap(find.text('Методистов М.М.'));
     await tester.pumpAndSettle();
@@ -167,14 +187,18 @@ void main() {
   });
 
   testWidgets('кнопка письма в списке есть только при почте', (tester) async {
-    await tester.pumpWidget(await _app([
-      _person(id: '1', shortName: 'Спочтой С.С.', email: 'a@sfedu.ru'),
-      _person(id: '2', shortName: 'Безпочты Б.Б.', email: null),
-    ]));
+    await tester.pumpWidget(
+      await _app([
+        _person(id: '1', shortName: 'Спочтой С.С.', email: 'a@sfedu.ru'),
+        _person(id: '2', shortName: 'Безпочты Б.Б.', email: null),
+      ]),
+    );
     await _openContacts(tester);
 
     expect(
-        find.widgetWithIcon(IconButton, Icons.email_outlined), findsOneWidget);
+      find.widgetWithIcon(IconButton, Icons.email_outlined),
+      findsOneWidget,
+    );
   });
 
   testWidgets('долгое нажатие на иконку копирует email', (tester) async {
@@ -192,9 +216,7 @@ void main() {
       () => messenger.setMockMethodCallHandler(SystemChannels.platform, null),
     );
 
-    await tester.pumpWidget(await _app([
-      _person(email: 'volchik@sfedu.ru'),
-    ]));
+    await tester.pumpWidget(await _app([_person(email: 'volchik@sfedu.ru')]));
     await _openContacts(tester);
 
     await tester.longPress(find.byIcon(Icons.email_outlined));
@@ -204,16 +226,18 @@ void main() {
     expect(find.text('Почта скопирована'), findsOneWidget);
   });
 
-  testWidgets('офлайн: честно про сеть, а не пустой справочник',
-      (tester) async {
+  testWidgets('офлайн: честно про сеть, а не пустой справочник', (
+    tester,
+  ) async {
     await tester.pumpWidget(await _app(const [], error: Exception('нет сети')));
     await _openContacts(tester);
 
     expect(find.textContaining('Нужна сеть'), findsOneWidget);
   });
 
-  testWidgets('кнопка настроек в AppBar ведёт на экран настроек',
-      (tester) async {
+  testWidgets('кнопка настроек в AppBar ведёт на экран настроек', (
+    tester,
+  ) async {
     await tester.pumpWidget(await _app([_person()]));
     await _openContacts(tester);
 
