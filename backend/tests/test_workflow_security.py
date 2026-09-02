@@ -19,27 +19,83 @@ DEPENDABOT_CONFIG = ROOT / ".github" / "dependabot.yml"
 
 TRUSTED_ACTIONS = {
     "actions/checkout": {
-        "11d5960a326750d5838078e36cf38b85af677262": "v4.4.0",
+        "3d3c42e5aac5ba805825da76410c181273ba90b1": "v7.0.1",
     },
     "actions/setup-python": {
-        "a26af69be951a213d495a4c3e4e4022e16d87065": "v5.6.0",
+        "5fda3b95a4ea91299a34e894583c3862153e4b97": "v7.0.0",
     },
     "actions/setup-java": {
-        "cf277c60eb25467037889841efdb72551f06f6c3": "v4.9.1",
+        "dd06d9cba3e5552c54d9f8ea23572deb30010f7c": "v6.0.0",
     },
     "actions/upload-artifact": {
-        "ea165f8d65b6e75b540449e92b4886f43607fa02": "v4.6.2",
+        "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a": "v7.0.1",
     },
     "aquasecurity/trivy-action": {
         "b6643a29fecd7f34b3597bc6acb0a98b03d33ff8": "v0.33.1",
     },
     "gitleaks/gitleaks-action": {
-        "ff98106e4c7b2bc287b24eaf42907196329070c7": "v2.3.9",
+        "e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e": "v3.0.0",
     },
     "subosito/flutter-action": {
         "1a449444c387b1966244ae4d4f8c696479add0b2": "v2.23.0",
     },
 }
+
+NODE24_ACTION_PINS = (
+    (
+        "actions/checkout",
+        "3d3c42e5aac5ba805825da76410c181273ba90b1",
+        "v7.0.1",
+    ),
+    (
+        "actions/setup-python",
+        "5fda3b95a4ea91299a34e894583c3862153e4b97",
+        "v7.0.0",
+    ),
+    (
+        "actions/setup-java",
+        "dd06d9cba3e5552c54d9f8ea23572deb30010f7c",
+        "v6.0.0",
+    ),
+    (
+        "actions/upload-artifact",
+        "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "v7.0.1",
+    ),
+    (
+        "gitleaks/gitleaks-action",
+        "e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e",
+        "v3.0.0",
+    ),
+)
+
+FORMER_NODE20_ACTION_PINS = (
+    (
+        "actions/checkout",
+        "11d5960a326750d5838078e36cf38b85af677262",
+        "v4.4.0",
+    ),
+    (
+        "actions/setup-python",
+        "a26af69be951a213d495a4c3e4e4022e16d87065",
+        "v5.6.0",
+    ),
+    (
+        "actions/setup-java",
+        "cf277c60eb25467037889841efdb72551f06f6c3",
+        "v4.9.1",
+    ),
+    (
+        "actions/upload-artifact",
+        "ea165f8d65b6e75b540449e92b4886f43607fa02",
+        "v4.6.2",
+    ),
+    (
+        "gitleaks/gitleaks-action",
+        "ff98106e4c7b2bc287b24eaf42907196329070c7",
+        "v2.3.9",
+    ),
+)
 
 SHA_PIN = re.compile(
     r"^\s*(?:-\s+)?(?:uses|\"uses\"|'uses'):\s+"
@@ -509,8 +565,8 @@ def test_backend_ci_runs_ruff_after_install_and_before_pytest() -> None:
     (
         (
             "gitleaks/gitleaks-action",
-            "ff98106e4c7b2bc287b24eaf42907196329070c7",
-            "v2.3.9",
+            "e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e",
+            "v3.0.0",
         ),
         (
             "aquasecurity/trivy-action",
@@ -521,6 +577,19 @@ def test_backend_ci_runs_ruff_after_install_and_before_pytest() -> None:
     ids=("gitleaks", "trivy"),
 )
 def test_security_scanner_action_pins_are_trusted(
+    action: str,
+    sha: str,
+    version: str,
+) -> None:
+    assert TRUSTED_ACTIONS.get(action) == {sha: version}
+
+
+@pytest.mark.parametrize(
+    ("action", "sha", "version"),
+    NODE24_ACTION_PINS,
+    ids=("checkout", "setup-python", "setup-java", "upload-artifact", "gitleaks"),
+)
+def test_node24_action_pins_are_trusted(
     action: str,
     sha: str,
     version: str,
@@ -585,8 +654,8 @@ def test_security_workflow_has_exact_blocking_and_advisory_jobs() -> None:
 def test_gitleaks_uses_full_history_checkout_and_github_token() -> None:
     _text, document = _load_workflow(SECURITY_WORKFLOW)
     job = _workflow_job(document, "gitleaks")
-    checkout = "actions/checkout@11d5960a326750d5838078e36cf38b85af677262"
-    action = "gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7"
+    checkout = "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1"
+    action = "gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e"
     assert _action_uses(job) == [checkout, action]
 
     steps = _job_steps(job)
@@ -602,9 +671,9 @@ def test_gitleaks_config_extends_only_default_rules_without_allowlist() -> None:
 def test_semgrep_uses_exact_version_scopes_and_report_settings() -> None:
     _text, document = _load_workflow(SECURITY_WORKFLOW)
     job = _workflow_job(document, "semgrep")
-    checkout = "actions/checkout@11d5960a326750d5838078e36cf38b85af677262"
-    setup_python = "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065"
-    upload = "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02"
+    checkout = "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1"
+    setup_python = "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97"
+    upload = "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"
     assert _action_uses(job) == [checkout, setup_python, upload]
 
     steps = _job_steps(job)
@@ -648,9 +717,9 @@ def test_semgrep_uses_exact_version_scopes_and_report_settings() -> None:
 def test_trivy_uses_exact_filesystem_scan_and_report_settings() -> None:
     _text, document = _load_workflow(SECURITY_WORKFLOW)
     job = _workflow_job(document, "trivy")
-    checkout = "actions/checkout@11d5960a326750d5838078e36cf38b85af677262"
+    checkout = "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1"
     trivy = "aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8"
-    upload = "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02"
+    upload = "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"
     assert _action_uses(job) == [checkout, trivy, upload]
 
     scan = _named_step(job, "Scan dependencies and configuration")
@@ -1029,12 +1098,12 @@ def test_unknown_action_is_rejected_in_step_and_job_forms(
     ("uses", "expected_error"),
     (
         (
-            f"- uses: actions/checkout@{'0' * 40} # v4.4.0",
+            f"- uses: actions/checkout@{'0' * 40} # v7.0.1",
             "unapproved SHA",
         ),
         (
             "- uses: actions/checkout@"
-            "11d5960a326750d5838078e36cf38b85af677262 # v4.4.1",
+            "3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.2",
             "version comment",
         ),
     ),
@@ -1051,6 +1120,26 @@ def test_trusted_action_with_wrong_pin_is_rejected(
     )
 
     with pytest.raises(AssertionError, match=expected_error):
+        guard["test_workflow_actions_are_pinned_to_versioned_commit_shas"]()
+
+
+@pytest.mark.parametrize(
+    ("action", "sha", "version"),
+    FORMER_NODE20_ACTION_PINS,
+    ids=("checkout", "setup-python", "setup-java", "upload-artifact", "gitleaks"),
+)
+def test_former_node20_action_pin_is_rejected(
+    tmp_path: Path,
+    action: str,
+    sha: str,
+    version: str,
+) -> None:
+    guard = _load_guard(
+        tmp_path,
+        {"release.yml": _action_workflow(f"- uses: {action}@{sha} # {version}")},
+    )
+
+    with pytest.raises(AssertionError, match="unapproved SHA"):
         guard["test_workflow_actions_are_pinned_to_versioned_commit_shas"]()
 
 
