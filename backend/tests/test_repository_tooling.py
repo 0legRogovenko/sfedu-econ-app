@@ -41,10 +41,12 @@ FORBIDDEN_PUBLIC_CLAIMS = {
     ),
     "app-store availability": (
         r"(?<!не )\b(?:доступн\w*|опубликован\w*|выложен\w*|скачать)\b"
-        r".{0,40}\b(?:app store|google play|play store|"
+        r".{0,40}\b(?:app store|google play|play store|rustore|ru store|"
+        r"appgallery|app gallery|"
         r"магазин\w*\s+приложен\w*)\b",
         r"(?<!not )\b(?:available|published|download(?:able)?)\b.{0,40}"
-        r"\b(?:app store|google play|play store)\b",
+        r"\b(?:app store|google play|play store|rustore|ru store|"
+        r"appgallery|app gallery)\b",
     ),
 }
 
@@ -148,6 +150,9 @@ def _assert_readme_architecture_and_start(markdown: str) -> None:
     start = _normalized(_markdown_section(markdown, "## Запуск для разработчика"))
     assert "backend/" in architecture
     assert "flutter" in architecture
+    assert "docker compose up -d --build" in start
+    assert "flutter pub get" in start
+    assert "flutter run" in start
     assert "http://localhost:8000" in start
     assert "api_base_url=http://10.0.2.2:8000" in start
 
@@ -492,6 +497,27 @@ def test_readme_pins_privacy_and_agpl_links() -> None:
 def test_readme_avoids_forbidden_public_claims() -> None:
     text = PROJECT_README.read_text(encoding="utf-8")
     _assert_no_forbidden_public_claims(text)
+
+
+def test_alt_store_claim_guard_allows_negations_and_rejects_availability() -> None:
+    safe_statements = (
+        "Приложение не доступно в RuStore или AppGallery.",
+        "Не устанавливайте APK из RuStore или AppGallery.",
+        "This app is not available on RuStore or AppGallery.",
+        "Do not install APK files from RuStore or AppGallery.",
+    )
+    for statement in safe_statements:
+        _assert_no_forbidden_public_claims(statement)
+
+    forbidden_statements = (
+        "Приложение доступно в RuStore.",
+        "Приложение опубликовано в AppGallery.",
+        "Available on RuStore.",
+        "Published on AppGallery.",
+    )
+    for statement in forbidden_statements:
+        with pytest.raises(AssertionError):
+            _assert_no_forbidden_public_claims(statement)
 
 
 def test_readme_guards_reject_representative_in_memory_mutations() -> None:
