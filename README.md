@@ -1,13 +1,16 @@
 <h1 align="center">Эконом ЮФУ</h1>
 
 <p align="center">
-  <strong>Расписание, новости, контакты и учебный помощник в одном Flutter-приложении</strong><br>
+  <strong>Неофициальное мобильное приложение: расписание, экзамены, новости, контакты и AI-помощник</strong><br>
   для студентов экономического факультета Южного федерального университета
 </p>
 
 <p align="center">
   <a href="https://github.com/0legRogovenko/sfedu-econ-app/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/0legRogovenko/sfedu-econ-app/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/0legRogovenko/sfedu-econ-app/actions/workflows/android-beta.yml"><img alt="Android beta APK" src="https://github.com/0legRogovenko/sfedu-econ-app/actions/workflows/android-beta.yml/badge.svg"></a>
   <a href="https://github.com/0legRogovenko/sfedu-econ-app/actions/workflows/security.yml"><img alt="Security checks" src="https://github.com/0legRogovenko/sfedu-econ-app/actions/workflows/security.yml/badge.svg"></a>
+  <img alt="Flutter 3.44" src="https://img.shields.io/badge/Flutter-3.44-02569B">
+  <img alt="Python 3.12" src="https://img.shields.io/badge/Python-3.12-3776AB">
   <a href="LICENSE"><img alt="License: AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-blue.svg"></a>
 </p>
 
@@ -30,45 +33,58 @@
 
 ## Как выглядит приложение
 
+Нажмите на скриншот, чтобы открыть полноразмерный локальный PNG. На узком
+экране таблица прокручивается горизонтально без уменьшения исходных кадров.
+
 <table>
   <tr>
-    <td align="center" width="50%">
+    <td align="center" width="25%">
       <strong>Расписание</strong><br>
-      <img src="assets/readme/01-schedule.png" alt="Экран расписания" width="100%">
+      <a href="assets/readme/01-schedule.png">
+        <img src="assets/readme/01-schedule.png" alt="Экран расписания" width="220">
+      </a>
     </td>
-    <td align="center" width="50%">
+    <td align="center" width="25%">
       <strong>Новости</strong><br>
-      <img src="assets/readme/02-news.png" alt="Экран новостей" width="100%">
+      <a href="assets/readme/02-news.png">
+        <img src="assets/readme/02-news.png" alt="Экран новостей" width="220">
+      </a>
     </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%">
+    <td align="center" width="25%">
       <strong>Контакты</strong><br>
-      <img src="assets/readme/03-contacts.png" alt="Экран контактов" width="100%">
+      <a href="assets/readme/03-contacts.png">
+        <img src="assets/readme/03-contacts.png" alt="Экран контактов" width="220">
+      </a>
     </td>
-    <td align="center" width="50%">
-      <strong>Помощник</strong><br>
-      <img src="assets/readme/04-assistant.png" alt="Экран учебного помощника" width="100%">
+    <td align="center" width="25%">
+      <strong>AI-помощник</strong><br>
+      <a href="assets/readme/04-assistant.png">
+        <img src="assets/readme/04-assistant.png" alt="Экран AI-помощника" width="220">
+      </a>
     </td>
   </tr>
 </table>
 
 ## Возможности
 
-- **Расписание и сессия.** Выбор группы или преподавателя, верхняя и нижняя
-  недели по календарю сервера, фильтр подгруппы, избранное и ближайшие экзамены
-  с консультациями.
+- **Расписание и сессия.** Выбор семестра, группы или преподавателя, верхняя и
+  нижняя недели по календарю сервера, фильтр подгруппы, избранное и ближайшие
+  экзамены с консультациями.
 - **Работа без стабильной сети.** Последние полученные расписание, новости и
   контакты сохраняются в локальном кэше и остаются доступны офлайн.
 - **Новости факультета.** Лента с постраничной загрузкой, подробным экраном и
   переходом к исходной публикации.
-- **Контакты.** Поиск по деканату и кафедрам, почта по кнопке и переход к
-  расписанию преподавателя.
+- **Контакты.** Единый справочник преподавателей и деканата, поиск по кафедрам,
+  почта по кнопке и переход к расписанию преподавателя.
 - **Учебный помощник.** Ответы на общие организационные вопросы по локальной
   базе знаний. Ответ помощника может быть неполным или ошибочным и не заменяет
   информацию от деканата и преподавателей.
 
 ## Получить beta APK
+
+> **Безопасность установки.** Не устанавливайте APK из сторонних источников:
+> используйте только файл и контрольную сумму, полученные в ответ на запрос по
+> указанному ниже адресу.
 
 Чтобы запросить актуальную Android-сборку и инструкцию установки, напишите на
 [080806oleg@gmail.com](mailto:080806oleg@gmail.com). В письме достаточно указать
@@ -77,6 +93,8 @@
 
 APK передаётся участникам фокус-группы вручную после подтверждения доступности
 сборки. Перед установкой сверьте имя файла и контрольную сумму из сообщения.
+Обновление, подписанное тем же ключом, устанавливается поверх предыдущей
+beta-версии и сохраняет локальные данные приложения.
 Сценарии проверки и форма обратной связи описаны в
 [инструкции для beta-тестирования](BETA_TESTING.md).
 
@@ -131,12 +149,39 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000
 
 ## Проверки и безопасность
 
-Основной CI запускается для push и pull request:
+Команды проверки бэкенда воспроизводят основной CI:
 
-- бэкенд — `ruff check`, `ruff format --check` и `pytest`;
-- схема — применение миграций и `alembic check` на PostgreSQL 16;
-- приложение — форматирование отслеживаемых Dart-файлов, `flutter analyze` и
-  `flutter test`.
+```bash
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements-dev.txt
+ruff check .
+ruff format --check .
+pytest -q
+```
+
+Команды проверки Flutter-клиента форматируют все отслеживаемые вручную
+Dart-файлы и исключают сгенерированный `db.g.dart`:
+
+```bash
+cd app
+flutter pub get
+set -o pipefail
+git ls-files -z -- '*.dart' ':!**/db.g.dart' |
+  xargs -0 dart format --output=none --set-exit-if-changed
+flutter analyze
+flutter test
+```
+
+Основной CI запускается для push и pull request. Помимо команд выше:
+
+- golden-проверки прогоняют парсеры на реальных DOCX/PDF-образцах;
+- отдельная задача применяет миграции командой `alembic upgrade head`, затем
+  запускает `alembic check` на PostgreSQL 16.
+
+Golden- и migration-проверки снижают риск регрессий, но не гарантируют
+абсолютную актуальность данных и отсутствие всех ошибок.
 
 Отдельный workflow безопасности запускается для pull request, push в `main`,
 по недельному расписанию и вручную. Gitleaks работает как блокирующая проверка

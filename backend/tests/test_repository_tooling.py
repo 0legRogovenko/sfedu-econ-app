@@ -14,6 +14,12 @@ SCREENSHOTS = {
     "assets/readme/03-contacts.png",
     "assets/readme/04-assistant.png",
 }
+SCREENSHOT_CAPTIONS = {
+    "assets/readme/01-schedule.png": "Расписание",
+    "assets/readme/02-news.png": "Новости",
+    "assets/readme/03-contacts.png": "Контакты",
+    "assets/readme/04-assistant.png": "AI-помощник",
+}
 
 
 class _HTMLTargetParser(HTMLParser):
@@ -51,6 +57,17 @@ def _relative_targets(markdown: str) -> set[str]:
         if parsed.path:
             targets.add(parsed.path)
     return targets
+
+
+def _markdown_section(markdown: str, heading: str) -> str:
+    heading_match = re.search(rf"(?m)^{re.escape(heading)}\s*$", markdown)
+    assert heading_match is not None
+    following = markdown[heading_match.end() :]
+    next_heading = re.search(r"(?m)^## ", following)
+    end = heading_match.end() + (
+        next_heading.start() if next_heading else len(following)
+    )
+    return markdown[heading_match.start() : end]
 
 
 def _requirement_names(path: Path) -> set[str]:
@@ -186,7 +203,49 @@ def test_readme_target_parser_handles_markdown_and_html() -> None:
     }
 
 
-def test_readme_references_exact_showcase_screenshots_once() -> None:
+def test_readme_centered_subtitle_describes_the_mobile_product() -> None:
+    text = PROJECT_README.read_text(encoding="utf-8")
+    match = re.search(
+        r'<p align="center">\s*<strong>(?P<subtitle>.*?)</strong>',
+        text,
+        re.DOTALL,
+    )
+    assert match is not None
+    subtitle = " ".join(match.group("subtitle").casefold().split())
+    required_phrases = {
+        "неофициальное мобильное приложение",
+        "расписание",
+        "экзамены",
+        "новости",
+        "контакты",
+        "ai-помощник",
+    }
+
+    missing = sorted(phrase for phrase in required_phrases if phrase not in subtitle)
+    assert missing == []
+
+
+def test_readme_centered_badges_cover_release_stack_and_license() -> None:
+    text = PROJECT_README.read_text(encoding="utf-8")
+    centered_blocks = re.findall(
+        r'<p align="center">(?P<content>.*?)</p>', text, re.DOTALL
+    )
+    badge_block = next((block for block in centered_blocks if "<img" in block), "")
+    assert badge_block
+    required_badges = {
+        "actions/workflows/ci.yml",
+        "actions/workflows/security.yml",
+        "actions/workflows/android-beta.yml",
+        "badge/Flutter-3.44",
+        "badge/Python-3.12",
+        "badge/license-AGPL--3.0",
+    }
+
+    missing = sorted(badge for badge in required_badges if badge not in badge_block)
+    assert missing == []
+
+
+def test_readme_showcase_screenshots_are_clickable_and_compact() -> None:
     text = PROJECT_README.read_text(encoding="utf-8")
     showcase_targets = {
         target
@@ -195,10 +254,105 @@ def test_readme_references_exact_showcase_screenshots_once() -> None:
     }
 
     assert showcase_targets == SCREENSHOTS
-    assert "<table>" in text
-    for screenshot in SCREENSHOTS:
-        assert text.count(screenshot) == 1
-        assert f'<img src="{screenshot}"' in text
+    showcase = _markdown_section(text, "## Как выглядит приложение")
+    table_match = re.search(r"<table>(?P<table>.*?)</table>", showcase, re.DOTALL)
+    assert table_match is not None
+    rows = re.findall(r"<tr>(?P<row>.*?)</tr>", table_match.group("table"), re.DOTALL)
+    assert len(rows) == 1
+    cells = re.findall(r"<td\b[^>]*>(?P<cell>.*?)</td>", rows[0], re.DOTALL)
+    assert len(cells) == 4
+
+    for screenshot, caption in SCREENSHOT_CAPTIONS.items():
+        assert text.count(screenshot) == 2
+        cell = next(
+            (cell for cell in cells if f"<strong>{caption}</strong>" in cell), ""
+        )
+        assert cell
+        image = re.search(
+            rf'<a href="{re.escape(screenshot)}">\s*'
+            rf'<img src="{re.escape(screenshot)}"(?P<attrs>[^>]*)>\s*</a>',
+            cell,
+            re.DOTALL,
+        )
+        assert image is not None
+        width = re.search(r'\bwidth="(?P<width>\d+)"', image.group("attrs"))
+        assert width is not None
+        assert 200 <= int(width.group("width")) <= 240
+        assert re.search(r'\balt="[^"]+"', image.group("attrs")) is not None
+
+
+def test_readme_capabilities_cover_semesters_and_the_unified_directory() -> None:
+    text = PROJECT_README.read_text(encoding="utf-8")
+    capabilities = " ".join(
+        _markdown_section(text, "## Возможности").casefold().split()
+    )
+
+    assert "выбор семестра" in capabilities
+    assert "единый справочник преподавателей и деканата" in capabilities
+
+
+def test_readme_beta_section_explains_safe_installation_and_updates() -> None:
+    text = PROJECT_README.read_text(encoding="utf-8")
+    beta = " ".join(_markdown_section(text, "## Получить beta APK").casefold().split())
+
+    assert "не устанавливайте apk из сторонних источников" in beta
+    assert re.search(r"обновлени[ея].*подписанн\w+ тем же ключом", beta) is not None
+    assert re.search(r"(?:ставится|устанавливается) поверх", beta) is not None
+    assert "сохраняет локальные данные" in beta
+    assert re.search(r"app store|google play|play store", text, re.IGNORECASE) is None
+
+
+def test_readme_documents_reproducible_backend_checks() -> None:
+    text = PROJECT_README.read_text(encoding="utf-8")
+    checks = _markdown_section(text, "## Проверки и безопасность")
+    commands = (
+        "pip install -r requirements-dev.txt",
+        "ruff check .",
+        "ruff format --check .",
+        "pytest -q",
+    )
+
+    positions: list[int] = []
+    for command in commands:
+        assert command in checks
+        positions.append(checks.index(command))
+    assert positions == sorted(positions)
+
+
+def test_readme_documents_reproducible_flutter_checks() -> None:
+    text = PROJECT_README.read_text(encoding="utf-8")
+    checks = _markdown_section(text, "## Проверки и безопасность")
+    commands = (
+        "flutter pub get",
+        "git ls-files -z -- '*.dart' ':!**/db.g.dart'",
+        "xargs -0 dart format --output=none --set-exit-if-changed",
+        "flutter analyze",
+        "flutter test",
+    )
+
+    positions: list[int] = []
+    for command in commands:
+        assert command in checks
+        positions.append(checks.index(command))
+    assert positions == sorted(positions)
+    assert "find lib test" not in checks
+
+
+def test_readme_explains_golden_and_migration_check_limitations() -> None:
+    text = PROJECT_README.read_text(encoding="utf-8")
+    checks = " ".join(
+        _markdown_section(text, "## Проверки и безопасность").casefold().split()
+    )
+
+    assert "golden" in checks
+    assert "docx" in checks
+    assert "pdf" in checks
+    assert "alembic upgrade head" in checks
+    assert "alembic check" in checks
+    assert (
+        "не гарантируют абсолютную актуальность данных и отсутствие всех ошибок"
+        in checks
+    )
 
 
 def test_readme_has_public_sections_and_contact() -> None:
