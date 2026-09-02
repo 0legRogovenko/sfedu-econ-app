@@ -308,6 +308,9 @@ def test_backend_ci_runs_ruff_after_install_and_before_pytest() -> None:
     assert not _entries_for_key(backend_job, "if"), (
         "backend job must not use conditional if"
     )
+    assert not _entries_for_key(backend_job, "shell"), (
+        "backend job must not use a custom shell"
+    )
 
     steps = backend_job.get("steps")
     assert isinstance(steps, list), "backend job must define a steps sequence"
@@ -380,6 +383,24 @@ def test_quoted_uses_key_cannot_hide_mutable_action(
         guard["test_workflow_actions_are_pinned_to_versioned_commit_shas"]()
 
 
+def test_alias_injected_uses_key_cannot_hide_mutable_action(tmp_path: Path) -> None:
+    guard = _load_guard(
+        tmp_path,
+        {
+            "release.yml": """\
+action_key: &action_key uses
+jobs:
+  release:
+    steps:
+      - *action_key: actions/checkout@v4
+"""
+        },
+    )
+
+    with pytest.raises(AssertionError, match="malformed or mutable action ref"):
+        guard["test_workflow_actions_are_pinned_to_versioned_commit_shas"]()
+
+
 def test_nested_permissions_override_is_rejected(tmp_path: Path) -> None:
     guard = _load_guard(
         tmp_path,
@@ -434,6 +455,26 @@ jobs: {release: {permissions: {contents: write}}}
         guard["test_workflows_use_read_only_permissions_and_safe_triggers"]()
 
 
+def test_merge_injected_job_permissions_are_rejected(tmp_path: Path) -> None:
+    guard = _load_guard(
+        tmp_path,
+        {
+            "release.yml": """\
+permissions: &read_permissions
+  contents: read
+jobs:
+  release:
+    <<:
+      permissions: *read_permissions
+    runs-on: ubuntu-latest
+"""
+        },
+    )
+
+    with pytest.raises(AssertionError, match="nested permissions"):
+        guard["test_workflows_use_read_only_permissions_and_safe_triggers"]()
+
+
 def test_quoted_root_permissions_are_normalized(tmp_path: Path) -> None:
     guard = _load_guard(
         tmp_path,
@@ -462,6 +503,27 @@ jobs:
     runs-on: ubuntu-latest
   release:
     runs-on: windows-latest
+"""
+        },
+    )
+
+    with pytest.raises(AssertionError, match="duplicate key"):
+        guard["test_workflows_use_read_only_permissions_and_safe_triggers"]()
+
+
+def test_merge_collision_is_rejected_as_duplicate_key(tmp_path: Path) -> None:
+    guard = _load_guard(
+        tmp_path,
+        {
+            "release.yml": """\
+permissions: &read_permissions
+  contents: read
+jobs:
+  release:
+    <<:
+      permissions: *read_permissions
+    permissions:
+      contents: write
 """
         },
     )
@@ -628,6 +690,34 @@ def test_trusted_action_with_wrong_pin_is_rejected(
 
     with pytest.raises(AssertionError, match=expected_error):
         guard["test_workflow_actions_are_pinned_to_versioned_commit_shas"]()
+
+
+@pytest.mark.parametrize(
+    ("target", "replacement"),
+    (
+        (
+            "        working-directory: backend",
+            "        working-directory: backend\n"
+            "        shell: bash -c 'exit 0' -- {0}",
+        ),
+        (
+            "      - run: ruff check .",
+            "      - run: ruff check .\n        shell: bash -c 'exit 0' -- {0}",
+        ),
+    ),
+    ids=("defaults-run-shell", "ruff-step-shell"),
+)
+def test_backend_ruff_gate_rejects_custom_shell(
+    tmp_path: Path,
+    target: str,
+    replacement: str,
+) -> None:
+    assert target in VALID_BACKEND_WORKFLOW
+    mutated_workflow = VALID_BACKEND_WORKFLOW.replace(target, replacement)
+    guard = _load_guard(tmp_path, {"ci.yml": mutated_workflow})
+
+    with pytest.raises(AssertionError, match="custom shell"):
+        guard["test_backend_ci_runs_ruff_after_install_and_before_pytest"]()
 
 
 @pytest.mark.parametrize(
