@@ -511,7 +511,7 @@ def test_semgrep_uses_exact_version_scopes_and_report_settings() -> None:
     assert _action_uses(job) == [checkout, setup_python, upload]
 
     steps = _job_steps(job)
-    assert steps[1].get("with") == {"python-version": "3.12", "cache": "pip"}
+    assert steps[1].get("with") == {"python-version": "3.12"}
     assert _named_step(job, "Install Semgrep").get("run") == (
         "pip install semgrep==1.176.0"
     )
