@@ -75,6 +75,7 @@ def test_development_requirements_extend_runtime() -> None:
     assert "-r requirements.txt" in lines
     assert {"pytest", "ruff"} <= development
     assert "ruff==0.16.5" in lines
+    assert lines.count("PyYAML==6.0.3") == 1
     assert "httpx" not in development
 
 

@@ -1,8 +1,12 @@
 import re
 import runpy
+from collections.abc import Iterator, Mapping
 from pathlib import Path
 
 import pytest
+import yaml
+from yaml.constructor import ConstructorError
+from yaml.nodes import MappingNode
 
 ROOT = Path(__file__).resolve().parents[2]
 WORKFLOWS_DIR = ROOT / ".github" / "workflows"
@@ -27,25 +31,119 @@ TRUSTED_ACTIONS = {
     },
 }
 
-ACTION_STEP = re.compile(r"^\s*(?:-\s+)?uses:")
 SHA_PIN = re.compile(
-    r"^\s*(?:-\s+)?uses:\s+(?P<action>[^\s@]+)@"
-    r"(?P<sha>[0-9a-f]{40})\s+# "
+    r"^\s*(?:-\s+)?(?:uses|\"uses\"|'uses'):\s+"
+    r"(?P<quote>[\"']?)(?P<action>[^\s@\"']+)@"
+    r"(?P<sha>[0-9a-f]{40})(?P=quote)\s+# "
     r"(?P<version>v[0-9]+(?:\.[0-9]+)*)\s*$"
 )
-RUN_STEP = re.compile(r"(?m)^\s*-\s+run:\s*(?P<command>[^\n]+?)\s*$")
-PERMISSIONS_KEY = re.compile(r"^(?P<indent>[ \t]*)permissions\s*:(?P<value>.*)$")
-WORKING_DIRECTORY = re.compile(
-    r"(?m)^\s+working-directory:\s*(?P<directory>[^\s#]+)\s*$"
+
+
+class _MarkedMapping(dict[object, object]):
+    def __init__(self) -> None:
+        super().__init__()
+        self.key_lines: dict[object, int] = {}
+
+
+class _UniqueKeySafeLoader(yaml.SafeLoader):
+    pass
+
+
+def _construct_unique_mapping(
+    loader: _UniqueKeySafeLoader,
+    node: MappingNode,
+    deep: bool = False,
+) -> _MarkedMapping:
+    loader.flatten_mapping(node)
+    mapping = _MarkedMapping()
+    for key_node, value_node in node.value:
+        key = loader.construct_object(key_node, deep=deep)
+        try:
+            duplicate = key in mapping
+        except TypeError as exc:
+            raise ConstructorError(
+                "while constructing a mapping",
+                node.start_mark,
+                "found an unhashable mapping key",
+                key_node.start_mark,
+            ) from exc
+        if duplicate:
+            raise ConstructorError(
+                "while constructing a mapping",
+                node.start_mark,
+                f"found duplicate key {key!r}",
+                key_node.start_mark,
+            )
+
+        mapping[key] = loader.construct_object(value_node, deep=deep)
+        mapping.key_lines[key] = key_node.start_mark.line
+    return mapping
+
+
+_UniqueKeySafeLoader.add_constructor(
+    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+    _construct_unique_mapping,
 )
 
 
-def _action_pin_issue(line: str) -> str | None:
+def _load_workflow(workflow: Path) -> tuple[str, _MarkedMapping]:
+    text = workflow.read_text(encoding="utf-8")
+    path = workflow.relative_to(ROOT)
+    try:
+        document = yaml.load(text, Loader=_UniqueKeySafeLoader)
+    except yaml.YAMLError as exc:
+        raise AssertionError(f"{path}: invalid workflow YAML: {exc}") from exc
+
+    assert isinstance(document, _MarkedMapping), (
+        f"{path}: workflow root must be a mapping"
+    )
+    return text, document
+
+
+def _mapping_entries(
+    value: object,
+) -> Iterator[tuple[_MarkedMapping, object, object, int]]:
+    pending = [value]
+    visited: set[int] = set()
+    while pending:
+        current = pending.pop()
+        if isinstance(current, _MarkedMapping):
+            identity = id(current)
+            if identity in visited:
+                continue
+            visited.add(identity)
+            for key, nested in current.items():
+                yield current, key, nested, current.key_lines[key]
+                pending.append(nested)
+        elif isinstance(current, list):
+            identity = id(current)
+            if identity in visited:
+                continue
+            visited.add(identity)
+            pending.extend(current)
+
+
+def _entries_for_key(
+    document: _MarkedMapping,
+    expected_key: str,
+) -> list[tuple[_MarkedMapping, object, int]]:
+    return [
+        (mapping, value, line)
+        for mapping, key, value, line in _mapping_entries(document)
+        if key == expected_key
+    ]
+
+
+def _action_pin_issue(line: str, parsed_uses: object) -> str | None:
     match = SHA_PIN.fullmatch(line)
     if match is None:
         return "malformed or mutable action ref"
 
     action = match.group("action")
+    source_uses = f"{action}@{match.group('sha')}"
+    if parsed_uses != source_uses:
+        return "malformed or mutable action ref"
+
     approved_shas = TRUSTED_ACTIONS.get(action)
     if approved_shas is None:
         return f"unknown action {action}"
@@ -64,54 +162,18 @@ def _action_pin_issue(line: str) -> str | None:
     return None
 
 
-def _workflow_job(text: str, name: str) -> str:
-    jobs = re.search(r"(?m)^jobs:\s*$", text)
-    assert jobs is not None, "workflow is missing a top-level jobs mapping"
-
-    jobs_text = text[jobs.end() :]
-    job = re.search(rf"(?m)^  {re.escape(name)}:\s*$", jobs_text)
-    assert job is not None, f"workflow is missing the {name!r} job"
-
-    following = jobs_text[job.end() :]
-    next_job = re.search(r"(?m)^  [A-Za-z0-9_-]+:\s*$", following)
-    end = job.end() + next_job.start() if next_job else len(jobs_text)
-    return jobs_text[job.start() : end]
-
-
-def _permission_issues(lines: list[str]) -> list[str]:
-    keys: list[tuple[int, str, str]] = []
-    for line_number, line in enumerate(lines, start=1):
-        match = PERMISSIONS_KEY.fullmatch(line)
-        if match is not None:
-            keys.append(
-                (line_number, match.group("indent"), match.group("value").strip())
-            )
-
-    issues = [
-        f"line {line_number}: nested permissions key is forbidden"
-        for line_number, indent, _value in keys
-        if indent
-    ]
-    top_level = [key for key in keys if not key[1]]
-    if len(top_level) != 1:
+def _permission_issues(document: _MarkedMapping) -> list[str]:
+    issues: list[str] = []
+    missing = object()
+    root_permissions = document.get("permissions", missing)
+    if root_permissions is missing:
         issues.append("workflow must define exactly one top-level permissions block")
-        return issues
-
-    start_line, _indent, inline_value = top_level[0]
-    block: list[str] = []
-    if inline_value:
-        block.append(inline_value)
-    else:
-        for line in lines[start_line:]:
-            stripped = line.strip()
-            if not stripped or stripped.startswith("#"):
-                continue
-            if not line[0].isspace():
-                break
-            block.append(stripped)
-
-    if block != ["contents: read"]:
+    elif root_permissions != {"contents": "read"}:
         issues.append("top-level permissions must contain only contents: read")
+
+    for mapping, _value, line in _entries_for_key(document, "permissions"):
+        if mapping is not document:
+            issues.append(f"line {line + 1}: nested permissions key is forbidden")
     return issues
 
 
@@ -132,7 +194,7 @@ def _load_guard(
 
 
 def _action_workflow(uses: str) -> str:
-    if uses.startswith("- uses:"):
+    if uses.startswith("-"):
         return f"jobs:\n  release:\n    steps:\n      {uses}\n"
     return f"jobs:\n  release:\n    {uses}\n"
 
@@ -156,52 +218,72 @@ def test_workflow_actions_are_pinned_to_versioned_commit_shas() -> None:
     invalid_refs: list[str] = []
 
     for workflow in WORKFLOWS:
-        for line_number, line in enumerate(
-            workflow.read_text(encoding="utf-8").splitlines(), start=1
-        ):
-            if not ACTION_STEP.match(line):
-                continue
-            issue = _action_pin_issue(line)
+        text, document = _load_workflow(workflow)
+        lines = text.splitlines()
+        for _mapping, parsed_uses, line_index in _entries_for_key(document, "uses"):
+            line = lines[line_index]
+            issue = _action_pin_issue(line, parsed_uses)
             if issue is not None:
                 path = workflow.relative_to(ROOT)
-                invalid_refs.append(f"{path}:{line_number}: {issue}: {line.strip()}")
+                invalid_refs.append(f"{path}:{line_index + 1}: {issue}: {line.strip()}")
 
     assert not invalid_refs, "invalid action refs:\n" + "\n".join(invalid_refs)
 
 
 def test_workflows_use_read_only_permissions_and_safe_triggers() -> None:
+    assert WORKFLOWS, "repository has no workflow files"
     issues: list[str] = []
 
     for workflow in WORKFLOWS:
-        text = workflow.read_text(encoding="utf-8")
+        _text, document = _load_workflow(workflow)
         path = workflow.relative_to(ROOT)
 
-        for issue in _permission_issues(text.splitlines()):
+        for issue in _permission_issues(document):
             issues.append(f"{path}: {issue}")
-        if "pull_request_target" in text:
-            issues.append(f"{path}: pull_request_target is forbidden")
+        for _mapping, _value, line in _entries_for_key(document, "pull_request_target"):
+            issues.append(f"{path}: line {line + 1}: pull_request_target is forbidden")
 
     assert not issues, "workflow security issues:\n" + "\n".join(issues)
 
 
 def test_backend_ci_runs_ruff_after_install_and_before_pytest() -> None:
-    workflow = CI_WORKFLOW.read_text(encoding="utf-8")
-    backend_job = _workflow_job(workflow, "backend")
-    working_directories = WORKING_DIRECTORY.findall(backend_job)
+    _text, document = _load_workflow(CI_WORKFLOW)
+    jobs = document.get("jobs")
+    assert isinstance(jobs, Mapping), "workflow is missing a top-level jobs mapping"
+    backend_job = jobs.get("backend")
+    assert isinstance(backend_job, Mapping), "workflow is missing the 'backend' job"
+
+    defaults = backend_job.get("defaults")
+    run_defaults = defaults.get("run") if isinstance(defaults, Mapping) else None
+    assert (
+        isinstance(run_defaults, Mapping)
+        and run_defaults.get("working-directory") == "backend"
+    ), "backend job must set defaults.run.working-directory to backend"
+
+    working_directories = [
+        value
+        for _mapping, value, _line in _entries_for_key(backend_job, "working-directory")
+    ]
     assert working_directories == ["backend"], (
         "backend job must declare exactly one working-directory: backend"
     )
 
     # Conservatively forbid escape hatches anywhere in this job so required
     # install, Ruff, and pytest steps cannot be conditionally bypassed.
-    assert re.search(r"(?m)^\s+continue-on-error\s*:", backend_job) is None, (
+    assert not _entries_for_key(backend_job, "continue-on-error"), (
         "backend job must not use continue-on-error"
     )
-    assert re.search(r"(?m)^\s+if\s*:", backend_job) is None, (
+    assert not _entries_for_key(backend_job, "if"), (
         "backend job must not use conditional if"
     )
 
-    commands = [match.group("command") for match in RUN_STEP.finditer(backend_job)]
+    steps = backend_job.get("steps")
+    assert isinstance(steps, list), "backend job must define a steps sequence"
+    commands = [
+        command.strip()
+        for step in steps
+        if isinstance(step, Mapping) and isinstance((command := step.get("run")), str)
+    ]
 
     required_commands = (
         "pip install -r requirements-dev.txt",
@@ -245,6 +327,27 @@ def test_yaml_workflow_with_mutable_action_is_rejected(tmp_path: Path) -> None:
         guard["test_workflow_actions_are_pinned_to_versioned_commit_shas"]()
 
 
+@pytest.mark.parametrize(
+    "uses",
+    (
+        '- "uses": actions/checkout@v4',
+        '"uses": actions/checkout@v4',
+    ),
+    ids=("quoted-step-uses", "quoted-job-uses"),
+)
+def test_quoted_uses_key_cannot_hide_mutable_action(
+    tmp_path: Path,
+    uses: str,
+) -> None:
+    guard = _load_guard(
+        tmp_path,
+        {"release.yml": _action_workflow(uses)},
+    )
+
+    with pytest.raises(AssertionError, match="malformed or mutable action ref"):
+        guard["test_workflow_actions_are_pinned_to_versioned_commit_shas"]()
+
+
 def test_nested_permissions_override_is_rejected(tmp_path: Path) -> None:
     guard = _load_guard(
         tmp_path,
@@ -262,6 +365,105 @@ jobs:
 
     with pytest.raises(AssertionError, match="nested permissions"):
         guard["test_workflows_use_read_only_permissions_and_safe_triggers"]()
+
+
+def test_quoted_nested_permissions_override_is_rejected(tmp_path: Path) -> None:
+    guard = _load_guard(
+        tmp_path,
+        {
+            "release.yml": """\
+permissions:
+  contents: read
+jobs:
+  release:
+    "permissions":
+      contents: write
+"""
+        },
+    )
+
+    with pytest.raises(AssertionError, match="nested permissions"):
+        guard["test_workflows_use_read_only_permissions_and_safe_triggers"]()
+
+
+def test_flow_style_nested_permissions_override_is_rejected(tmp_path: Path) -> None:
+    guard = _load_guard(
+        tmp_path,
+        {
+            "release.yml": """\
+permissions:
+  contents: read
+jobs: {release: {permissions: {contents: write}}}
+"""
+        },
+    )
+
+    with pytest.raises(AssertionError, match="nested permissions"):
+        guard["test_workflows_use_read_only_permissions_and_safe_triggers"]()
+
+
+def test_quoted_root_permissions_are_normalized(tmp_path: Path) -> None:
+    guard = _load_guard(
+        tmp_path,
+        {
+            "release.yml": """\
+"permissions": {contents: read}
+jobs:
+  release:
+    runs-on: ubuntu-latest
+"""
+        },
+    )
+
+    guard["test_workflows_use_read_only_permissions_and_safe_triggers"]()
+
+
+def test_duplicate_mapping_keys_are_rejected(tmp_path: Path) -> None:
+    guard = _load_guard(
+        tmp_path,
+        {
+            "release.yml": """\
+permissions:
+  contents: read
+jobs:
+  release:
+    runs-on: ubuntu-latest
+  release:
+    runs-on: windows-latest
+"""
+        },
+    )
+
+    with pytest.raises(AssertionError, match="duplicate key"):
+        guard["test_workflows_use_read_only_permissions_and_safe_triggers"]()
+
+
+def test_recursively_normalized_pull_request_target_key_is_rejected(
+    tmp_path: Path,
+) -> None:
+    guard = _load_guard(
+        tmp_path,
+        {
+            "release.yml": """\
+permissions:
+  contents: read
+on:
+  "pull_request_\\u0074arget": {}
+jobs: {}
+"""
+        },
+    )
+
+    with pytest.raises(AssertionError, match="pull_request_target"):
+        guard["test_workflows_use_read_only_permissions_and_safe_triggers"]()
+
+
+def test_empty_workflow_directory_is_rejected(tmp_path: Path) -> None:
+    guard = _load_guard(tmp_path, {})
+
+    assert guard["WORKFLOWS"] == []
+    with pytest.raises(AssertionError, match="no workflow files"):
+        guard["test_workflow_actions_are_pinned_to_versioned_commit_shas"]()
 
 
 @pytest.mark.parametrize("uses_prefix", ("- uses:", "uses:"))
@@ -325,12 +527,43 @@ def test_trusted_action_with_wrong_pin_is_rejected(
             "conditional if",
         ),
         (
+            "      - run: ruff check .",
+            '      - run: ruff check .\n        "continue-on-error": true',
+            "continue-on-error",
+        ),
+        (
+            "      - run: ruff format --check .",
+            '      - run: ruff format --check .\n        "if": false',
+            "conditional if",
+        ),
+        (
             "        working-directory: backend",
             "        working-directory: elsewhere",
             "working-directory",
         ),
+        (
+            "    defaults:\n"
+            "      run:\n"
+            "        working-directory: backend\n"
+            "    steps:\n"
+            "      - run: pip install -r requirements-dev.txt",
+            "    defaults:\n"
+            "      run:\n"
+            "        shell: bash\n"
+            "    steps:\n"
+            "      - run: pip install -r requirements-dev.txt\n"
+            "        working-directory: backend",
+            "working-directory",
+        ),
     ),
-    ids=("continue-on-error", "conditional-skip", "working-directory"),
+    ids=(
+        "continue-on-error",
+        "conditional-skip",
+        "quoted-continue-on-error",
+        "quoted-conditional-skip",
+        "working-directory",
+        "working-directory-not-default",
+    ),
 )
 def test_backend_ruff_gate_rejects_weakening(
     tmp_path: Path,
