@@ -3,6 +3,8 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[2]
 BACKEND = ROOT / "backend"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
@@ -19,6 +21,31 @@ SCREENSHOT_CAPTIONS = {
     "assets/readme/02-news.png": "Новости",
     "assets/readme/03-contacts.png": "Контакты",
     "assets/readme/04-assistant.png": "AI-помощник",
+}
+PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+FORBIDDEN_PUBLIC_CLAIMS = {
+    "official status": (
+        r"(?<!не )\bофициальн(?:ое|ый|ая)\s+"
+        r"(?:мобильн(?:ое|ый|ая)\s+)?(?:приложение|проект|клиент)\b",
+        r"(?<!not )\bofficial\s+(?:mobile\s+)?"
+        r"(?:app|application|project|client)\b",
+    ),
+    "penetration test": (
+        r"\b(?:пентест\w*|пенетрационн\w+\s+тест\w*)\b",
+        r"\b(?:pen[- ]?test(?:ed|ing)?|penetration[- ]test(?:ed|ing)?)\b",
+    ),
+    "zero vulnerabilities": (
+        r"\b(?:ноль уязвимостей|уязвимост(?:ей|и)\s+нет|без уязвимостей|"
+        r"полное отсутствие уязвимостей)\b",
+        r"\b(?:zero|no)\s+vulnerabilities\b|\bvulnerability[- ]free\b",
+    ),
+    "app-store availability": (
+        r"(?<!не )\b(?:доступн\w*|опубликован\w*|выложен\w*|скачать)\b"
+        r".{0,40}\b(?:app store|google play|play store|"
+        r"магазин\w*\s+приложен\w*)\b",
+        r"(?<!not )\b(?:available|published|download(?:able)?)\b.{0,40}"
+        r"\b(?:app store|google play|play store)\b",
+    ),
 }
 
 
@@ -68,6 +95,94 @@ def _markdown_section(markdown: str, heading: str) -> str:
         next_heading.start() if next_heading else len(following)
     )
     return markdown[heading_match.start() : end]
+
+
+def _normalized(text: str) -> str:
+    return " ".join(text.casefold().split())
+
+
+def _markdown_bullets(section: str) -> list[str]:
+    return [_normalized(bullet) for bullet in re.split(r"(?m)^- ", section)[1:]]
+
+
+def _bullet_containing(bullets: list[str], pattern: str) -> str:
+    bullet = next((item for item in bullets if re.search(pattern, item)), "")
+    assert bullet, f"missing README bullet matching {pattern!r}"
+    return bullet
+
+
+def _assert_readme_capabilities(markdown: str) -> None:
+    bullets = _markdown_bullets(_markdown_section(markdown, "## Возможности"))
+    schedule = _bullet_containing(bullets, r"расписан")
+    schedule_terms = {
+        "group": r"групп\w*",
+        "teacher": r"преподавател\w*",
+        "semester": r"семестр\w*",
+        "subgroup": r"подгрупп\w*",
+        "favorites": r"избранн\w*",
+        "exams": r"экзамен\w*",
+    }
+    missing = sorted(
+        name
+        for name, pattern in schedule_terms.items()
+        if not re.search(pattern, schedule)
+    )
+    assert missing == []
+
+    _bullet_containing(bullets, r"новост\w*")
+    contacts = _bullet_containing(bullets, r"справочник\w*")
+    assert re.search(r"преподавател\w*", contacts) is not None
+    assert re.search(r"деканат\w*", contacts) is not None
+    _bullet_containing(bullets, r"помощник\w*")
+    _bullet_containing(bullets, r"офлайн\w*")
+
+
+def _assert_readme_beta_handoff(markdown: str) -> None:
+    beta = _normalized(_markdown_section(markdown, "## Получить beta APK"))
+    assert "[080806oleg@gmail.com](mailto:080806oleg@gmail.com)" in beta
+    assert re.search(r"контрольн\w+\s+сумм\w*", beta) is not None
+
+
+def _assert_readme_architecture_and_start(markdown: str) -> None:
+    architecture = _normalized(_markdown_section(markdown, "## Архитектура"))
+    start = _normalized(_markdown_section(markdown, "## Запуск для разработчика"))
+    assert "backend/" in architecture
+    assert "flutter" in architecture
+    assert "http://localhost:8000" in start
+    assert "api_base_url=http://10.0.2.2:8000" in start
+
+
+def _assert_readme_security_modes(markdown: str) -> None:
+    security = _normalized(_markdown_section(markdown, "## Проверки и безопасность"))
+    assert re.search(r"gitleaks.{0,120}блокир\w*", security) is not None
+    assert re.search(r"semgrep\s+и\s+trivy.{0,120}advisory", security) is not None
+
+
+def _assert_readme_privacy_and_license(markdown: str) -> None:
+    privacy = _markdown_section(markdown, "## Приватность")
+    license_section = _markdown_section(markdown, "## Лицензия")
+    assert re.search(r"\]\(PRIVACY\.md\)", privacy) is not None
+    assert "AGPL-3.0" in license_section
+    assert re.search(r"\]\(LICENSE\)", license_section) is not None
+
+
+def _assert_no_forbidden_public_claims(markdown: str) -> None:
+    normalized = _normalized(markdown)
+    violations = sorted(
+        name
+        for name, patterns in FORBIDDEN_PUBLIC_CLAIMS.items()
+        if any(re.search(pattern, normalized) for pattern in patterns)
+    )
+    assert violations == []
+
+
+def _png_dimensions(path: Path) -> tuple[int, int]:
+    with path.open("rb") as stream:
+        header = stream.read(24)
+    assert len(header) == 24
+    assert header[:8] == PNG_SIGNATURE
+    assert header[8:16] == b"\x00\x00\x00\rIHDR"
+    return int.from_bytes(header[16:20]), int.from_bytes(header[20:24])
 
 
 def _requirement_names(path: Path) -> set[str]:
@@ -281,25 +396,34 @@ def test_readme_showcase_screenshots_are_clickable_and_compact() -> None:
         assert re.search(r'\balt="[^"]+"', image.group("attrs")) is not None
 
 
-def test_readme_capabilities_cover_semesters_and_the_unified_directory() -> None:
-    text = PROJECT_README.read_text(encoding="utf-8")
-    capabilities = " ".join(
-        _markdown_section(text, "## Возможности").casefold().split()
-    )
+def test_readme_showcase_png_files_are_real_and_nontrivial() -> None:
+    for screenshot in sorted(SCREENSHOTS):
+        path = ROOT / screenshot
+        assert path.stat().st_size >= 50_000
+        width, height = _png_dimensions(path)
+        assert width >= 300
+        assert height >= 600
 
-    assert "выбор семестра" in capabilities
-    assert "единый справочник преподавателей и деканата" in capabilities
+
+def test_readme_capabilities_cover_the_public_feature_contract() -> None:
+    text = PROJECT_README.read_text(encoding="utf-8")
+    _assert_readme_capabilities(text)
 
 
 def test_readme_beta_section_explains_safe_installation_and_updates() -> None:
     text = PROJECT_README.read_text(encoding="utf-8")
     beta = " ".join(_markdown_section(text, "## Получить beta APK").casefold().split())
 
+    _assert_readme_beta_handoff(text)
     assert "не устанавливайте apk из сторонних источников" in beta
     assert re.search(r"обновлени[ея].*подписанн\w+ тем же ключом", beta) is not None
     assert re.search(r"(?:ставится|устанавливается) поверх", beta) is not None
     assert "сохраняет локальные данные" in beta
-    assert re.search(r"app store|google play|play store", text, re.IGNORECASE) is None
+
+
+def test_readme_pins_architecture_and_local_development_endpoints() -> None:
+    text = PROJECT_README.read_text(encoding="utf-8")
+    _assert_readme_architecture_and_start(text)
 
 
 def test_readme_documents_reproducible_backend_checks() -> None:
@@ -353,6 +477,38 @@ def test_readme_explains_golden_and_migration_check_limitations() -> None:
         "не гарантируют абсолютную актуальность данных и отсутствие всех ошибок"
         in checks
     )
+
+
+def test_readme_pins_security_enforcement_modes() -> None:
+    text = PROJECT_README.read_text(encoding="utf-8")
+    _assert_readme_security_modes(text)
+
+
+def test_readme_pins_privacy_and_agpl_links() -> None:
+    text = PROJECT_README.read_text(encoding="utf-8")
+    _assert_readme_privacy_and_license(text)
+
+
+def test_readme_avoids_forbidden_public_claims() -> None:
+    text = PROJECT_README.read_text(encoding="utf-8")
+    _assert_no_forbidden_public_claims(text)
+
+
+def test_readme_guards_reject_representative_in_memory_mutations() -> None:
+    text = PROJECT_README.read_text(encoding="utf-8")
+    without_favorites, replacements = re.subn(
+        r"избранн\w*", "", text, flags=re.IGNORECASE
+    )
+    assert replacements >= 1
+    with pytest.raises(AssertionError):
+        _assert_readme_capabilities(without_favorites)
+
+    forbidden_claim = (
+        "Официальный проект после пентеста: ноль уязвимостей. "
+        "Official mobile app available on Google Play after penetration testing."
+    )
+    with pytest.raises(AssertionError):
+        _assert_no_forbidden_public_claims(f"{text}\n\n{forbidden_claim}")
 
 
 def test_readme_has_public_sections_and_contact() -> None:
