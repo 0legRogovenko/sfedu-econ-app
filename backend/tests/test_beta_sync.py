@@ -1,6 +1,40 @@
 import pytest
 
 
+def test_news_only_sync_does_not_touch_staff_schedule_or_logs():
+    from src.beta_sync import run_beta_sync
+
+    def unexpected():
+        pytest.fail("News refresh must not modify other application data")
+
+    result = run_beta_sync(
+        news_only=True,
+        news=lambda: {"sfedu": {"new": 3}, "econ": {"new": 2}},
+        staff=unexpected,
+        schedule=unexpected,
+        cleanup=unexpected,
+    )
+
+    assert result == {"news": {"sfedu": {"new": 3}, "econ": {"new": 2}}}
+
+
+def test_news_only_sync_reports_partial_failures_without_exposing_secrets():
+    from src.beta_sync import BetaSyncFailed, run_beta_sync
+
+    with pytest.raises(BetaSyncFailed, match="news") as raised:
+        run_beta_sync(
+            news_only=True,
+            news=lambda: {
+                "sfedu": {"new": 2},
+                "econ": {"error": "postgresql://user:password@database.example/app"},
+            },
+        )
+
+    assert raised.value.result == {
+        "news": {"sfedu": {"new": 2}, "econ": {"error": "source failed"}}
+    }
+
+
 def test_beta_sync_runs_every_source_even_when_one_fails():
     from src.beta_sync import BetaSyncFailed, run_beta_sync
 
