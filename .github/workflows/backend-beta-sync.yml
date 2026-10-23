@@ -2,6 +2,12 @@ name: Backend beta data sync
 
 on:
   workflow_dispatch:
+    inputs:
+      news_only:
+        description: Refresh news only, preserving staff and reviewed schedules
+        type: boolean
+        required: true
+        default: true
   schedule:
     # 03:17 MSK. The non-round minute reduces contention on hosted runners.
     - cron: '17 0 * * *'
@@ -59,4 +65,10 @@ jobs:
       - name: Refresh news, staff, and official schedule
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: python -m src.beta_sync
+          NEWS_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.news_only }}
+        run: |
+          if [[ "$NEWS_ONLY" == "true" ]]; then
+            python -m src.beta_sync --news-only
+          else
+            python -m src.beta_sync
+          fi

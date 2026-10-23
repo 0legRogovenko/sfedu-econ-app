@@ -7,6 +7,7 @@ PostgreSQL database instead.
 
 from __future__ import annotations
 
+import argparse
 import json
 from collections.abc import Callable
 from typing import Any
@@ -46,12 +47,13 @@ def _purge_expired_assistant_logs() -> int:
 
 def run_beta_sync(
     *,
+    news_only: bool = False,
     news: Callable[[], dict[str, Any]] = run_news_parsers,
     staff: Callable[[], None] = run_staff_import,
     schedule: Callable[[], dict[str, Any]] = run_schedule_import,
     cleanup: Callable[[], int] = _purge_expired_assistant_logs,
 ) -> dict[str, Any]:
-    """Refresh every source, then fail once with a complete source summary."""
+    """Refresh the selected sources and report failures without leaking secrets."""
     result: dict[str, Any] = {}
     failed: list[str] = []
 
@@ -66,6 +68,11 @@ def run_beta_sync(
     except Exception as error:  # noqa: BLE001 - continue with other sources
         result["news"] = {"error": type(error).__name__}
         failed.append("news")
+
+    if news_only:
+        if failed:
+            raise BetaSyncFailed(failed, result)
+        return result
 
     try:
         staff()
@@ -99,8 +106,15 @@ def run_beta_sync(
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--news-only",
+        action="store_true",
+        help="Refresh news without modifying staff, schedules, or assistant logs.",
+    )
+    args = parser.parse_args()
     try:
-        result = run_beta_sync()
+        result = run_beta_sync(news_only=args.news_only)
     except BetaSyncFailed as error:
         print(json.dumps(error.result, ensure_ascii=False, sort_keys=True))
         raise

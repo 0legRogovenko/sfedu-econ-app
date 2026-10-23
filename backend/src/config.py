@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -5,6 +6,17 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     database_url: str = "postgresql+psycopg2://sfedu:sfedu@localhost:5433/sfedu_econ"
+
+    @field_validator("database_url")
+    @classmethod
+    def use_installed_postgresql_driver(cls, value: str) -> str:
+        # Cloud providers use several URL schemes; this project ships psycopg2.
+        # Replace only the scheme so credentials and TLS options remain intact.
+        scheme, separator, remainder = value.partition("://")
+        if separator and scheme in {"postgres", "postgresql", "postgresql+psycopg"}:
+            return "postgresql+psycopg2://" + remainder
+        return value
+
     admin_username: str = "admin"
     admin_password: str
     secret_key: str
