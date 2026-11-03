@@ -12,8 +12,8 @@ from datetime import datetime, timedelta, timezone
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from src.config import settings
-from src.parsers.runner import run_news_parsers
 from src.parsers.econ_staff_runner import main as run_staff_import
+from src.parsers.runner import run_news_parsers
 from src.schedule.importer import run_schedule_import
 
 logger = logging.getLogger(__name__)

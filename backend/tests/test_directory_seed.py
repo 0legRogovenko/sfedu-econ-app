@@ -67,4 +67,6 @@ def test_surname_only_hidden_override_removes_person(db_session):
     db_session.flush()
     _module().seed_directory_overrides(db_session)
 
-    assert all(person.short_name != "Потракаева А.И." for person in build_directory(db_session))
+    assert all(
+        person.short_name != "Потракаева А.И." for person in build_directory(db_session)
+    )

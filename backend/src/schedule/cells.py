@@ -34,7 +34,9 @@ from src.schedule.rooms import normalize_room
 
 # Вид занятия. 'c' — ЛАТИНСКАЯ: опечатка ЮФУ (13498 p10 R9), глазом не видна.
 # 'лаб' раньше 'л' — иначе '(лаб)' не соберётся.
-_KIND = re.compile(r"\(\s*(лаб|л|с|c)\s*\)(?:\s*/\s*\(\s*(лаб|л|с|c)\s*\))?", re.IGNORECASE)
+_KIND = re.compile(
+    r"\(\s*(лаб|л|с|c)\s*\)(?:\s*/\s*\(\s*(лаб|л|с|c)\s*\))?", re.IGNORECASE
+)
 
 # Дата-префикс: 'До 17.12', 'С 6.10', '24.12', '08.11,  15.11'.
 _DATE_PREFIX = re.compile(
@@ -220,8 +222,7 @@ def _parse_without_kind(
         kind_raw=None,
         lesson_kind=None,
         teachers=tuple(
-            teacher.strip()
-            for teacher in teacher_match.group("teachers").split(",")
+            teacher.strip() for teacher in teacher_match.group("teachers").split(",")
         ),
         room=room,
         date_constraint_raw=date_constraint_raw,
@@ -239,14 +240,20 @@ def parse_lesson(text: str, cell_raw: str) -> ParsedLesson | None:
     week_type = None
     week = _WEEK.search(flat)
     if week:
-        week_type = WeekType.UPPER if week.group(1).lower() == "верхняя" else WeekType.LOWER
+        week_type = (
+            WeekType.UPPER if week.group(1).lower() == "верхняя" else WeekType.LOWER
+        )
         flat = (flat[: week.start()] + " " + flat[week.end() :]).strip()
 
     short_week = _WEEK_SHORT.match(flat)
     if short_week:
-        week_type = WeekType.UPPER if short_week.group("type").lower() == "в" else WeekType.LOWER
+        week_type = (
+            WeekType.UPPER
+            if short_week.group("type").lower() == "в"
+            else WeekType.LOWER
+        )
         prefix = short_week.group("prefix") or ""
-        flat = f"{prefix}{flat[short_week.end():]}".strip()
+        flat = f"{prefix}{flat[short_week.end() :]}".strip()
 
     subgroup = None
     label = _SUBGROUP.search(flat)

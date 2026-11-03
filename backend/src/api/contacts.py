@@ -13,9 +13,7 @@ DEANERY_SECTION = "Деканат"
 
 
 @router.get("/contacts", response_model=list[ContactOut])
-def list_contacts(
-    request: Request, response: Response, db: Session = Depends(get_db)
-):
+def list_contacts(request: Request, response: Response, db: Session = Depends(get_db)):
     # Деканат закреплён первым, остальные секции по алфавиту: студенту в первую
     # очередь нужен деканат, а не первая по алфавиту кафедра. Внутри секции
     # порядок задаёт sort_order — им импорт ставит заведующего первым.

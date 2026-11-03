@@ -130,9 +130,7 @@ def test_exams_etag_304(client, db_session):
     assert second.status_code == 304
 
 
-def test_reviewed_semester_snapshot_does_not_infer_exam_events(
-    client, db_session
-):
+def test_reviewed_semester_snapshot_does_not_infer_exam_events(client, db_session):
     imported = _import_reviewed_semester_snapshot(db_session)
     groups_response = client.get("/api/groups")
 
@@ -150,6 +148,5 @@ def test_reviewed_semester_snapshot_does_not_infer_exam_events(
         )
         exams = response.json()
         assert exams == [], (
-            f"group_id={group['id']} label={group_label!r} "
-            f"returned exams={exams!r}"
+            f"group_id={group['id']} label={group_label!r} returned exams={exams!r}"
         )

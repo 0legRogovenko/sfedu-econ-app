@@ -68,9 +68,7 @@ class _ContactsScreenState extends ConsumerState<ContactsScreen> {
               ),
               data: (people) => _query.trim().isEmpty
                   ? _GroupedDirectory(people: people)
-                  : _SearchResults(
-                      people: filterPeople(people, _query),
-                    ),
+                  : _SearchResults(people: filterPeople(people, _query)),
             ),
           ),
         ],
@@ -110,8 +108,7 @@ class _GroupedDirectory extends StatelessWidget {
       children: [
         for (final section in sections) ...[
           _SectionTitle(section),
-          for (final person in bySection[section]!)
-            _PersonTile(person: person),
+          for (final person in bySection[section]!) _PersonTile(person: person),
         ],
       ],
     );
@@ -206,9 +203,7 @@ class _PersonTile extends StatelessWidget {
                   onPressed: () => _email(context),
                 ),
               )
-            : (person.hasSchedule
-                ? const Icon(Icons.chevron_right)
-                : null),
+            : (person.hasSchedule ? const Icon(Icons.chevron_right) : null),
         onTap: () => context.push('/people/person', extra: person),
       ),
     );

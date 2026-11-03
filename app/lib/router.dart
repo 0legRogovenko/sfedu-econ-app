@@ -38,30 +38,38 @@ final routerProvider = Provider<GoRouter>((ref) {
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => _ShellScaffold(shell: shell),
         branches: [
-          StatefulShellBranch(routes: [
-            GoRoute(
-              path: '/schedule',
-              builder: (context, state) => const ScheduleScreen(),
-            ),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(
-              path: '/news',
-              builder: (context, state) => const NewsScreen(),
-            ),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(
-              path: '/assistant',
-              builder: (context, state) => const AssistantScreen(),
-            ),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(
-              path: '/contacts',
-              builder: (context, state) => const ContactsScreen(),
-            ),
-          ]),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/schedule',
+                builder: (context, state) => const ScheduleScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/news',
+                builder: (context, state) => const NewsScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/assistant',
+                builder: (context, state) => const AssistantScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/contacts',
+                builder: (context, state) => const ContactsScreen(),
+              ),
+            ],
+          ),
         ],
       ),
       GoRoute(
@@ -69,10 +77,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) =>
             NewsDetailScreen(item: state.extra! as NewsItem),
       ),
-      GoRoute(
-        path: '/exams',
-        builder: (context, state) => const ExamsScreen(),
-      ),
+      GoRoute(path: '/exams', builder: (context, state) => const ExamsScreen()),
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),

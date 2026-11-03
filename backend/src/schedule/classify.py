@@ -11,8 +11,8 @@
 from __future__ import annotations
 
 import re
-import zipfile
 import xml.etree.ElementTree as ET
+import zipfile
 from enum import Enum
 from pathlib import Path
 

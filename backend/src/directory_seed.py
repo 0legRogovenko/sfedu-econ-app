@@ -12,7 +12,6 @@ from sqlalchemy.orm import Session
 
 from src.models import DirectoryOverride
 
-
 CURATED_DIRECTORY_OVERRIDES: tuple[tuple[str, str | None, bool], ...] = (
     ("Фролова И.В.", "ifrolova@sfedu.ru", False),
     ("Никитаева А.Ю.", "aunikitaeva@sfedu.ru", False),

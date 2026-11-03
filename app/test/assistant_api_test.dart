@@ -82,25 +82,32 @@ void main() {
     expect(await _api(adapter).ask('Вопрос', 'dev-1'), isA<AskRateLimited>());
   });
 
-  test('429 несёт detail сервера: лимит настраивается, число знает он',
-      () async {
-    final adapter = _StubAdapter.reply(429, {
-      'detail': 'Не больше 5 вопросов за 24 часа',
-    });
+  test(
+    '429 несёт detail сервера: лимит настраивается, число знает он',
+    () async {
+      final adapter = _StubAdapter.reply(429, {
+        'detail': 'Не больше 5 вопросов за 24 часа',
+      });
 
-    final result = await _api(adapter).ask('Вопрос', 'dev-1');
+      final result = await _api(adapter).ask('Вопрос', 'dev-1');
 
-    expect((result as AskRateLimited).detail, 'Не больше 5 вопросов за 24 часа');
-  });
+      expect(
+        (result as AskRateLimited).detail,
+        'Не больше 5 вопросов за 24 часа',
+      );
+    },
+  );
 
-  test('429 без внятного detail — detail пуст, текст возьмут запасной',
-      () async {
-    final adapter = _StubAdapter.reply(429, {'detail': '   '});
+  test(
+    '429 без внятного detail — detail пуст, текст возьмут запасной',
+    () async {
+      final adapter = _StubAdapter.reply(429, {'detail': '   '});
 
-    final result = await _api(adapter).ask('Вопрос', 'dev-1');
+      final result = await _api(adapter).ask('Вопрос', 'dev-1');
 
-    expect((result as AskRateLimited).detail, isNull);
-  });
+      expect((result as AskRateLimited).detail, isNull);
+    },
+  );
 
   test('нет сети — AskFailed, а не исключение', () async {
     expect(

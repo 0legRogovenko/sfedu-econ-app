@@ -12,11 +12,10 @@
 from __future__ import annotations
 
 import logging
+import time
 from collections.abc import Callable
 
 from sqlalchemy import delete, select
-
-import time
 
 from src.alerts import notify_admin
 from src.database import SessionLocal
@@ -90,9 +89,7 @@ def _rows(section: str, people: list[Person], start_order: int) -> list[Contact]
             # в деканат. Для единого справочника деканат — основная секция;
             # это правило должно работать и в штатном импорте кафедр, а не
             # только в резервном реестре ЮФУ.
-            section=(
-                DEANERY_SECTION if person.name in _DEANERY_NAMES else section
-            ),
+            section=(DEANERY_SECTION if person.name in _DEANERY_NAMES else section),
             name=person.name,
             role=person.role or None,
             # Телефон с сайта НЕ сохраняем: у деканата это общий коммутатор с
@@ -113,9 +110,7 @@ def _official_rows(people: list[sfedu_staff.StaffPerson]) -> list[Contact]:
     return [
         Contact(
             section=(
-                DEANERY_SECTION
-                if person.name in _DEANERY_NAMES
-                else TEACHERS_SECTION
+                DEANERY_SECTION if person.name in _DEANERY_NAMES else TEACHERS_SECTION
             ),
             name=person.name,
             role=person.role or None,
@@ -310,9 +305,7 @@ def sync(
         )
         return 0
 
-    session.execute(
-        delete(Contact).where(Contact.source == ContactSource.ECON_SITE)
-    )
+    session.execute(delete(Contact).where(Contact.source == ContactSource.ECON_SITE))
     session.add_all(rows)
     session.flush()
     return len(rows)
@@ -325,9 +318,7 @@ def main() -> None:
         overrides = seed_directory_overrides(session)
         session.commit()
         manual = session.scalar(
-            select(Contact)
-            .where(Contact.source == ContactSource.MANUAL)
-            .limit(1)
+            select(Contact).where(Contact.source == ContactSource.MANUAL).limit(1)
         )
         logger.info(
             "Справочник обновлён: %s записей с сайта%s",

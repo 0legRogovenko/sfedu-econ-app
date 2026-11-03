@@ -15,7 +15,13 @@ final clockProvider = Provider<DateTime Function()>((ref) {
     return () {
       final now = DateTime.now();
       return DateTime(
-          demo.year, demo.month, demo.day, now.hour, now.minute, now.second);
+        demo.year,
+        demo.month,
+        demo.day,
+        now.hour,
+        now.minute,
+        now.second,
+      );
     };
   }
   return DateTime.now;

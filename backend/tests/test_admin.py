@@ -1,5 +1,5 @@
-from fastapi.testclient import TestClient
 from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 
 def _client(**kwargs) -> TestClient:

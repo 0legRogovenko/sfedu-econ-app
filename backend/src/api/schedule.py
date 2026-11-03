@@ -51,7 +51,9 @@ def get_schedule(
     # Контекст резолвинга «дата → модуль + тип недели» — данные, не формула.
     # Берём ВСЕ модули и календарь документов, откуда приехали пары: клиенту
     # нужны границы и тех модулей, где у группы занятий нет.
-    document_ids = sorted({l.document_id for l in lessons if l.document_id})
+    document_ids = sorted(
+        {lesson.document_id for lesson in lessons if lesson.document_id}
+    )
     modules: list[Module] = []
     calendar: list[WeekCalendar] = []
     if document_ids:
@@ -67,7 +69,7 @@ def get_schedule(
         ).all()
 
     payload = ScheduleOut(
-        lessons=[LessonOut.model_validate(l) for l in lessons],
+        lessons=[LessonOut.model_validate(lesson) for lesson in lessons],
         modules=[ModuleOut.model_validate(m) for m in modules],
         week_calendar=[WeekCalendarOut.model_validate(w) for w in calendar],
     ).model_dump(mode="json")

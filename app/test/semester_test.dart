@@ -6,16 +6,41 @@ import 'package:sfedu_econ/features/schedule/semester.dart';
 // Реальная структура из данных ЮФУ (группа 1.5): осень стык-в-стык из трёх
 // модулей, разрыв на зимние каникулы, весна из двух модулей.
 ScheduleData _yearData() => ScheduleData(
-      lessons: const [],
-      modules: [
-        Module(id: 1, name: 'I модуль', dateFrom: DateTime(2025, 9, 1), dateTo: DateTime(2025, 11, 2)),
-        Module(id: 2, name: '2 модуль', dateFrom: DateTime(2025, 11, 3), dateTo: DateTime(2025, 11, 23)),
-        Module(id: 3, name: null, dateFrom: DateTime(2025, 11, 24), dateTo: DateTime(2026, 1, 11)),
-        Module(id: 4, name: 'I модуль', dateFrom: DateTime(2026, 2, 9), dateTo: DateTime(2026, 4, 12)),
-        Module(id: 5, name: 'II модуль', dateFrom: DateTime(2026, 4, 13), dateTo: DateTime(2026, 6, 22)),
-      ],
-      weekCalendar: const [],
-    );
+  lessons: const [],
+  modules: [
+    Module(
+      id: 1,
+      name: 'I модуль',
+      dateFrom: DateTime(2025, 9, 1),
+      dateTo: DateTime(2025, 11, 2),
+    ),
+    Module(
+      id: 2,
+      name: '2 модуль',
+      dateFrom: DateTime(2025, 11, 3),
+      dateTo: DateTime(2025, 11, 23),
+    ),
+    Module(
+      id: 3,
+      name: null,
+      dateFrom: DateTime(2025, 11, 24),
+      dateTo: DateTime(2026, 1, 11),
+    ),
+    Module(
+      id: 4,
+      name: 'I модуль',
+      dateFrom: DateTime(2026, 2, 9),
+      dateTo: DateTime(2026, 4, 12),
+    ),
+    Module(
+      id: 5,
+      name: 'II модуль',
+      dateFrom: DateTime(2026, 4, 13),
+      dateTo: DateTime(2026, 6, 22),
+    ),
+  ],
+  weekCalendar: const [],
+);
 
 void main() {
   group('detectSemesters', () {
@@ -49,11 +74,24 @@ void main() {
       final data = ScheduleData(
         lessons: const [],
         modules: [
-          Module(id: 1, name: '1', dateFrom: DateTime(2025, 9, 1), dateTo: DateTime(2025, 12, 28)),
+          Module(
+            id: 1,
+            name: '1',
+            dateFrom: DateTime(2025, 9, 1),
+            dateTo: DateTime(2025, 12, 28),
+          ),
         ],
         weekCalendar: [
-          WeekCalendarEntry(dateFrom: DateTime(2025, 9, 1), dateTo: DateTime(2025, 9, 7), weekType: WeekType.upper),
-          WeekCalendarEntry(dateFrom: DateTime(2025, 12, 22), dateTo: DateTime(2025, 12, 28), weekType: WeekType.lower),
+          WeekCalendarEntry(
+            dateFrom: DateTime(2025, 9, 1),
+            dateTo: DateTime(2025, 9, 7),
+            weekType: WeekType.upper,
+          ),
+          WeekCalendarEntry(
+            dateFrom: DateTime(2025, 12, 22),
+            dateTo: DateTime(2025, 12, 28),
+            weekType: WeekType.lower,
+          ),
         ],
       );
       expect(detectSemesters(data).length, 1);
@@ -71,17 +109,25 @@ void main() {
       expect(s[1].firstMonday, DateTime(2026, 2, 9));
     });
 
-    test('firstMonday откатывается к понедельнику, если семестр начат в среду', () {
-      final data = ScheduleData(
-        lessons: const [],
-        modules: [
-          Module(id: 1, name: '1', dateFrom: DateTime(2025, 9, 3), dateTo: DateTime(2025, 12, 1)),
-        ],
-        weekCalendar: const [],
-      );
-      // 03.09.2025 — среда → понедельник 01.09.
-      expect(detectSemesters(data).single.firstMonday, DateTime(2025, 9, 1));
-    });
+    test(
+      'firstMonday откатывается к понедельнику, если семестр начат в среду',
+      () {
+        final data = ScheduleData(
+          lessons: const [],
+          modules: [
+            Module(
+              id: 1,
+              name: '1',
+              dateFrom: DateTime(2025, 9, 3),
+              dateTo: DateTime(2025, 12, 1),
+            ),
+          ],
+          weekCalendar: const [],
+        );
+        // 03.09.2025 — среда → понедельник 01.09.
+        expect(detectSemesters(data).single.firstMonday, DateTime(2025, 9, 1));
+      },
+    );
   });
 
   group('currentSemester', () {
@@ -117,18 +163,24 @@ void main() {
 
     test('по seasonKey возвращает выбранный, не текущий по дате', () {
       // Дата летом (по дате — весенний), но выбран осенний ключ.
-      expect(resolveSemester(semesters, '2025-Осенний', DateTime(2026, 7, 1)),
-          semesters[0]);
+      expect(
+        resolveSemester(semesters, '2025-Осенний', DateTime(2026, 7, 1)),
+        semesters[0],
+      );
     });
 
     test('ключ не найден → текущий по дате', () {
-      expect(resolveSemester(semesters, 'нет-такого', DateTime(2026, 3, 10)),
-          semesters[1]);
+      expect(
+        resolveSemester(semesters, 'нет-такого', DateTime(2026, 3, 10)),
+        semesters[1],
+      );
     });
 
     test('ключ null → текущий по дате', () {
-      expect(resolveSemester(semesters, null, DateTime(2025, 9, 16)),
-          semesters[0]);
+      expect(
+        resolveSemester(semesters, null, DateTime(2025, 9, 16)),
+        semesters[0],
+      );
     });
 
     test('два одноимённых семестра различаются по seasonKey', () {
@@ -136,9 +188,24 @@ void main() {
       final twoYears = ScheduleData(
         lessons: const [],
         modules: [
-          Module(id: 1, name: null, dateFrom: DateTime(2025, 9, 1), dateTo: DateTime(2026, 1, 11)),
-          Module(id: 2, name: null, dateFrom: DateTime(2026, 2, 9), dateTo: DateTime(2026, 6, 22)),
-          Module(id: 3, name: null, dateFrom: DateTime(2026, 9, 1), dateTo: DateTime(2027, 1, 11)),
+          Module(
+            id: 1,
+            name: null,
+            dateFrom: DateTime(2025, 9, 1),
+            dateTo: DateTime(2026, 1, 11),
+          ),
+          Module(
+            id: 2,
+            name: null,
+            dateFrom: DateTime(2026, 2, 9),
+            dateTo: DateTime(2026, 6, 22),
+          ),
+          Module(
+            id: 3,
+            name: null,
+            dateFrom: DateTime(2026, 9, 1),
+            dateTo: DateTime(2027, 1, 11),
+          ),
         ],
         weekCalendar: const [],
       );

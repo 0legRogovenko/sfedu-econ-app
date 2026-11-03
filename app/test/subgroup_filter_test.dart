@@ -51,8 +51,10 @@ void main() {
     await c.read(subgroupFiltersProvider.notifier).set(3, null);
 
     expect(c.read(subgroupFiltersProvider), isEmpty);
-    expect(c.read(sharedPreferencesProvider).containsKey('subgroup_of_3'),
-        isFalse);
+    expect(
+      c.read(sharedPreferencesProvider).containsKey('subgroup_of_3'),
+      isFalse,
+    );
   });
 
   test('фильтр хранится отдельно для каждой группы', () async {
@@ -69,8 +71,11 @@ void main() {
 
   group('activeSubgroupProvider', () {
     test('отдаёт фильтр активной группы', () async {
-      final c = await _container(
-          {'selected_group_id': 4, 'subgroup_of_3': 1, 'subgroup_of_4': 2});
+      final c = await _container({
+        'selected_group_id': 4,
+        'subgroup_of_3': 1,
+        'subgroup_of_4': 2,
+      });
       addTearDown(c.dispose);
       expect(c.read(activeSubgroupProvider), 2);
     });
@@ -88,8 +93,11 @@ void main() {
     });
 
     test('смена активной группы меняет фильтр', () async {
-      final c = await _container(
-          {'selected_group_id': 3, 'subgroup_of_3': 1, 'subgroup_of_4': 2});
+      final c = await _container({
+        'selected_group_id': 3,
+        'subgroup_of_3': 1,
+        'subgroup_of_4': 2,
+      });
       addTearDown(c.dispose);
       expect(c.read(activeSubgroupProvider), 1);
 

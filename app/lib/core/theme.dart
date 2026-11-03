@@ -32,14 +32,15 @@ TextTheme _textTheme(TextTheme base) =>
     _isFlutterTest ? base : GoogleFonts.golosTextTextTheme(base);
 
 ThemeData buildLightTheme() {
-  final scheme = ColorScheme.fromSeed(
-    seedColor: AppColors.sfeduRed,
-    brightness: Brightness.light,
-  ).copyWith(
-    primary: AppColors.sfeduRed,
-    surface: AppColors.lightSurface,
-    onSurface: AppColors.lightText,
-  );
+  final scheme =
+      ColorScheme.fromSeed(
+        seedColor: AppColors.sfeduRed,
+        brightness: Brightness.light,
+      ).copyWith(
+        primary: AppColors.sfeduRed,
+        surface: AppColors.lightSurface,
+        onSurface: AppColors.lightText,
+      );
   final base = ThemeData(brightness: Brightness.light, colorScheme: scheme);
   return base.copyWith(
     scaffoldBackgroundColor: AppColors.lightBackground,
@@ -52,14 +53,15 @@ ThemeData buildLightTheme() {
 }
 
 ThemeData buildDarkTheme() {
-  final scheme = ColorScheme.fromSeed(
-    seedColor: AppColors.sfeduRedDark,
-    brightness: Brightness.dark,
-  ).copyWith(
-    primary: AppColors.sfeduRedDark,
-    surface: AppColors.darkSurface,
-    onSurface: AppColors.darkText,
-  );
+  final scheme =
+      ColorScheme.fromSeed(
+        seedColor: AppColors.sfeduRedDark,
+        brightness: Brightness.dark,
+      ).copyWith(
+        primary: AppColors.sfeduRedDark,
+        surface: AppColors.darkSurface,
+        onSurface: AppColors.darkText,
+      );
   final base = ThemeData(brightness: Brightness.dark, colorScheme: scheme);
   return base.copyWith(
     scaffoldBackgroundColor: AppColors.darkBackground,

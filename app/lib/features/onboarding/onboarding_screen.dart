@@ -26,16 +26,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           padding: const EdgeInsets.all(24),
           child: groupsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, _) => _ErrorState(
-              onRetry: () => ref.invalidate(groupsProvider),
-            ),
+            error: (error, _) =>
+                _ErrorState(onRetry: () => ref.invalidate(groupsProvider)),
             data: (groups) {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Spacer(),
-                  Text('Привет! 👋',
-                      style: Theme.of(context).textTheme.headlineLarge),
+                  Text(
+                    'Привет! 👋',
+                    style: Theme.of(context).textTheme.headlineLarge,
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     'Выбери уровень и группу — и всё готово. Без регистрации.',

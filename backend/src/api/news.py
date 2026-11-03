@@ -29,11 +29,7 @@ def list_news(
             detail="Курсор задаётся парой параметров: before и before_id",
         )
 
-    query = (
-        select(News)
-        .order_by(News.published_at.desc(), News.id.desc())
-        .limit(limit)
-    )
+    query = select(News).order_by(News.published_at.desc(), News.id.desc()).limit(limit)
     if before is not None:
         query = query.where(
             tuple_(News.published_at, News.id) < tuple_(before, before_id)

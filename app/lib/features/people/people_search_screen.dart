@@ -13,8 +13,7 @@ class PeopleSearchScreen extends ConsumerStatefulWidget {
   const PeopleSearchScreen({super.key});
 
   @override
-  ConsumerState<PeopleSearchScreen> createState() =>
-      _PeopleSearchScreenState();
+  ConsumerState<PeopleSearchScreen> createState() => _PeopleSearchScreenState();
 }
 
 class _PeopleSearchScreenState extends ConsumerState<PeopleSearchScreen> {
@@ -72,10 +71,8 @@ class _PeopleSearchScreenState extends ConsumerState<PeopleSearchScreen> {
                   itemCount: found.length,
                   itemBuilder: (context, index) => ListTile(
                     title: Text(found[index].shortName),
-                    onTap: () => context.push(
-                      '/people/schedule',
-                      extra: found[index],
-                    ),
+                    onTap: () =>
+                        context.push('/people/schedule', extra: found[index]),
                   ),
                 );
               },

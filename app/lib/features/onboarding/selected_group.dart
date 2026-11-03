@@ -29,5 +29,6 @@ class FakeSelectedGroupId extends SelectedGroupId {
   }
 }
 
-final selectedGroupIdProvider =
-    NotifierProvider<SelectedGroupId, int?>(SelectedGroupId.new);
+final selectedGroupIdProvider = NotifierProvider<SelectedGroupId, int?>(
+  SelectedGroupId.new,
+);

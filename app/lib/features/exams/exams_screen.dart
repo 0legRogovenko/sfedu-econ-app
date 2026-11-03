@@ -16,13 +16,17 @@ class ExamsScreen extends ConsumerWidget {
   /// Офлайн-первый: пока в кэше что-то есть — показываем его, даже если
   /// последний ответ сервера был ошибкой. Экран ошибки — только когда
   /// показать нечего (как в контактах).
-  Widget _body(BuildContext context, WidgetRef ref, AsyncValue<ExamsFeed> feed) {
+  Widget _body(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<ExamsFeed> feed,
+  ) {
     final now = ref.watch(clockProvider)();
     Widget list(ExamsFeed f) => _ExamsList(
-          feed: f,
-          now: now,
-          onRefresh: () => ref.read(examsFeedProvider.notifier).refresh(),
-        );
+      feed: f,
+      now: now,
+      onRefresh: () => ref.read(examsFeedProvider.notifier).refresh(),
+    );
 
     final cached = feed.value;
     if (cached != null && cached.items.isNotEmpty) return list(cached);
@@ -71,9 +75,7 @@ class _ExamsList extends StatelessWidget {
           : 'Расписание экзаменов ещё не опубликовано';
       listBody = ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          SizedBox(height: 300, child: Center(child: Text(message))),
-        ],
+        children: [SizedBox(height: 300, child: Center(child: Text(message)))],
       );
     } else {
       listBody = ListView(
@@ -140,32 +142,34 @@ class _ExamCard extends StatelessWidget {
     final color = past ? theme.disabledColor : null;
 
     Widget row(IconData icon, String label, String value) => Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, size: 16, color: color ?? theme.colorScheme.outline),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text.rich(
-                  TextSpan(children: [
-                    TextSpan(
-                      text: '$label: ',
-                      style: theme.textTheme.bodySmall?.copyWith(color: color),
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 16, color: color ?? theme.colorScheme.outline),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: '$label: ',
+                    style: theme.textTheme.bodySmall?.copyWith(color: color),
+                  ),
+                  TextSpan(
+                    text: value,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.w600,
                     ),
-                    TextSpan(
-                      text: value,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ]),
-                ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        );
+        ],
+      ),
+    );
 
     return Card(
       child: Padding(
@@ -183,12 +187,21 @@ class _ExamCard extends StatelessWidget {
               style: theme.textTheme.bodySmall?.copyWith(color: color),
             ),
             const SizedBox(height: 6),
-            row(Icons.school_outlined, 'Экзамен',
-                formatExamDateTime(exam.examAt)),
-            row(Icons.co_present_outlined, 'Консультация',
-                formatExamDateTime(exam.consultationAt)),
-            row(Icons.meeting_room_outlined, 'Аудитория',
-                exam.room == null ? 'уточняется' : formatRoom(exam.room!)),
+            row(
+              Icons.school_outlined,
+              'Экзамен',
+              formatExamDateTime(exam.examAt),
+            ),
+            row(
+              Icons.co_present_outlined,
+              'Консультация',
+              formatExamDateTime(exam.consultationAt),
+            ),
+            row(
+              Icons.meeting_room_outlined,
+              'Аудитория',
+              exam.room == null ? 'уточняется' : formatRoom(exam.room!),
+            ),
             row(Icons.assignment_outlined, 'Форма', exam.kind ?? 'уточняется'),
           ],
         ),

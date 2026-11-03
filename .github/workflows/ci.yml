@@ -1,15 +1,13 @@
 # CI из §8 спеки: «pytest на каждый коммит».
-#
-# ВНИМАНИЕ: этот файл не проверен запуском — у репозитория нет удалённой
-# ветки, и GitHub Actions не на чем было выполнить. Команды внутри — ровно
-# те, что гоняются локально и зелены; непроверенной остаётся сама обвязка
-# (версии actions, установка Flutter). Первый push покажет.
 
 name: CI
 
 on:
   push:
   pull_request:
+
+permissions:
+  contents: read
 
 jobs:
   backend:
@@ -19,13 +17,17 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.12'   # как в backend/Dockerfile
           cache: pip
-          cache-dependency-path: backend/requirements.txt
-      - run: pip install -r requirements.txt
+          cache-dependency-path: |
+            backend/requirements.txt
+            backend/requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check .
+      - run: ruff format --check .
       # Тесты держат схему в памяти на SQLite (tests/conftest.py), поэтому
       # postgres здесь не нужен — он нужен соседней задаче.
       - run: pytest -q
@@ -58,8 +60,8 @@ jobs:
       ADMIN_PASSWORD: ci-password
       SECRET_KEY: ci-secret
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.12'
           cache: pip
@@ -76,12 +78,18 @@ jobs:
       run:
         working-directory: app
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           flutter-version: 3.44.6
           channel: stable
           cache: true
       - run: flutter pub get
+      - name: Check Dart formatting
+        shell: bash
+        run: |
+          set -o pipefail
+          git ls-files -z -- '*.dart' ':!**/db.g.dart' |
+            xargs -0 dart format --output=none --set-exit-if-changed
       - run: flutter analyze
       - run: flutter test

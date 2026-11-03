@@ -12,10 +12,8 @@ import html
 import re
 from dataclasses import dataclass
 
-
 STAFF_URL = (
-    "https://sfedu.ru/www/stat_pages22.show?"
-    "p=ELs%2Fsotr%2FD&x=ELS%2F10000000000000"
+    "https://sfedu.ru/www/stat_pages22.show?p=ELs%2Fsotr%2FD&x=ELS%2F10000000000000"
 )
 
 

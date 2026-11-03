@@ -26,9 +26,9 @@ class FavoriteGroupIds extends Notifier<List<int>> {
 
   Future<void> _persist(List<int> ids) async {
     state = ids;
-    await ref
-        .read(sharedPreferencesProvider)
-        .setStringList(_prefsKey, [for (final id in ids) '$id']);
+    await ref.read(sharedPreferencesProvider).setStringList(_prefsKey, [
+      for (final id in ids) '$id',
+    ]);
   }
 
   Future<void> add(int groupId) async {
@@ -59,9 +59,12 @@ class FavoriteGroupIds extends Notifier<List<int>> {
     // Пустой список мог быть осознанным. Добавляем замену только если раньше
     // избранные были, но все они оказались устаревшими.
     if (state.isNotEmpty && filtered.isEmpty) filtered.add(replacement);
-    final unchanged = state.length == filtered.length &&
-        List.generate(state.length, (index) => state[index] == filtered[index])
-            .every((same) => same);
+    final unchanged =
+        state.length == filtered.length &&
+        List.generate(
+          state.length,
+          (index) => state[index] == filtered[index],
+        ).every((same) => same);
     if (!unchanged) await _persist(filtered);
   }
 
@@ -78,5 +81,6 @@ class FavoriteGroupIds extends Notifier<List<int>> {
   }
 }
 
-final favoriteGroupIdsProvider =
-    NotifierProvider<FavoriteGroupIds, List<int>>(FavoriteGroupIds.new);
+final favoriteGroupIdsProvider = NotifierProvider<FavoriteGroupIds, List<int>>(
+  FavoriteGroupIds.new,
+);

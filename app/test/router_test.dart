@@ -47,8 +47,9 @@ Future<Widget> _appWithGroup() async {
       sharedPreferencesProvider.overrideWithValue(prefs),
       // группа уже выбрана — онбординг не показывается
       selectedGroupIdProvider.overrideWith(() => FakeSelectedGroupId(3)),
-      scheduleDataProvider
-          .overrideWith((ref) => Stream.value(const ScheduleData.empty())),
+      scheduleDataProvider.overrideWith(
+        (ref) => Stream.value(const ScheduleData.empty()),
+      ),
       syncStatusProvider.overrideWith(_FakeSync.new),
       newsFeedProvider.overrideWith(_FakeFeed.new),
       contactsFeedProvider.overrideWith(_FakeContactsFeed.new),

@@ -174,7 +174,10 @@ def test_13767_master_program_instead_of_group_number(exams_13767):
     exams = exams_13767.exams
     assert all(e.group_number is None for e in exams)
     assert all(e.master_program for e in exams)
-    assert exams[0].master_program == "Магистерская программа «Экономика, управление и право»"
+    assert (
+        exams[0].master_program
+        == "Магистерская программа «Экономика, управление и право»"
+    )
 
 
 def test_13767_program_carries_forward_across_pages(exams_13767):
@@ -212,7 +215,9 @@ def test_13767_leading_dot_is_stripped(exams_13767):
 def test_13767_essay_form(exams_13767):
     """«эссе» — форма, которой нет ни в одном списке «устный/письменный»."""
     exam = next(
-        e for e in exams_13767.exams if e.subject == "Институциональная экономика и право"
+        e
+        for e in exams_13767.exams
+        if e.subject == "Институциональная экономика и право"
     )
     assert exam.exam.kind == "эссе"
 
@@ -371,7 +376,9 @@ def test_14058_rotated_column_text_does_not_break_the_row():
     но строку он пустой не делает.
     """
     result = parse_exams(_grids("14058.pdf"))
-    exam = next(e for e in result.exams if e.subject == "Анализ хозяйственной деятельности")
+    exam = next(
+        e for e in result.exams if e.subject == "Анализ хозяйственной деятельности"
+    )
     assert exam.group_number == "3.2"
     assert exam.exam.date == date(2026, 6, 29)
     assert exam.exam.kind == "устно"
@@ -426,7 +433,10 @@ EXPECTED = {
 def test_exam_counts_per_file_are_pinned(name):
     result = parse_exams(_grids(name))
     expected_exams, expected_unparsed = EXPECTED[name]
-    assert (len(result.exams), len(result.unparsed)) == (expected_exams, expected_unparsed)
+    assert (len(result.exams), len(result.unparsed)) == (
+        expected_exams,
+        expected_unparsed,
+    )
 
 
 def test_13768_rows_drawn_off_grid_are_bound_by_x_not_by_column_index():
@@ -442,7 +452,9 @@ def test_13768_rows_drawn_off_grid_are_bound_by_x_not_by_column_index():
     result = parse_exams(_grids("13768.pdf"))
     assert len(result.exams) == 14
 
-    shifted = next(e for e in result.exams if e.subject == "Система внутреннего контроля")
+    shifted = next(
+        e for e in result.exams if e.subject == "Система внутреннего контроля"
+    )
     assert shifted.master_program.endswith("«Учетные технологии и аудит»")
     assert shifted.exam.date == date(2026, 1, 14)
     assert shifted.exam.kind == "устный"
@@ -450,7 +462,9 @@ def test_13768_rows_drawn_off_grid_are_bound_by_x_not_by_column_index():
     assert shifted.consultation.date == date(2026, 1, 12)
 
     for exam in result.exams:
-        assert not re.match(r"^[\d.\s]+$", exam.subject), f"в предмет уехала дата: {exam.subject!r}"
+        assert not re.match(r"^[\d.\s]+$", exam.subject), (
+            f"в предмет уехала дата: {exam.subject!r}"
+        )
         assert exam.exam is not None
 
 
@@ -474,11 +488,17 @@ def test_every_parsed_exam_has_a_date_and_a_plausible_subject(name):
     а в предмете оказывается «12.01.26 17.30 ауд.209».
     """
     for exam in parse_exams(_grids(name)).exams:
-        assert exam.exam is not None and exam.exam.date, f"{name}: {exam.subject!r} без даты"
+        assert exam.exam is not None and exam.exam.date, (
+            f"{name}: {exam.subject!r} без даты"
+        )
         assert len(exam.subject) >= 4, f"{name}: огрызок предмета {exam.subject!r}"
-        assert not re.search(r"\d\d\.\d\d\.\d\d", exam.subject), f"{name}: дата в предмете"
+        assert not re.search(r"\d\d\.\d\d\.\d\d", exam.subject), (
+            f"{name}: дата в предмете"
+        )
         # ФИО не должно остаться в названии предмета
-        assert not re.search(r"[А-ЯЁ]\.\s?[А-ЯЁ]\.", exam.subject), f"{name}: ФИО в предмете"
+        assert not re.search(r"[А-ЯЁ]\.\s?[А-ЯЁ]\.", exam.subject), (
+            f"{name}: ФИО в предмете"
+        )
 
 
 @pytest.mark.parametrize("name", SESSION_FILES)
@@ -491,7 +511,9 @@ def test_no_page_is_silently_dropped(name):
     grids = _grids(name)
     result = parse_exams(grids)
     pages_with_tables = {g.page for g in grids}
-    pages_with_output = {e.page for e in result.exams} | {u.page for u in result.unparsed}
+    pages_with_output = {e.page for e in result.exams} | {
+        u.page for u in result.unparsed
+    }
     assert pages_with_tables <= pages_with_output, (
         f"{name}: страницы без единой строки — {pages_with_tables - pages_with_output}"
     )

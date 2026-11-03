@@ -16,8 +16,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from urllib.parse import parse_qs, urljoin, urlparse
 
-from bs4 import BeautifulSoup
 import requests
+from bs4 import BeautifulSoup
 
 from src.parsers import sfedu_news
 
@@ -63,11 +63,31 @@ _UPPER_WORDS = {
 }
 _SINGLE_TRANSLIT = str.maketrans(
     {
-        "a": "а", "b": "б", "v": "в", "g": "г", "d": "д",
-        "e": "е", "z": "з", "i": "и", "j": "й", "k": "к",
-        "l": "л", "m": "м", "n": "н", "o": "о", "p": "п",
-        "r": "р", "s": "с", "t": "т", "u": "у", "f": "ф",
-        "h": "х", "y": "ы", "c": "к", "q": "к", "w": "в",
+        "a": "а",
+        "b": "б",
+        "v": "в",
+        "g": "г",
+        "d": "д",
+        "e": "е",
+        "z": "з",
+        "i": "и",
+        "j": "й",
+        "k": "к",
+        "l": "л",
+        "m": "м",
+        "n": "н",
+        "o": "о",
+        "p": "п",
+        "r": "р",
+        "s": "с",
+        "t": "т",
+        "u": "у",
+        "f": "ф",
+        "h": "х",
+        "y": "ы",
+        "c": "к",
+        "q": "к",
+        "w": "в",
         "x": "кс",
     }
 )

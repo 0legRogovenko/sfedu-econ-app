@@ -15,8 +15,8 @@ from sqlalchemy.pool import StaticPool
 
 @pytest.fixture()
 def db_session():
-    from src.database import Base
     from src import models  # noqa: F401 — регистрирует таблицы в metadata
+    from src.database import Base
 
     engine = create_engine(
         "sqlite://",

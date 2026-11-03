@@ -10,7 +10,6 @@ from sqlalchemy import select
 from src.models import Contact
 from src.parsers import econ_staff, econ_staff_runner
 
-
 STAFF_HTML = """
 <html><body><table>
   <tr class="tr1">

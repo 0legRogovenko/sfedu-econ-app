@@ -17,7 +17,6 @@ from src.schedule.validated_snapshot import (
     validate_snapshot,
 )
 
-
 FIXTURE_PDF = Path(__file__).parent / "fixtures" / "schedule" / "13829.pdf"
 DOCUMENT_ID = "13829"
 SOURCE_SHA256 = "253200a64a50073c58f5e126b0b3be342fec538912d173cffe2ed37aba950564"
@@ -281,12 +280,15 @@ def test_confirmed_export_bootstraps_and_finalizes_seven_pdf_six_reviewed_v2(
     ):
         validate_snapshot(snapshot_dir)
 
-    assert _export(
-        snapshot_dir,
-        output,
-        "--confirm",
-        exporter.CONFIRMATION,
-    ) == 0
+    assert (
+        _export(
+            snapshot_dir,
+            output,
+            "--confirm",
+            exporter.CONFIRMATION,
+        )
+        == 0
+    )
 
     payload = json.loads(output.read_text(encoding="utf-8"))
     assert set(payload["documents"]) == DRAFT_MANAGED_IDS
@@ -314,9 +316,7 @@ def test_confirmed_export_bootstraps_and_finalizes_seven_pdf_six_reviewed_v2(
     reviewed_ids = set(validated.review_bundle.reviewed_documents)
     assert correction_ids == reviewed_ids == DRAFT_MANAGED_IDS
     assert correction_ids
-    source_hashes = {
-        item["p_doc_id"]: item["sha256"] for item in manifest["documents"]
-    }
+    source_hashes = {item["p_doc_id"]: item["sha256"] for item in manifest["documents"]}
     for p_doc_id in correction_ids:
         validated.review_bundle.guard_source(p_doc_id, source_hashes[p_doc_id])
 
@@ -408,12 +408,15 @@ def test_exact_confirmation_permits_authoritative_target(tmp_path):
     snapshot_dir = _build_v1_snapshot(tmp_path)
     output = snapshot_dir / "reviewed_schedule.json"
 
-    assert _export(
-        snapshot_dir,
-        output,
-        "--confirm",
-        exporter.CONFIRMATION,
-    ) == 0
+    assert (
+        _export(
+            snapshot_dir,
+            output,
+            "--confirm",
+            exporter.CONFIRMATION,
+        )
+        == 0
+    )
 
     assert json.loads(output.read_text(encoding="utf-8"))["version"] == 1
 
@@ -470,12 +473,15 @@ def test_complete_v2_declared_reviewed_target_remains_permitted(tmp_path):
     snapshot_dir = _build_v2_snapshot(tmp_path)
     output = snapshot_dir / "reviewed_schedule.json"
 
-    assert _export(
-        snapshot_dir,
-        output,
-        "--confirm",
-        exporter.CONFIRMATION,
-    ) == 0
+    assert (
+        _export(
+            snapshot_dir,
+            output,
+            "--confirm",
+            exporter.CONFIRMATION,
+        )
+        == 0
+    )
 
     assert json.loads(output.read_text(encoding="utf-8"))["version"] == 1
 
@@ -635,12 +641,15 @@ def test_generated_output_is_untrusted_until_manifest_authenticates_it(tmp_path)
     corrections_before = (snapshot_dir / "corrections.json").read_bytes()
     pdf_before = (snapshot_dir / f"{DOCUMENT_ID}.pdf").read_bytes()
 
-    assert _export(
-        snapshot_dir,
-        output,
-        "--confirm",
-        exporter.CONFIRMATION,
-    ) == 0
+    assert (
+        _export(
+            snapshot_dir,
+            output,
+            "--confirm",
+            exporter.CONFIRMATION,
+        )
+        == 0
+    )
 
     assert manifest_path.read_bytes() == manifest_before
     assert (snapshot_dir / "corrections.json").read_bytes() == corrections_before

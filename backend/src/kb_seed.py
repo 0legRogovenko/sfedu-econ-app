@@ -321,9 +321,7 @@ def upsert() -> None:
     try:
         created = updated = unchanged = 0
         for a in _all_articles():
-            row = session.scalar(
-                select(KbArticle).where(KbArticle.slug == a["slug"])
-            )
+            row = session.scalar(select(KbArticle).where(KbArticle.slug == a["slug"]))
             if row is None:
                 session.add(
                     KbArticle(slug=a["slug"], title=a["title"], body_md=a["body"])

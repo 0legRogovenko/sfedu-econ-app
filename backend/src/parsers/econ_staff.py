@@ -62,7 +62,7 @@ def _looks_like_person(name: str) -> bool:
 # Карточка сотрудника целиком: от начала обёртки до конца её содержимого.
 _CARD_RE = re.compile(
     r'<div class="sppb-carousel-extended-team-wrap">(.*?)'
-    r'</ul>\s*</div>\s*</div>\s*</div>',
+    r"</ul>\s*</div>\s*</div>\s*</div>",
     re.S,
 )
 _NAME_RE = re.compile(
@@ -98,21 +98,15 @@ def _parse_cards(page_html: str) -> list[Person]:
                 profile = _unescape_href(href)
                 break
 
-        people.append(
-            Person(name=name, role=role, phone=phone, profile_url=profile)
-        )
+        people.append(Person(name=name, role=role, phone=phone, profile_url=profile))
     return people
 
 
 # ВТОРОЙ МАКЕТ. Часть кафедр свёрстана не каруселью, а блоками
 # `sppb-addon-person`. Пока он не поддерживался, такая кафедра молча теряла
 # и заведующего, и часть состава.
-_PERSON_BLOCK_RE = re.compile(
-    r'<div class="sppb-person-information">(.*?)</div>', re.S
-)
-_PERSON_NAME_RE = re.compile(
-    r'<span class="sppb-person-name">(.*?)</span>', re.S
-)
+_PERSON_BLOCK_RE = re.compile(r'<div class="sppb-person-information">(.*?)</div>', re.S)
+_PERSON_NAME_RE = re.compile(r'<span class="sppb-person-name">(.*?)</span>', re.S)
 _PERSON_ROLE_RE = re.compile(
     r'<span class="sppb-person-designation">(.*?)</span>', re.S
 )
@@ -221,7 +215,9 @@ def parse_department(page_html: str) -> Department:
 # настоящий адрес страница показывает, декодируя base64 в браузере. Приманка
 # нерабочая, поэтому сохранять её нельзя — кнопка письма вела бы в никуда.
 _DECOY_MAILTO_RE = re.compile(r"mailto:hello\+([A-Za-z0-9+/=]+)@")
-_PLAIN_MAILTO_RE = re.compile(r"mailto:([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})")
+_PLAIN_MAILTO_RE = re.compile(
+    r"mailto:([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})"
+)
 
 
 def parse_person_email(page_html: str) -> str | None:

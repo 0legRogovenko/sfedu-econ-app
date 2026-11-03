@@ -3,15 +3,15 @@ import 'package:sfedu_econ/features/exams/exam_event.dart';
 import 'package:sfedu_econ/features/exams/exams_logic.dart';
 
 ExamEvent _exam({int id = 1, DateTime? examAt}) => ExamEvent(
-      id: id,
-      groupId: 3,
-      subject: 'Предмет $id',
-      teacher: null,
-      consultationAt: null,
-      examAt: examAt,
-      room: null,
-      kind: null,
-    );
+  id: id,
+  groupId: 3,
+  subject: 'Предмет $id',
+  teacher: null,
+  consultationAt: null,
+  examAt: examAt,
+  room: null,
+  kind: null,
+);
 
 void main() {
   group('splitExams', () {
@@ -57,7 +57,10 @@ void main() {
       expect(formatExamDateTime(null), 'уточняется');
     });
     test('дата и время с ведущими нулями', () {
-      expect(formatExamDateTime(DateTime(2026, 4, 9, 9, 0)), '09.04.2026, 09:00');
+      expect(
+        formatExamDateTime(DateTime(2026, 4, 9, 9, 0)),
+        '09.04.2026, 09:00',
+      );
     });
   });
 

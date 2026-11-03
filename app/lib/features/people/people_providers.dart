@@ -22,26 +22,26 @@ final peopleProvider = FutureProvider<List<Person>>((ref) async {
 /// Без drift-кэша намеренно: расписание человека смотрят изредка, а офлайн
 /// экран честно показывает «нужна сеть» — так проще, чем заводить ещё один
 /// скоуп кэша со сменой schemaVersion.
-final personScheduleProvider =
-    FutureProvider.autoDispose.family<ScheduleData, String>((ref, id) async {
-  final dio = ref.watch(dioProvider);
-  final response = await dio.get<Map<String, dynamic>>(
-    '/api/persons/$id/schedule',
-    options: Options(validateStatus: (status) => status == 200),
-  );
-  return ScheduleData.fromJson(response.data ?? const {});
-});
+final personScheduleProvider = FutureProvider.autoDispose
+    .family<ScheduleData, String>((ref, id) async {
+      final dio = ref.watch(dioProvider);
+      final response = await dio.get<Map<String, dynamic>>(
+        '/api/persons/$id/schedule',
+        options: Options(validateStatus: (status) => status == 200),
+      );
+      return ScheduleData.fromJson(response.data ?? const {});
+    });
 
 /// Экзамены человека — для карточки. Той же природы, что personScheduleProvider:
 /// без drift-кэша, autoDispose, офлайн — честная ошибка.
-final personExamsProvider =
-    FutureProvider.autoDispose.family<List<ExamEvent>, String>((ref, id) async {
-  final dio = ref.watch(dioProvider);
-  final response = await dio.get<List<dynamic>>(
-    '/api/persons/$id/exams',
-    options: Options(validateStatus: (status) => status == 200),
-  );
-  return (response.data ?? const [])
-      .map((e) => ExamEvent.fromJson(e as Map<String, dynamic>))
-      .toList();
-});
+final personExamsProvider = FutureProvider.autoDispose
+    .family<List<ExamEvent>, String>((ref, id) async {
+      final dio = ref.watch(dioProvider);
+      final response = await dio.get<List<dynamic>>(
+        '/api/persons/$id/exams',
+        options: Options(validateStatus: (status) => status == 200),
+      );
+      return (response.data ?? const [])
+          .map((e) => ExamEvent.fromJson(e as Map<String, dynamic>))
+          .toList();
+    });

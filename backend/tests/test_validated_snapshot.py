@@ -17,7 +17,6 @@ from src.schedule.validated_snapshot import (
     validate_snapshot,
 )
 
-
 LEGACY_SNAPSHOT_DIR = DEFAULT_SNAPSHOT_DIR.parent / "2026-08-28"
 
 
@@ -333,7 +332,15 @@ def test_v2_manifest_rejects_unknown_keys(tmp_path):
         validate_snapshot(snapshot_dir)
 
 
-@pytest.mark.parametrize("filename", ["../corrections.json", "/tmp/corrections.json", "nested/corrections.json", r"nested\corrections.json"])
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "../corrections.json",
+        "/tmp/corrections.json",
+        "nested/corrections.json",
+        r"nested\corrections.json",
+    ],
+)
 def test_v2_rejects_unsafe_asset_filenames(tmp_path, filename):
     snapshot_dir = _build_v2_snapshot(tmp_path)
     manifest = _manifest(snapshot_dir)
@@ -502,9 +509,7 @@ def test_rejects_modified_corrections_before_touching_database(
         called = True
         raise AssertionError("database importer must not run")
 
-    monkeypatch.setattr(
-        "src.schedule.validated_snapshot.import_all", forbidden_import
-    )
+    monkeypatch.setattr("src.schedule.validated_snapshot.import_all", forbidden_import)
 
     with pytest.raises(SnapshotValidationError, match="corrections integrity"):
         import_validated_snapshot(db_session, snapshot_dir)
@@ -542,9 +547,7 @@ def test_rejects_modified_reviewed_output_before_touching_database(
         called = True
         raise AssertionError("database importer must not run")
 
-    monkeypatch.setattr(
-        "src.schedule.validated_snapshot.import_all", forbidden_import
-    )
+    monkeypatch.setattr("src.schedule.validated_snapshot.import_all", forbidden_import)
 
     with pytest.raises(SnapshotValidationError, match="reviewed schedule integrity"):
         import_validated_snapshot(db_session, snapshot_dir)
@@ -568,9 +571,7 @@ def test_rejects_invalid_authenticated_corrections_before_database(
         nonlocal called
         called = True
 
-    monkeypatch.setattr(
-        "src.schedule.validated_snapshot.import_all", forbidden_import
-    )
+    monkeypatch.setattr("src.schedule.validated_snapshot.import_all", forbidden_import)
 
     with pytest.raises(SnapshotValidationError, match="corrections file is invalid"):
         import_validated_snapshot(db_session, snapshot_dir)
@@ -587,9 +588,7 @@ def test_rejects_rehashed_but_wrong_reviewed_output_and_rolls_back(
     signatures = ["corrupted-reviewed-signature"]
     payload["documents"]["14159"]["signatures"] = signatures
     payload["documents"]["14159"]["lesson_hash"] = _lesson_hash(tuple(signatures))
-    _rewrite_asset_and_manifest_hash(
-        snapshot_dir, "reviewed_schedule_file", payload
-    )
+    _rewrite_asset_and_manifest_hash(snapshot_dir, "reviewed_schedule_file", payload)
     monkeypatch.setattr(
         "src.schedule.validated_snapshot.import_all", _empty_reviewed_import
     )

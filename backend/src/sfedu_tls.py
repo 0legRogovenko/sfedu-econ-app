@@ -14,10 +14,8 @@ from pathlib import Path
 
 import requests
 
-
 SFEDU_INTERMEDIATE_CERT = (
-    Path(__file__).with_name("certs")
-    / "globalsign-gcc-r6-alphassl-ca-2025.pem"
+    Path(__file__).with_name("certs") / "globalsign-gcc-r6-alphassl-ca-2025.pem"
 )
 
 

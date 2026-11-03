@@ -93,7 +93,9 @@ def test_row_of_three_cells_binds_to_the_right_groups(grids_13470):
 def test_lecture_row_covers_all_six_groups(grids_13470):
     grid = _page_grid(grids_13470, 2)
     groups = _groups(grid)
-    lecture = next(c for c in grid.row(7) if "Теория и практика управления (л)" in c.text)
+    lecture = next(
+        c for c in grid.row(7) if "Теория и практика управления (л)" in c.text
+    )
     assert all(lecture.covers(*rng) for rng in groups.values())
 
 
@@ -161,7 +163,9 @@ def test_extract_text_mixes_rotated_day_name_therefore_we_read_cells(grids_13470
     assert not bez.overlaps(*groups["Группа 2.1"])
 
     # и ни одной буквы повёрнутого дня в ячейках занятий
-    assert all(len(ln) > 1 for c in (bez, teo) for ln in c.text.split("\n") if ln.strip())
+    assert all(
+        len(ln) > 1 for c in (bez, teo) for ln in c.text.split("\n") if ln.strip()
+    )
 
 
 def test_superscript_of_next_row_does_not_bleed_into_time_cell():
@@ -234,7 +238,9 @@ def test_duplicate_cell_nested_inside_another_is_dropped():
     row = grid.row(26)
     lessons = [c for c in row if "Проектирование и разработка" in c.text]
     assert len(lessons) == 1, "занятие ровно одно, а не задвоено"
-    assert (lessons[0].bbox[0], lessons[0].bbox[2]) == pytest.approx((241.05, 779.61), abs=0.01)
+    assert (lessons[0].bbox[0], lessons[0].bbox[2]) == pytest.approx(
+        (241.05, 779.61), abs=0.01
+    )
 
 
 def test_page_without_tables_is_skipped_not_crashed():

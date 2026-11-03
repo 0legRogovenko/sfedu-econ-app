@@ -6,41 +6,37 @@ import 'package:sfedu_econ/features/schedule/schedule_repository.dart';
 import 'package:sfedu_econ/features/schedule/schedule_scope.dart';
 
 Map<String, dynamic> _lessonJson(int id) => {
-      'id': id,
-      'group_id': 3,
-      'weekday': 0,
-      'pair_number': id,
-      'starts_at': '09:00:00',
-      'ends_at': '10:35:00',
-      'subject': 'Предмет $id',
-      'room': null,
-      'week_type': null,
-      'subgroup': 0,
-      'teacher': null,
-      'module_id': 2,
-      'valid_from': '2025-09-01',
-      'valid_to': '2025-10-26',
-      'specific_dates': ['2025-09-08', '2025-09-22'],
-    };
+  'id': id,
+  'group_id': 3,
+  'weekday': 0,
+  'pair_number': id,
+  'starts_at': '09:00:00',
+  'ends_at': '10:35:00',
+  'subject': 'Предмет $id',
+  'room': null,
+  'week_type': null,
+  'subgroup': 0,
+  'teacher': null,
+  'module_id': 2,
+  'valid_from': '2025-09-01',
+  'valid_to': '2025-10-26',
+  'specific_dates': ['2025-09-08', '2025-09-22'],
+};
 
 Map<String, dynamic> _schedule(List<Map<String, dynamic>> lessons) => {
-      'lessons': lessons,
-      'modules': [
-        {
-          'id': 2,
-          'name': '1 модуль',
-          'date_from': '2025-09-01',
-          'date_to': '2025-10-26',
-        }
-      ],
-      'week_calendar': [
-        {
-          'date_from': '2025-09-01',
-          'date_to': '2025-09-07',
-          'week_type': 'upper',
-        }
-      ],
-    };
+  'lessons': lessons,
+  'modules': [
+    {
+      'id': 2,
+      'name': '1 модуль',
+      'date_from': '2025-09-01',
+      'date_to': '2025-10-26',
+    },
+  ],
+  'week_calendar': [
+    {'date_from': '2025-09-01', 'date_to': '2025-09-07', 'week_type': 'upper'},
+  ],
+};
 
 class FakeApi implements ScheduleApi {
   FakeApi(this.responses);
@@ -53,7 +49,9 @@ class FakeApi implements ScheduleApi {
 
   @override
   Future<ScheduleApiResponse> fetchSchedule(
-      ScheduleScope scope, String? etag) async {
+    ScheduleScope scope,
+    String? etag,
+  ) async {
     sentScopes.add(scope);
     sentEtags.add(etag);
     return responses[calls++];
@@ -69,7 +67,9 @@ void main() {
   test('первый синк: 200 → кэш заполнен, etag сохранён', () async {
     final api = FakeApi([
       ScheduleApiResponse.ok(
-          _schedule([_lessonJson(1), _lessonJson(2)]), '"e1"'),
+        _schedule([_lessonJson(1), _lessonJson(2)]),
+        '"e1"',
+      ),
     ]);
     final repo = ScheduleRepository(api, db);
 
@@ -113,25 +113,28 @@ void main() {
     expect((await db.lessonsForScope('group:3')).length, 1);
   });
 
-  test('битый 200 (неизвестный тип недели) → failed, прежний кэш цел', () async {
-    // Регрессия #5: разбор тела 200 может бросить (WeekType.fromValue на
-    // неизвестном значении). Раньше исключение уходило необработанным, синк
-    // «падал в тишину», а экран показывал «Пар нет» вместо честного сбоя.
-    final bad = _lessonJson(2)..['week_type'] = 'диагональ';
-    final api = FakeApi([
-      ScheduleApiResponse.ok(_schedule([_lessonJson(1)]), '"e1"'),
-      ScheduleApiResponse.ok(_schedule([bad]), '"e2"'),
-    ]);
-    final repo = ScheduleRepository(api, db);
+  test(
+    'битый 200 (неизвестный тип недели) → failed, прежний кэш цел',
+    () async {
+      // Регрессия #5: разбор тела 200 может бросить (WeekType.fromValue на
+      // неизвестном значении). Раньше исключение уходило необработанным, синк
+      // «падал в тишину», а экран показывал «Пар нет» вместо честного сбоя.
+      final bad = _lessonJson(2)..['week_type'] = 'диагональ';
+      final api = FakeApi([
+        ScheduleApiResponse.ok(_schedule([_lessonJson(1)]), '"e1"'),
+        ScheduleApiResponse.ok(_schedule([bad]), '"e2"'),
+      ]);
+      final repo = ScheduleRepository(api, db);
 
-    await repo.sync(const ScheduleScope.group(3)); // кэш = 1 пара
-    final result = await repo.sync(const ScheduleScope.group(3)); // битый
+      await repo.sync(const ScheduleScope.group(3)); // кэш = 1 пара
+      final result = await repo.sync(const ScheduleScope.group(3)); // битый
 
-    expect(result, SyncResult.failed);
-    // прежний (успешный) кэш не затёрт битым ответом
-    expect((await db.lessonsForScope('group:3')).length, 1);
-    expect((await db.metaForScope('group:3'))!.etag, '"e1"');
-  });
+      expect(result, SyncResult.failed);
+      // прежний (успешный) кэш не затёрт битым ответом
+      expect((await db.lessonsForScope('group:3')).length, 1);
+      expect((await db.metaForScope('group:3'))!.etag, '"e1"');
+    },
+  );
 
   test('скоуп преподавателя кэшируется отдельно от скоупа группы', () async {
     // Пара с одним id приходит в обоих расписаниях; без скоупа вторая
@@ -145,8 +148,10 @@ void main() {
     await repo.sync(const ScheduleScope.group(3));
     await repo.sync(const ScheduleScope.teacher(7));
 
-    expect(api.sentScopes,
-        [const ScheduleScope.group(3), const ScheduleScope.teacher(7)]);
+    expect(api.sentScopes, [
+      const ScheduleScope.group(3),
+      const ScheduleScope.teacher(7),
+    ]);
     expect((await db.lessonsForScope('group:3')).length, 1);
     expect((await db.lessonsForScope('teacher:7')).length, 1);
     expect((await db.metaForScope('group:3'))!.etag, '"g"');

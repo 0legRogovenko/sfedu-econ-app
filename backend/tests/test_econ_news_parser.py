@@ -1,5 +1,6 @@
-import requests
 import time as time_module
+
+import requests
 
 from src.parsers import econ_news, sfedu_news
 from src.parsers.econ_news import parse_sitemap
@@ -23,17 +24,13 @@ def test_sitemap_fallback_titles_are_readable_during_article_outage():
     base = "https://econ-sfedu.ru/component/content/article/"
     rows = parse_sitemap(
         _sitemap(
-            base
-            + "328-poryadok-postupleniya-na-sluzhbu-po-spetsialnomu-kontraktu.html"
+            base + "328-poryadok-postupleniya-na-sluzhbu-po-spetsialnomu-kontraktu.html"
             "?catid=15&Itemid=101",
-            base
-            + "324-the-faculty-of-economics-will-host-another-meeting.html"
+            base + "324-the-faculty-of-economics-will-host-another-meeting.html"
             "?catid=15&Itemid=101",
-            base
-            + "319-molodye-uchjonye-ekonoma-yufu-uchastniki-molodjozhnogo-dnya-"
+            base + "319-molodye-uchjonye-ekonoma-yufu-uchastniki-molodjozhnogo-dnya-"
             "pmef-2026.html?catid=15&Itemid=101",
-            base
-            + "318-den-otkrytykh-dverej-ekonoma-yufu-20-iyunya.html"
+            base + "318-den-otkrytykh-dverej-ekonoma-yufu-20-iyunya.html"
             "?catid=15&Itemid=101",
         )
     )

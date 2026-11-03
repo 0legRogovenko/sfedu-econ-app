@@ -1,9 +1,8 @@
 import json
 import os
-from pathlib import Path
 import subprocess
 import sys
-
+from pathlib import Path
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 
@@ -38,6 +37,16 @@ def test_vercel_bundle_excludes_the_workflow_only_schedule_snapshot():
 
 def test_vercel_uses_the_same_python_version_as_the_backend_container():
     assert (BACKEND_ROOT / ".python-version").read_text().strip() == "3.12"
+
+
+def test_vercel_dependency_discovery_is_not_shadowed_by_tool_only_pyproject():
+    """A pyproject without [project] makes Vercel run a failing ``uv lock``."""
+    pyproject = BACKEND_ROOT / "pyproject.toml"
+
+    assert not pyproject.exists() or "[project]" in pyproject.read_text(
+        encoding="utf-8"
+    )
+    assert (BACKEND_ROOT / "requirements.txt").is_file()
 
 
 def test_disabled_scheduler_does_not_load_parser_stack_on_cold_start():

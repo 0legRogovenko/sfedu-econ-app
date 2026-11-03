@@ -113,16 +113,18 @@ class CachedContacts extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-@DriftDatabase(tables: [
-  CachedLessons,
-  CachedModules,
-  CachedWeekCalendar,
-  ScheduleCacheMeta,
-  CachedExams,
-  ExamCacheMeta,
-  CachedNews,
-  CachedContacts,
-])
+@DriftDatabase(
+  tables: [
+    CachedLessons,
+    CachedModules,
+    CachedWeekCalendar,
+    ScheduleCacheMeta,
+    CachedExams,
+    ExamCacheMeta,
+    CachedNews,
+    CachedContacts,
+  ],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: 'sfedu_econ'));
 
@@ -133,16 +135,16 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (m) => m.createAll(),
-        onUpgrade: (m, from, to) async {
-          // Это локальный кэш, а не источник истины — при апгрейде схемы
-          // проще пересоздать все таблицы, чем писать пошаговые миграции.
-          for (final table in allTables) {
-            await m.deleteTable(table.actualTableName);
-          }
-          await m.createAll();
-        },
-      );
+    onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      // Это локальный кэш, а не источник истины — при апгрейде схемы
+      // проще пересоздать все таблицы, чем писать пошаговые миграции.
+      for (final table in allTables) {
+        await m.deleteTable(table.actualTableName);
+      }
+      await m.createAll();
+    },
+  );
 
   // --- Расписание ---
   // Скоуп ('group:3' / 'teacher:7') строит ScheduleScope.key; БД принимает его
@@ -166,9 +168,9 @@ class AppDatabase extends _$AppDatabase {
             ..orderBy([(t) => OrderingTerm(expression: t.dateFrom)]))
           .get();
 
-  Future<ScheduleCacheMetaData?> metaForScope(String scope) =>
-      (select(scheduleCacheMeta)..where((t) => t.scope.equals(scope)))
-          .getSingleOrNull();
+  Future<ScheduleCacheMetaData?> metaForScope(String scope) => (select(
+    scheduleCacheMeta,
+  )..where((t) => t.scope.equals(scope))).getSingleOrNull();
 
   /// Атомарная замена кэша расписания скоупа (пары + модули + календарь) и меты.
   Future<void> replaceScheduleCache(
@@ -177,70 +179,73 @@ class AppDatabase extends _$AppDatabase {
     List<CachedModulesCompanion> modules,
     List<CachedWeekCalendarCompanion> calendar,
     String? etag,
-  ) =>
-      transaction(() async {
-        await (delete(cachedLessons)..where((t) => t.scope.equals(scope))).go();
-        await (delete(cachedModules)..where((t) => t.scope.equals(scope))).go();
-        await (delete(cachedWeekCalendar)..where((t) => t.scope.equals(scope)))
-            .go();
-        await batch((b) {
-          b.insertAll(cachedLessons, lessons);
-          b.insertAll(cachedModules, modules);
-          b.insertAll(cachedWeekCalendar, calendar);
-        });
-        await into(scheduleCacheMeta).insertOnConflictUpdate(
-          ScheduleCacheMetaCompanion.insert(
-            scope: scope,
-            etag: Value(etag),
-            syncedAt: DateTime.now(),
-          ),
-        );
-      });
+  ) => transaction(() async {
+    await (delete(cachedLessons)..where((t) => t.scope.equals(scope))).go();
+    await (delete(cachedModules)..where((t) => t.scope.equals(scope))).go();
+    await (delete(
+      cachedWeekCalendar,
+    )..where((t) => t.scope.equals(scope))).go();
+    await batch((b) {
+      b.insertAll(cachedLessons, lessons);
+      b.insertAll(cachedModules, modules);
+      b.insertAll(cachedWeekCalendar, calendar);
+    });
+    await into(scheduleCacheMeta).insertOnConflictUpdate(
+      ScheduleCacheMetaCompanion.insert(
+        scope: scope,
+        etag: Value(etag),
+        syncedAt: DateTime.now(),
+      ),
+    );
+  });
 
   Future<void> touchSyncedAt(String scope, DateTime at) =>
-      (update(scheduleCacheMeta)..where((t) => t.scope.equals(scope)))
-          .write(ScheduleCacheMetaCompanion(syncedAt: Value(at)));
+      (update(scheduleCacheMeta)..where((t) => t.scope.equals(scope))).write(
+        ScheduleCacheMetaCompanion(syncedAt: Value(at)),
+      );
 
   // --- Экзамены ---
 
   Future<List<CachedExam>> examsForGroup(int groupId) =>
       (select(cachedExams)..where((t) => t.groupId.equals(groupId))).get();
 
-  Future<ExamCacheMetaData?> examMetaForGroup(int groupId) =>
-      (select(examCacheMeta)..where((t) => t.groupId.equals(groupId)))
-          .getSingleOrNull();
+  Future<ExamCacheMetaData?> examMetaForGroup(int groupId) => (select(
+    examCacheMeta,
+  )..where((t) => t.groupId.equals(groupId))).getSingleOrNull();
 
   /// Атомарная замена кэша экзаменов группы и меты.
   Future<void> replaceGroupExams(
     int groupId,
     List<CachedExamsCompanion> rows,
     String? etag,
-  ) =>
-      transaction(() async {
-        await (delete(cachedExams)..where((t) => t.groupId.equals(groupId)))
-            .go();
-        await batch((b) => b.insertAll(cachedExams, rows));
-        await into(examCacheMeta).insertOnConflictUpdate(
-          ExamCacheMetaCompanion.insert(
-            groupId: Value(groupId),
-            etag: Value(etag),
-            syncedAt: DateTime.now(),
-          ),
-        );
-      });
+  ) => transaction(() async {
+    await (delete(cachedExams)..where((t) => t.groupId.equals(groupId))).go();
+    await batch((b) => b.insertAll(cachedExams, rows));
+    await into(examCacheMeta).insertOnConflictUpdate(
+      ExamCacheMetaCompanion.insert(
+        groupId: Value(groupId),
+        etag: Value(etag),
+        syncedAt: DateTime.now(),
+      ),
+    );
+  });
 
   Future<void> touchExamSyncedAt(int groupId, DateTime at) =>
-      (update(examCacheMeta)..where((t) => t.groupId.equals(groupId)))
-          .write(ExamCacheMetaCompanion(syncedAt: Value(at)));
+      (update(examCacheMeta)..where((t) => t.groupId.equals(groupId))).write(
+        ExamCacheMetaCompanion(syncedAt: Value(at)),
+      );
 
   // --- Новости ---
 
-  Future<List<CachedNew>> allNews() => (select(cachedNews)
-        ..orderBy([
-          (t) => OrderingTerm(expression: t.publishedAt, mode: OrderingMode.desc),
-          (t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc),
-        ]))
-      .get();
+  Future<List<CachedNew>> allNews() =>
+      (select(cachedNews)..orderBy([
+            (t) => OrderingTerm(
+              expression: t.publishedAt,
+              mode: OrderingMode.desc,
+            ),
+            (t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc),
+          ]))
+          .get();
 
   /// Атомарная замена всего кэша новостей (первая страница ленты).
   Future<void> replaceNewsCache(List<CachedNewsCompanion> rows) =>
@@ -251,9 +256,9 @@ class AppDatabase extends _$AppDatabase {
 
   // --- Контакты ---
 
-  Future<List<CachedContact>> allContacts() =>
-      (select(cachedContacts)..orderBy([(t) => OrderingTerm(expression: t.id)]))
-          .get();
+  Future<List<CachedContact>> allContacts() => (select(
+    cachedContacts,
+  )..orderBy([(t) => OrderingTerm(expression: t.id)])).get();
 
   /// Атомарная замена всего кэша контактов (справочник маленький).
   Future<void> replaceContactsCache(List<CachedContactsCompanion> rows) =>

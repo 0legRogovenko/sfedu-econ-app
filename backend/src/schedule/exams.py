@@ -68,13 +68,13 @@ _LOCATION = re.compile(
 # ФИО: «Фамилия И.О.». Фамилия бывает через дефис («Кривошеева-Медянцева»),
 # инициалы — латиницей у англоязычных программ, а точка после последнего
 # инициала иногда потеряна («Туманян Ю.Р» в 13767).
-_FIO_SRC = (
-    r"[А-ЯЁA-Z][а-яёa-z]+(?:-[А-ЯЁA-Z][а-яёa-z]+)?\s+[А-ЯЁA-Z]\.\s*[А-ЯЁA-Z]\.?"
-)
+_FIO_SRC = r"[А-ЯЁA-Z][а-яёa-z]+(?:-[А-ЯЁA-Z][а-яёa-z]+)?\s+[А-ЯЁA-Z]\.\s*[А-ЯЁA-Z]\.?"
 _FIO = re.compile(_FIO_SRC)
 # Преподаватели идут хвостом ячейки: через запятую («Алехин В.В., Захарова Д.С.»)
 # или просто переносом строки («Туманян Ю.Р\nПогосян Н.В.»).
-_TEACHERS_TAIL = re.compile(rf"(?:{_FIO_SRC})(?:\s*[,;]?\s*(?:{_FIO_SRC}))*\s*[,.]?\s*$")
+_TEACHERS_TAIL = re.compile(
+    rf"(?:{_FIO_SRC})(?:\s*[,;]?\s*(?:{_FIO_SRC}))*\s*[,.]?\s*$"
+)
 
 
 @dataclass(frozen=True)
@@ -176,7 +176,9 @@ def parse_exams(grids: Sequence[Grid]) -> ExamParseResult:
                 continue  # строка-разделитель
 
             seen += 1
-            cell_raw = " | ".join(t for t in (subject_text, consult_text, exam_text) if t)
+            cell_raw = " | ".join(
+                t for t in (subject_text, consult_text, exam_text) if t
+            )
 
             group_text = texts.get(_Role.GROUP, "").strip()
             direction_text = _join_lines(texts.get(_Role.DIRECTION, ""))
@@ -197,7 +199,9 @@ def parse_exams(grids: Sequence[Grid]) -> ExamParseResult:
                 continue
             if not (group_number or master_program):
                 unparsed.append(
-                    UnparsedFragment(grid.page, cell_raw, "дисциплина без группы и программы")
+                    UnparsedFragment(
+                        grid.page, cell_raw, "дисциплина без группы и программы"
+                    )
                 )
                 continue
 
@@ -211,14 +215,19 @@ def parse_exams(grids: Sequence[Grid]) -> ExamParseResult:
                 # студенту в список экзаменов запись без даты.
                 unparsed.append(
                     UnparsedFragment(
-                        grid.page, cell_raw, "дисциплина без дат консультации и экзамена"
+                        grid.page,
+                        cell_raw,
+                        "дисциплина без дат консультации и экзамена",
                     )
                 )
                 continue
 
             ambiguous = [
                 name
-                for name, slot in (("консультации", consultation), ("экзамена", exam_slot))
+                for name, slot in (
+                    ("консультации", consultation),
+                    ("экзамена", exam_slot),
+                )
                 if slot is not None and len(slot.dates) > 1
             ]
             if ambiguous:

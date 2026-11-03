@@ -96,7 +96,10 @@ Semester? currentSemester(List<Semester> semesters, DateTime now) {
 /// два одноимённых семестра (осень двух лет) по метке дали бы коллизию —
 /// выбрался бы первый, а второй стал бы недоступен.
 Semester? resolveSemester(
-    List<Semester> semesters, String? chosenKey, DateTime now) {
+  List<Semester> semesters,
+  String? chosenKey,
+  DateTime now,
+) {
   if (chosenKey != null) {
     for (final s in semesters) {
       if (s.seasonKey == chosenKey) return s;
@@ -110,15 +113,16 @@ Semester? resolveSemester(
 DateTime currentWeekMonday(DateTime now) {
   final isSunday = now.weekday == DateTime.sunday;
   final monday = now.subtract(Duration(days: now.weekday - 1));
-  return DateTime(monday.year, monday.month, monday.day)
-      .add(Duration(days: isSunday ? 7 : 0));
+  return DateTime(
+    monday.year,
+    monday.month,
+    monday.day,
+  ).add(Duration(days: isSunday ? 7 : 0));
 }
 
 /// Неделя, с которой открывается семестр: текущий — на сегодняшней неделе,
 /// не текущий — на своей первой.
 DateTime mondayForSemester(Semester? semester, DateTime now) {
   if (semester == null) return currentWeekMonday(now);
-  return semester.contains(now)
-      ? currentWeekMonday(now)
-      : semester.firstMonday;
+  return semester.contains(now) ? currentWeekMonday(now) : semester.firstMonday;
 }

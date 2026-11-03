@@ -40,10 +40,7 @@ from src.schedule.reviewed_schedule import (
 from src.schedule.source import INDEX_URL, ScheduleLink, download_url
 
 DEFAULT_SNAPSHOT_DIR = (
-    Path(__file__).resolve().parents[2]
-    / "data"
-    / "schedule_snapshot"
-    / "2026-08-30"
+    Path(__file__).resolve().parents[2] / "data" / "schedule_snapshot" / "2026-08-30"
 )
 
 
@@ -92,8 +89,12 @@ class _SnapshotFetcher:
         key = str(p_doc_id)
         try:
             document = self._documents[key]
-        except KeyError as error:  # pragma: no cover - links come from the same manifest
-            raise SnapshotValidationError(f"document {key} is absent from snapshot") from error
+        except (
+            KeyError
+        ) as error:  # pragma: no cover - links come from the same manifest
+            raise SnapshotValidationError(
+                f"document {key} is absent from snapshot"
+            ) from error
         return FetchedDocument(
             p_doc_id=key,
             content=document.content,
@@ -159,13 +160,9 @@ def _check_exact_keys(value: dict, *, allowed: frozenset[str], context: str) -> 
     missing = sorted(allowed - value.keys())
     unknown = sorted(value.keys() - allowed)
     if missing:
-        raise SnapshotValidationError(
-            f"{context}: missing keys: {', '.join(missing)}"
-        )
+        raise SnapshotValidationError(f"{context}: missing keys: {', '.join(missing)}")
     if unknown:
-        raise SnapshotValidationError(
-            f"{context}: unknown keys: {', '.join(unknown)}"
-        )
+        raise SnapshotValidationError(f"{context}: unknown keys: {', '.join(unknown)}")
 
 
 def _strict_string(value, *, context: str) -> str:
@@ -235,7 +232,9 @@ def _validated_asset(root: Path, metadata, *, label: str) -> SnapshotAsset:
 def _validate_v1_snapshot(root: Path, payload: dict) -> ValidatedSnapshot:
     """Keep the committed legacy manifest readable until Task 8 switches it."""
     if payload.get("source_index_url") != INDEX_URL:
-        raise SnapshotValidationError("snapshot is not tied to the official SFEDU index")
+        raise SnapshotValidationError(
+            "snapshot is not tied to the official SFEDU index"
+        )
 
     expected_counts = payload.get("expected_counts")
     if not isinstance(expected_counts, dict) or not expected_counts:
@@ -261,7 +260,9 @@ def _validate_v1_snapshot(root: Path, payload: dict) -> ValidatedSnapshot:
             ) from error
 
         if not p_doc_id.isascii() or not p_doc_id.isdigit() or p_doc_id in seen_ids:
-            raise SnapshotValidationError(f"invalid or duplicate document id: {p_doc_id}")
+            raise SnapshotValidationError(
+                f"invalid or duplicate document id: {p_doc_id}"
+            )
         seen_ids.add(p_doc_id)
 
         path = root / filename
@@ -270,7 +271,9 @@ def _validate_v1_snapshot(root: Path, payload: dict) -> ValidatedSnapshot:
         try:
             content = path.read_bytes()
         except OSError as error:
-            raise SnapshotValidationError(f"snapshot file is missing: {filename}") from error
+            raise SnapshotValidationError(
+                f"snapshot file is missing: {filename}"
+            ) from error
 
         actual_sha256 = hashlib.sha256(content).hexdigest()
         if len(content) != expected_size or actual_sha256 != expected_sha256:
@@ -334,7 +337,9 @@ def _validate_v2_snapshot(root: Path, payload: dict) -> ValidatedSnapshot:
         context="source_index_url",
     )
     if source_index_url != INDEX_URL:
-        raise SnapshotValidationError("snapshot is not tied to the official SFEDU index")
+        raise SnapshotValidationError(
+            "snapshot is not tied to the official SFEDU index"
+        )
     expected_counts = _validate_expected_counts(payload["expected_counts"])
 
     raw_documents = payload["documents"]

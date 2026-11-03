@@ -43,10 +43,10 @@ class TestRegistryFilter:
     @pytest.mark.parametrize(
         "cell",
         [
-            "Дисциплины ВПК",           # → кандидат «Дисциплины В.П.»
-            "Свиридов АСУ",             # → «Свиридов А.С.», РЕАЛЬНЫЙ чужой человек
-            "Погосян АКТРУ",            # → «Погосян А.К.»
-            "Микроэкономика Н.Н.",      # Н.Н. — маркер нижней недели, не инициалы
+            "Дисциплины ВПК",  # → кандидат «Дисциплины В.П.»
+            "Свиридов АСУ",  # → «Свиридов А.С.», РЕАЛЬНЫЙ чужой человек
+            "Погосян АКТРУ",  # → «Погосян А.К.»
+            "Микроэкономика Н.Н.",  # Н.Н. — маркер нижней недели, не инициалы
             "Беликова С.А. Г-217 АКТРУ",  # прицепом даёт «Акт Р.У.»
         ],
     )
@@ -67,9 +67,7 @@ class TestRegistryFilter:
 class TestNamesakes:
     def test_same_surname_different_initials_never_merge(self):
         """Ласкова Т.С. и Ласкова Д.С. — два живых человека, расстояние 1 символ."""
-        registry = _registry(
-            "Ласкова Татьяна Сергеевна", "Ласкова Дарья Сергеевна"
-        )
+        registry = _registry("Ласкова Татьяна Сергеевна", "Ласкова Дарья Сергеевна")
         lesson = FakeLesson(1, "Предмет", "Ласкова Т.С.")
 
         assert link_lessons([lesson], registry)[1] == {
@@ -105,9 +103,7 @@ class TestSegmentation:
 
     def test_single_subject_cell_gives_everyone(self):
         """Один предмет — все преподаватели ячейки ведут его вместе."""
-        registry = _registry(
-            "Полховская Татьяна Юрьевна", "Шевченко Анна Андреевна"
-        )
+        registry = _registry("Полховская Татьяна Юрьевна", "Шевченко Анна Андреевна")
         cell = "МСФО (л)/(с) Полховская Т.Ю., Шевченко А.А. ауд.310"
         lessons = [FakeLesson(1, "МСФО", cell)]
 
@@ -131,9 +127,7 @@ class TestSegmentation:
 
 class TestExams:
     def test_two_teachers_without_trailing_dot(self):
-        registry = _registry(
-            "Туманян Юрий Рафаелович", "Погосян Нателла Володяевна"
-        )
+        registry = _registry("Туманян Юрий Рафаелович", "Погосян Нателла Володяевна")
         exam = FakeExam(1, "Туманян Ю.Р, Погосян Н.В.")
 
         assert link_exams([exam], registry)[1] == {

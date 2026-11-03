@@ -14,12 +14,16 @@ final databaseProvider = Provider<AppDatabase>((ref) {
   return db;
 });
 
-final scheduleApiProvider =
-    Provider<ScheduleApi>((ref) => DioScheduleApi(ref.watch(dioProvider)));
+final scheduleApiProvider = Provider<ScheduleApi>(
+  (ref) => DioScheduleApi(ref.watch(dioProvider)),
+);
 
-final scheduleRepositoryProvider = Provider<ScheduleRepository>((ref) =>
-    ScheduleRepository(
-        ref.watch(scheduleApiProvider), ref.watch(databaseProvider)));
+final scheduleRepositoryProvider = Provider<ScheduleRepository>(
+  (ref) => ScheduleRepository(
+    ref.watch(scheduleApiProvider),
+    ref.watch(databaseProvider),
+  ),
+);
 
 /// Семестр, выбранный СТУДЕНТОМ на своём расписании: Semester.seasonKey (год +
 /// сезон) или null — следовать текущему по дате. Пишет его только экран группы;
@@ -38,7 +42,8 @@ class ViewedSemesterNotifier extends Notifier<String?> {
 
 final viewedSemesterProvider =
     NotifierProvider<ViewedSemesterNotifier, String?>(
-        ViewedSemesterNotifier.new);
+      ViewedSemesterNotifier.new,
+    );
 
 /// Расписание выбранной группы из кэша (пары + модули + календарь, реактивно).
 final scheduleDataProvider = StreamProvider<ScheduleData>((ref) {
@@ -73,5 +78,6 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
   }
 }
 
-final syncStatusProvider =
-    NotifierProvider<SyncStatusNotifier, SyncStatus>(SyncStatusNotifier.new);
+final syncStatusProvider = NotifierProvider<SyncStatusNotifier, SyncStatus>(
+  SyncStatusNotifier.new,
+);

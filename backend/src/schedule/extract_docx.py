@@ -74,7 +74,9 @@ def _table_to_grid(tbl: ET.Element, table_index: int) -> Grid:
     declared = len(grid_def.findall(f"{W}gridCol")) if grid_def is not None else 0
     # объявленная ширина бывает меньше фактической — берём максимум, чтобы
     # ни одна колонка не оказалась за пределами сетки
-    return Grid(cells=tuple(cells), n_cols=max(width, declared), table_index=table_index)
+    return Grid(
+        cells=tuple(cells), n_cols=max(width, declared), table_index=table_index
+    )
 
 
 def extract_docx(source: str | Path | bytes) -> list[Grid]:

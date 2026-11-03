@@ -25,8 +25,8 @@ from src.schedule.reviewed_schedule import (
     GroupIdentity,
     ModuleIdentity,
     ReviewBundle,
-    ReviewValidationError,
     ReviewedDocument,
+    ReviewValidationError,
     _lesson_hash,
     apply_document_corrections,
     lesson_state,
@@ -276,26 +276,18 @@ def test_signature_distinguishes_delimiters_in_group_components():
     base = lesson_state(_lesson(group=group), p_doc_id="14160")
     number_contains_separator = replace(
         base,
-        group=GroupIdentity(
-            level="bachelor", course=2, number="A/B", program="C"
-        ),
+        group=GroupIdentity(level="bachelor", course=2, number="A/B", program="C"),
     )
     program_contains_separator = replace(
         base,
-        group=GroupIdentity(
-            level="bachelor", course=2, number="A", program="B/C"
-        ),
+        group=GroupIdentity(level="bachelor", course=2, number="A", program="B/C"),
     )
 
     assert state_signature(number_contains_separator) != state_signature(
         program_contains_separator
     )
-    assert r"|группа=bachelor/2/A\/B/C|" in state_signature(
-        number_contains_separator
-    )
-    assert r"|группа=bachelor/2/A/B\/C|" in state_signature(
-        program_contains_separator
-    )
+    assert r"|группа=bachelor/2/A\/B/C|" in state_signature(number_contains_separator)
+    assert r"|группа=bachelor/2/A/B\/C|" in state_signature(program_contains_separator)
 
 
 def test_signature_escapes_subject_and_date_constraint_control_characters():
@@ -489,9 +481,7 @@ def test_registry_keeps_canonical_document_id_compatible_with_integer_lookup(
 
 
 @pytest.mark.parametrize("p_doc_id", ["014159", "0", " 14159"])
-def test_registry_manages_rejects_noncanonical_public_document_id(
-    tmp_path, p_doc_id
-):
+def test_registry_manages_rejects_noncanonical_public_document_id(tmp_path, p_doc_id):
     registry = load_correction_registry(
         _write_registry(tmp_path, documents=[_document_json()])
     )
@@ -501,9 +491,7 @@ def test_registry_manages_rejects_noncanonical_public_document_id(
 
 
 @pytest.mark.parametrize("p_doc_id", ["014159", "0", " 14159"])
-def test_registry_guard_rejects_noncanonical_public_document_id(
-    tmp_path, p_doc_id
-):
+def test_registry_guard_rejects_noncanonical_public_document_id(tmp_path, p_doc_id):
     registry = load_correction_registry(
         _write_registry(tmp_path, documents=[_document_json()])
     )
@@ -590,9 +578,7 @@ def test_registry_rejects_duplicate_operation_ids_across_documents(tmp_path):
             {
                 "version": 1,
                 "documents": [
-                    _document_json(
-                        operations=[_operation_json("remove", typo=True)]
-                    )
+                    _document_json(operations=[_operation_json("remove", typo=True)])
                 ],
             },
             "correction master-room-209: unknown keys",
@@ -685,9 +671,7 @@ def test_registry_rejects_unsafe_correction_id(tmp_path, correction_id):
     path = _write_registry(
         tmp_path,
         documents=[
-            _document_json(
-                operations=[_operation_json("remove", id=correction_id)]
-            )
+            _document_json(operations=[_operation_json("remove", id=correction_id)])
         ],
     )
 
@@ -733,9 +717,7 @@ def test_registry_validates_enum_values(tmp_path, field, value, message):
         ("subgroup", 100, "subgroup must be between 0 and 99"),
     ],
 )
-def test_registry_validates_lesson_integer_boundaries(
-    tmp_path, field, value, message
-):
+def test_registry_validates_lesson_integer_boundaries(tmp_path, field, value, message):
     path = _write_registry(
         tmp_path,
         documents=[
@@ -758,11 +740,7 @@ def test_registry_validates_lesson_integer_boundaries(
 def test_registry_validates_source_page_boundaries(tmp_path, page):
     path = _write_registry(
         tmp_path,
-        documents=[
-            _document_json(
-                operations=[_operation_json("remove", page=page)]
-            )
-        ],
+        documents=[_document_json(operations=[_operation_json("remove", page=page)])],
     )
 
     with pytest.raises(ReviewValidationError, match="page must be between 1 and 10000"):
@@ -942,9 +920,7 @@ def test_registry_requires_complete_validity_window_for_module(
         tmp_path,
         documents=[
             _document_json(
-                operations=[
-                    _operation_json("remove", expected_before=state)
-                ]
+                operations=[_operation_json("remove", expected_before=state)]
             )
         ],
     )
@@ -968,9 +944,7 @@ def test_registry_accepts_validity_window_without_module(tmp_path):
             tmp_path,
             documents=[
                 _document_json(
-                    operations=[
-                        _operation_json("remove", expected_before=state)
-                    ]
+                    operations=[_operation_json("remove", expected_before=state)]
                 )
             ],
         )
@@ -996,9 +970,7 @@ def test_registry_accepts_consistent_specific_dates_and_ranges(tmp_path):
             tmp_path,
             documents=[
                 _document_json(
-                    operations=[
-                        _operation_json("remove", expected_before=state)
-                    ]
+                    operations=[_operation_json("remove", expected_before=state)]
                 )
             ],
         )
@@ -1088,9 +1060,7 @@ def test_registry_rejects_blank_evidence(tmp_path, evidence):
     path = _write_registry(
         tmp_path,
         documents=[
-            _document_json(
-                operations=[_operation_json("remove", evidence=evidence)]
-            )
+            _document_json(operations=[_operation_json("remove", evidence=evidence)])
         ],
     )
 
@@ -1125,16 +1095,10 @@ def test_registry_rejects_blank_evidence(tmp_path, evidence):
         ),
     ],
 )
-def test_registry_enforces_operation_semantics(
-    tmp_path, operation, changes, message
-):
+def test_registry_enforces_operation_semantics(tmp_path, operation, changes, message):
     path = _write_registry(
         tmp_path,
-        documents=[
-            _document_json(
-                operations=[_operation_json(operation, **changes)]
-            )
-        ],
+        documents=[_document_json(operations=[_operation_json(operation, **changes)])],
     )
 
     with pytest.raises(ReviewValidationError, match=message):
@@ -1159,9 +1123,7 @@ def test_registry_accepts_absent_irrelevant_state_keys(tmp_path):
 
 
 @pytest.mark.parametrize("state_field", ["expected_before", "after"])
-def test_registry_requires_state_document_id_to_match_document(
-    tmp_path, state_field
-):
+def test_registry_requires_state_document_id_to_match_document(tmp_path, state_field):
     operation = _operation_json(
         "replace",
         **{state_field: _state_json(p_doc_id="14160")},
@@ -1260,9 +1222,7 @@ def test_reviewed_documents_parse_strict_authenticated_bytes():
         ),
         (
             b'{"version":1,"documents":{"14159":{"sha256":"bad",'
-            b'"lesson_hash":"'
-            + b"b" * 64
-            + b'","signatures":[]}}}',
+            b'"lesson_hash":"' + b"b" * 64 + b'","signatures":[]}}}',
             "invalid SHA-256",
         ),
         (
@@ -1380,8 +1340,8 @@ def _persisted_lessons(db_session, document):
 
 
 def test_replace_writes_every_lesson_field_and_preserves_document(db_session):
-    document, old_group, old_module, old_teacher, lesson = (
-        _seed_correction_document(db_session)
+    document, old_group, old_module, old_teacher, lesson = _seed_correction_document(
+        db_session
     )
     new_group = Group(
         course=1,
@@ -1650,7 +1610,9 @@ def test_missing_document_module_fails_without_creating_module(db_session):
             _corrections(document, _correction("add", after=after)),
         )
 
-    assert list(db_session.scalars(select(Module).order_by(Module.id))) == before_modules
+    assert (
+        list(db_session.scalars(select(Module).order_by(Module.id))) == before_modules
+    )
     assert len(_persisted_lessons(db_session, document)) == 1
 
 
@@ -1780,9 +1742,12 @@ def test_duplicate_database_slot_is_review_error_and_session_stays_usable(db_ses
         )
 
     assert len(_persisted_lessons(db_session, document)) == 1
-    assert db_session.scalar(select(ScheduleDocument).where(
-        ScheduleDocument.id == document.id
-    )) is document
+    assert (
+        db_session.scalar(
+            select(ScheduleDocument).where(ScheduleDocument.id == document.id)
+        )
+        is document
+    )
 
 
 def test_two_operation_failure_rolls_back_first_operation_inside_function(db_session):
@@ -1815,9 +1780,12 @@ def test_two_operation_failure_rolls_back_first_operation_inside_function(db_ses
     assert persisted.room == "118"
     assert persisted.cell_raw == before.cell_raw
     assert persisted.cell_key == "1:2:3"
-    assert db_session.scalar(select(ScheduleDocument).where(
-        ScheduleDocument.id == document.id
-    )) is document
+    assert (
+        db_session.scalar(
+            select(ScheduleDocument).where(ScheduleDocument.id == document.id)
+        )
+        is document
+    )
 
 
 def test_flush_failure_rolls_back_prior_operation_and_is_review_error(db_session):
@@ -1844,9 +1812,7 @@ def test_flush_failure_rolls_back_prior_operation_and_is_review_error(db_session
             document,
             _corrections(
                 document,
-                _correction(
-                    "add", operation_id="first-valid-add", after=first_add
-                ),
+                _correction("add", operation_id="first-valid-add", after=first_add),
                 _correction(
                     "add", operation_id="second-conflict", after=conflicting_add
                 ),
@@ -1854,7 +1820,9 @@ def test_flush_failure_rolls_back_prior_operation_and_is_review_error(db_session
         )
 
     assert _persisted_lessons(db_session, document) == [lesson]
-    assert db_session.scalar(select(Group).where(Group.id == lesson.group_id)) is not None
+    assert (
+        db_session.scalar(select(Group).where(Group.id == lesson.group_id)) is not None
+    )
 
 
 def test_result_counts_add_replace_and_remove(db_session):
@@ -1917,8 +1885,8 @@ def test_result_counts_add_replace_and_remove(db_session):
 
 
 def test_replace_does_not_delete_now_unused_related_rows(db_session):
-    document, old_group, old_module, old_teacher, lesson = (
-        _seed_correction_document(db_session)
+    document, old_group, old_module, old_teacher, lesson = _seed_correction_document(
+        db_session
     )
     new_group = Group(
         course=2,
@@ -2082,9 +2050,7 @@ def test_registry_rejects_blank_teacher(tmp_path, teacher):
 
 
 @pytest.mark.parametrize("teacher", ["...", " , — "])
-def test_registry_rejects_teacher_without_alphanumeric_identity(
-    tmp_path, teacher
-):
+def test_registry_rejects_teacher_without_alphanumeric_identity(tmp_path, teacher):
     operation = _operation_json(
         "remove",
         expected_before=_state_json(teacher=teacher),
@@ -2159,9 +2125,7 @@ def _bundle(
     expected: ReviewedDocument,
 ) -> ReviewBundle:
     return ReviewBundle(
-        corrections=CorrectionRegistry(
-            documents={str(document.p_doc_id): corrections}
-        ),
+        corrections=CorrectionRegistry(documents={str(document.p_doc_id): corrections}),
         reviewed_documents={str(document.p_doc_id): expected},
     )
 
@@ -2364,9 +2328,7 @@ def test_reviewed_validation_fails_closed_for_identity_source_and_hash_drift(
 
 def test_reviewed_validation_diff_is_deterministically_bounded(db_session):
     document, _, _, _, _ = _seed_correction_document(db_session)
-    signatures = tuple(
-        f"expected-{index:04d}-" + "x" * 1_000 for index in range(500)
-    )
+    signatures = tuple(f"expected-{index:04d}-" + "x" * 1_000 for index in range(500))
     expected = _reviewed(document, signatures)
 
     with pytest.raises(ReviewValidationError) as caught:
@@ -2380,9 +2342,7 @@ def test_reviewed_validation_diff_is_deterministically_bounded(db_session):
 
 def test_reviewed_validation_diff_is_bounded_by_utf8_bytes_and_lines(db_session):
     document, _, _, _, _ = _seed_correction_document(db_session)
-    signatures = tuple(
-        f"ожидание-{index:04d}-" + "Ж😀" * 1_000 for index in range(500)
-    )
+    signatures = tuple(f"ожидание-{index:04d}-" + "Ж😀" * 1_000 for index in range(500))
     expected = _reviewed(document, signatures)
 
     with pytest.raises(ReviewValidationError) as caught:

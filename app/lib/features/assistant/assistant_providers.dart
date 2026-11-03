@@ -28,8 +28,7 @@ final assistantApiProvider = Provider<AssistantApi>(
 const offlineMessage =
     'Нужен интернет — помощник отвечает только онлайн. '
     'Проверьте связь и спросите ещё раз.';
-const unavailableMessage =
-    'Помощник временно недоступен, попробуйте позже.';
+const unavailableMessage = 'Помощник временно недоступен, попробуйте позже.';
 
 /// Запасной текст: число вопросов настраивается на сервере, поэтому в норме
 /// показываем detail из 429-го ответа, а не эту заготовку.
@@ -64,8 +63,9 @@ class ChatNotifier extends Notifier<List<AssistantMessage>> {
       reply = switch (result) {
         AskAnswer(text: final answer, fallback: final fallback) =>
           AssistantMessage.answer(answer, fallback: fallback),
-        AskRateLimited(detail: final detail) =>
-          AssistantMessage.error(detail ?? rateLimitMessage),
+        AskRateLimited(detail: final detail) => AssistantMessage.error(
+          detail ?? rateLimitMessage,
+        ),
         AskUnavailable() => const AssistantMessage.error(unavailableMessage),
         AskFailed() => const AssistantMessage.error(offlineMessage),
       };
@@ -79,5 +79,6 @@ class ChatNotifier extends Notifier<List<AssistantMessage>> {
   }
 }
 
-final chatProvider =
-    NotifierProvider<ChatNotifier, List<AssistantMessage>>(ChatNotifier.new);
+final chatProvider = NotifierProvider<ChatNotifier, List<AssistantMessage>>(
+  ChatNotifier.new,
+);

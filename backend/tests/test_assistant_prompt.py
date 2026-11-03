@@ -54,7 +54,9 @@ def test_prompt_contains_contacts():
 def test_articles_sorted_by_slug_not_by_input_order():
     prompt = build_system_prompt(_articles(), _contacts())
 
-    assert prompt.index("Пересдача") < prompt.index("Справка") < prompt.index("Стипендия")
+    assert (
+        prompt.index("Пересдача") < prompt.index("Справка") < prompt.index("Стипендия")
+    )
 
 
 def test_contacts_sorted_by_section_and_id():

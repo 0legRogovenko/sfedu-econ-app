@@ -2,10 +2,10 @@ import enum
 from datetime import date, datetime, time
 
 from sqlalchemy import (
+    JSON,
     Enum,
     ForeignKey,
     Index,
-    JSON,
     String,
     Text,
     UniqueConstraint,
@@ -131,9 +131,7 @@ class WeekCalendar(Base):
 
     document: Mapped["ScheduleDocument"] = relationship()
 
-    __table_args__ = (
-        UniqueConstraint("document_id", "date_from", "date_to"),
-    )
+    __table_args__ = (UniqueConstraint("document_id", "date_from", "date_to"),)
 
 
 class Module(Base):
@@ -154,18 +152,14 @@ class Module(Base):
 
     document: Mapped["ScheduleDocument"] = relationship()
 
-    __table_args__ = (
-        UniqueConstraint("document_id", "date_from", "date_to"),
-    )
+    __table_args__ = (UniqueConstraint("document_id", "date_from", "date_to"),)
 
 
 class Lesson(Base):
     __tablename__ = "lessons"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    group_id: Mapped[int] = mapped_column(
-        ForeignKey("groups.id", ondelete="CASCADE")
-    )
+    group_id: Mapped[int] = mapped_column(ForeignKey("groups.id", ondelete="CASCADE"))
     # Откуда пара приехала. Без этой ссылки переразбор изменившегося файла
     # не может заменить его пары: module_id nullable, и пары без модуля
     # (основной случай) не привязаны к документу ничем. NULL — ручная пара
@@ -331,8 +325,8 @@ class News(Base):
 
 
 class ContactSource(str, enum.Enum):
-    MANUAL = "manual"          # заведено админом
-    ECON_SITE = "econ_site"    # автозабор с econ-sfedu.ru
+    MANUAL = "manual"  # заведено админом
+    ECON_SITE = "econ_site"  # автозабор с econ-sfedu.ru
 
 
 class Contact(Base):

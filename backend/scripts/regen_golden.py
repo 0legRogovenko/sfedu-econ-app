@@ -25,18 +25,17 @@ BACKEND = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BACKEND))
 sys.path.insert(0, str(BACKEND / "tests"))
 
-from sqlalchemy import select  # noqa: E402
-
-from src.models import ScheduleDocument  # noqa: E402
-from src.schedule import importer  # noqa: E402
-
 import goldens  # noqa: E402
+from sqlalchemy import select  # noqa: E402
 from test_importer import (  # noqa: E402
     MANIFEST,
     NOT_EXTRACTED_DOC_TYPES,
     FakeFetcher,
     make_session,
 )
+
+from src.models import ScheduleDocument  # noqa: E402
+from src.schedule import importer  # noqa: E402
 
 
 def main() -> None:
@@ -53,9 +52,7 @@ def main() -> None:
         if by_id[p_doc_id].doc_type in NOT_EXTRACTED_DOC_TYPES:
             continue
         document = session.scalar(
-            select(ScheduleDocument).where(
-                ScheduleDocument.p_doc_id == int(p_doc_id)
-            )
+            select(ScheduleDocument).where(ScheduleDocument.p_doc_id == int(p_doc_id))
         )
         golden[p_doc_id] = goldens.document_golden(session, document)
 

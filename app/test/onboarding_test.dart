@@ -60,8 +60,9 @@ Future<Widget> _app() async {
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       groupsProvider.overrideWith((ref) async => _groups),
-      scheduleDataProvider
-          .overrideWith((ref) => Stream.value(const ScheduleData.empty())),
+      scheduleDataProvider.overrideWith(
+        (ref) => Stream.value(const ScheduleData.empty()),
+      ),
       syncStatusProvider.overrideWith(_FakeSync.new),
     ],
     child: const SfeduEconApp(),
@@ -69,8 +70,9 @@ Future<Widget> _app() async {
 }
 
 void main() {
-  testWidgets('онбординг бакалавра: уровень → курс → группа → расписание',
-      (tester) async {
+  testWidgets('онбординг бакалавра: уровень → курс → группа → расписание', (
+    tester,
+  ) async {
     await tester.pumpWidget(await _app());
     await tester.pumpAndSettle();
 
@@ -94,31 +96,32 @@ void main() {
     expect(find.text('Расписание'), findsWidgets);
   });
 
-  testWidgets('онбординг магистра: уровень → курс → направление, без смешивания',
-      (tester) async {
-    await tester.pumpWidget(await _app());
-    await tester.pumpAndSettle();
+  testWidgets(
+    'онбординг магистра: уровень → курс → направление, без смешивания',
+    (tester) async {
+      await tester.pumpWidget(await _app());
+      await tester.pumpAndSettle();
 
-    // Магистратура — отдельный уровень; бакалаврские номера сюда не примешаны.
-    await tester.tap(find.text('Магистратура'));
-    await tester.pumpAndSettle();
-    expect(find.text('1.1'), findsNothing);
-    expect(find.text('1 курс'), findsOneWidget);
+      // Магистратура — отдельный уровень; бакалаврские номера сюда не примешаны.
+      await tester.tap(find.text('Магистратура'));
+      await tester.pumpAndSettle();
+      expect(find.text('1.1'), findsNothing);
+      expect(find.text('1 курс'), findsOneWidget);
 
-    // Магистр явно выбирает курс, затем направление — номера у него нет.
-    await tester.tap(find.text('1 курс'));
-    await tester.pumpAndSettle();
-    expect(find.text('Финансы и кредит'), findsOneWidget);
-    await tester.tap(find.text('Финансы и кредит'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Начать'));
-    await tester.pumpAndSettle();
+      // Магистр явно выбирает курс, затем направление — номера у него нет.
+      await tester.tap(find.text('1 курс'));
+      await tester.pumpAndSettle();
+      expect(find.text('Финансы и кредит'), findsOneWidget);
+      await tester.tap(find.text('Финансы и кредит'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Начать'));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Расписание'), findsWidgets);
-  });
+      expect(find.text('Расписание'), findsWidgets);
+    },
+  );
 
-  testWidgets('кнопка «Начать» неактивна без выбранной группы',
-      (tester) async {
+  testWidgets('кнопка «Начать» неактивна без выбранной группы', (tester) async {
     await tester.pumpWidget(await _app());
     await tester.pumpAndSettle();
 
@@ -141,8 +144,9 @@ void main() {
     expect(prefs.getInt('selected_group_id'), 3);
   });
 
-  testWidgets('переход на вкладку без выбранной группы ведёт на онбординг',
-      (tester) async {
+  testWidgets('переход на вкладку без выбранной группы ведёт на онбординг', (
+    tester,
+  ) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final container = ProviderContainer(
@@ -152,10 +156,12 @@ void main() {
       ],
     );
     addTearDown(container.dispose);
-    await tester.pumpWidget(UncontrolledProviderScope(
-      container: container,
-      child: const SfeduEconApp(),
-    ));
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const SfeduEconApp(),
+      ),
+    );
     await tester.pumpAndSettle();
 
     container.read(routerProvider).go('/news');

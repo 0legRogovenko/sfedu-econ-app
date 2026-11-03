@@ -199,19 +199,23 @@ void main() {
     expect(last.text, isNot(contains('интернет')));
   });
 
-  test('fallback-ответ показывается как ответ, но без подписи «Ответ AI»',
-      () async {
-    final container = _container(
-      _FakeApi(const AskAnswer(text: 'Сейчас не могу ответить', fallback: true)),
-    );
+  test(
+    'fallback-ответ показывается как ответ, но без подписи «Ответ AI»',
+    () async {
+      final container = _container(
+        _FakeApi(
+          const AskAnswer(text: 'Сейчас не могу ответить', fallback: true),
+        ),
+      );
 
-    await container.read(chatProvider.notifier).ask('Вопрос');
+      await container.read(chatProvider.notifier).ask('Вопрос');
 
-    final last = container.read(chatProvider).last;
-    expect(last.isAnswer, isTrue); // чип контактов уместен
-    expect(last.text, 'Сейчас не могу ответить');
-    expect(last.showsDisclaimer, isFalse);
-  });
+      final last = container.read(chatProvider).last;
+      expect(last.isAnswer, isTrue); // чип контактов уместен
+      expect(last.text, 'Сейчас не могу ответить');
+      expect(last.showsDisclaimer, isFalse);
+    },
+  );
 
   test('обычный ответ модели подписан «Ответ AI»', () async {
     final container = _container(
@@ -244,19 +248,21 @@ void main() {
     expect(api.calls, ['Первый', 'Второй']);
   });
 
-  test('генерация дольше 10s не рвётся таймаутом: у помощника свой Dio',
-      () async {
-    final container = ProviderContainer(
-      overrides: [deviceIdProvider.overrideWithValue('dev-42')],
-    );
-    addTearDown(container.dispose);
-    container.read(assistantDioProvider).httpClientAdapter =
-        _GenerationAdapter(const Duration(seconds: 15));
+  test(
+    'генерация дольше 10s не рвётся таймаутом: у помощника свой Dio',
+    () async {
+      final container = ProviderContainer(
+        overrides: [deviceIdProvider.overrideWithValue('dev-42')],
+      );
+      addTearDown(container.dispose);
+      container.read(assistantDioProvider).httpClientAdapter =
+          _GenerationAdapter(const Duration(seconds: 15));
 
-    await container.read(chatProvider.notifier).ask('Где справка?');
+      await container.read(chatProvider.notifier).ask('Где справка?');
 
-    final last = container.read(chatProvider).last;
-    expect(last.isAnswer, isTrue, reason: 'ответ, а не «нужен интернет»');
-    expect(last.text, 'Справку берут в 305');
-  });
+      final last = container.read(chatProvider).last;
+      expect(last.isAnswer, isTrue, reason: 'ответ, а не «нужен интернет»');
+      expect(last.text, 'Справку берут в 305');
+    },
+  );
 }
