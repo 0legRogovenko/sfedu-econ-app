@@ -136,6 +136,10 @@ _MODULE_NAME = re.compile(r"([IVX]+|\d)\s*модул\w*", re.IGNORECASE)
 _DATE_RANGE = re.compile(
     r"(\d\d?)\s+([а-я]+)\s*[–—-]\s*(\d\d?)\s+([а-я]+)", re.IGNORECASE
 )
+_NUMERIC_DATE_RANGE = re.compile(
+    r"(\d{1,2}\.\d{1,2}\.(?:\d{4}|\d{2}))\s*[–—-]\s*"
+    r"(\d{1,2}\.\d{1,2}\.(?:\d{4}|\d{2}))(?!\d)"
+)
 # 'I семестр (1 сентября – 15 января)' — подпись СЕМЕСТРА, не модуля (13471 T7,
 # 13472 p10). Фолбэк ниже берёт любой диапазон дат, и без этого исключения
 # семестр становился безымянным модулем во весь свой срок: модули начинали
@@ -849,6 +853,7 @@ def _import_grid_document(session, document, content: bytes, link, report) -> No
     prev_shape: tuple | None = None
     carry_day: int | None = None
     carry_module: Module | None = None
+    group_modules: dict[tuple, Module] = {}
     muam_choices: dict[tuple, tuple[str, ...]] = {}
 
     for index, grid in enumerate(grids):
@@ -881,7 +886,10 @@ def _import_grid_document(session, document, content: bytes, link, report) -> No
             # 35 пар пропали бы у студента вне окна модуля.
             if header is None or not _same_group_block(header, found):
                 carry_module = None
-            header, prev_shape, carry_day = found, _shape(grid), None
+                group_modules = {}
+                carry_day = None
+            found, column_dates = _dated_header(grid, found)
+            header, prev_shape = found, _shape(grid)
             # Строки шапки (0..header_row) — направления, номера групп, 'Время',
             # периоды модулей. parse_rows начинает с header_row+1 и их не видит,
             # поэтому пометить их обязан вызывающий: иначе они не попадут ни в
@@ -903,7 +911,17 @@ def _import_grid_document(session, document, content: bytes, link, report) -> No
         # 13822 p10 объявляют период ТОЛЬКО в шапке колонок ('13 апреля-22
         # июня'), а слово «модуль» либо стоит отдельно, либо отсутствует вовсе.
         heading = f"{heading}\n{_header_text(grid, header, first_row)}"
-        carry_module = _module_for(session, document, heading, weeks) or carry_module
+        declared_module = _module_for(session, document, heading, weeks)
+        if declared_module is not None:
+            carry_module = declared_module
+            group_modules = {}
+        if found is not None and carry_module is not None:
+            group_modules.update({
+                identity: _module_with_bounds(
+                    session, document, (carry_module.name, start, end)
+                )
+                for identity, (start, end) in column_dates.items()
+            })
         module = carry_module
         page_week = week_type_from_heading(heading)
 
@@ -913,6 +931,7 @@ def _import_grid_document(session, document, content: bytes, link, report) -> No
                 session, document, report, resolver, grid, index, header,
                 slot, module, page_week, slot_keys, muam_choices,
                 semester_window,
+                group_modules=group_modules,
             )
         carry_day = slots[-1].weekday if slots else carry_day
 
@@ -1070,6 +1089,7 @@ def _parse_muam_continuation(text: str, subjects: tuple[str, ...]):
 def _import_row(
     session, document, report, resolver, grid, index, header,
     slot, module, page_week, slot_keys, muam_choices, semester_window,
+    group_modules=None,
 ) -> None:
     ledger = report.ledger
     for cell in grid.row(slot.row):
@@ -1151,7 +1171,11 @@ def _import_row(
             for lesson in parsed.lessons:
                 made |= _add_lesson(
                     session, document, report, resolver, header, placement,
-                    slot, lesson, module, page_week, slot_keys, grid, key,
+                    slot, lesson,
+                    (group_modules or {}).get(
+                        (placement.group.number, placement.group.program), module
+                    ),
+                    page_week, slot_keys, grid, key,
                     semester_window,
                 )
         if made and continuation_subjects is not None:
@@ -1291,6 +1315,10 @@ def _module_for(session, document, heading: str, weeks) -> Module | None:
     bounds = _module_bounds(heading, weeks)
     if bounds is None:
         return None
+    return _module_with_bounds(session, document, bounds)
+
+
+def _module_with_bounds(session, document, bounds) -> Module:
     name, date_from, date_to = bounds
 
     existing = session.scalar(
@@ -1311,6 +1339,41 @@ def _module_for(session, document, heading: str, weeks) -> Module | None:
     session.add(module)
     session.flush()
     return module
+
+
+def _numeric_date_ranges(text: str) -> list[tuple[date, date]]:
+    ranges = []
+    for match in _NUMERIC_DATE_RANGE.finditer(text):
+        try:
+            values = []
+            for raw in match.groups():
+                day, month, year = map(int, raw.split("."))
+                values.append(date(year + 2000 if year < 100 else year, month, day))
+            start, end = values
+        except ValueError:
+            continue
+        if start <= end:
+            ranges.append((start, end))
+    return ranges
+
+
+def _dated_header(grid: Grid, header: GridHeader):
+    """A date-only row below group names supplies each column's module window."""
+    row = grid.row(header.header_row + 1)
+    payload = [cell for cell in row if not cell.is_empty]
+    if not payload or any(
+        not _NUMERIC_DATE_RANGE.fullmatch(cell.text.strip()) for cell in payload
+    ):
+        return header, {}
+    windows = {}
+    for cell in payload:
+        ranges = _numeric_date_ranges(cell.text)
+        if len(ranges) != 1:
+            return header, {}
+        for group in header.groups:
+            if cell.covers(group.col_start, group.col_end):
+                windows[(group.number, group.program)] = ranges[0]
+    return replace(header, header_row=header.header_row + 1), windows
 
 
 def _module_bounds(heading: str, weeks) -> tuple[str | None, date, date] | None:
@@ -1341,6 +1404,8 @@ def _module_bounds(heading: str, weeks) -> tuple[str | None, date, date] | None:
         and (end := _resolve_date(int(raw.group(3)), raw.group(4), weeks))
         and start <= end
     ]
+    if name is not None:
+        ranges.extend(_numeric_date_ranges(heading))
     if not ranges:
         return None
     # У каждой группы свой конец модуля ('22 июня', '23 июня', '10 июня') —

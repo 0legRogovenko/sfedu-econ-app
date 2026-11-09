@@ -376,6 +376,16 @@ def _document_json(*, p_doc_id="14159", sha256=None, operations=None):
     }
 
 
+def test_reviewed_schedule_accepts_source_extra_late_block():
+    state = _state_json(pair_number=8, starts_at="20:55:00", ends_at="21:40:00")
+    operation = _operation_json("add", after=state)
+    registry = parse_correction_registry(json.dumps({
+        "version": 1,
+        "documents": [_document_json(operations=[operation])],
+    }).encode())
+    assert registry.documents["14159"].operations[0].after.pair_number == 8
+
+
 def _write_registry(tmp_path, *, documents=None, **overrides):
     payload = {
         "version": 1,
@@ -727,8 +737,8 @@ def test_registry_validates_enum_values(tmp_path, field, value, message):
     [
         ("weekday", -1, "weekday must be between 0 and 5"),
         ("weekday", 6, "weekday must be between 0 and 5"),
-        ("pair_number", 0, "pair number must be between 1 and 7"),
-        ("pair_number", 8, "pair number must be between 1 and 7"),
+        ("pair_number", 0, "pair number must be between 1 and 8"),
+        ("pair_number", 9, "pair number must be between 1 and 8"),
         ("subgroup", -1, "subgroup must be between 0 and 99"),
         ("subgroup", 100, "subgroup must be between 0 and 99"),
     ],

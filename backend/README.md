@@ -117,7 +117,8 @@ Read-only ручки для приложения (все отдают ETag, по
 ## Reviewed schedule corrections
 
 The beta schedule is imported from the authenticated snapshot in
-`data/schedule_snapshot/2026-08-30`. Manual corrections are not database edits:
+`data/schedule_snapshot/2026-11-09`. It includes the official second autumn
+module for all bachelor and master groups. Manual corrections are not database edits:
 they are exact source-hash-bound operations in `corrections.json`.
 
 If SFEDU replaces a managed PDF, the scheduled importer preserves the last
@@ -128,8 +129,8 @@ output only with the explicit confirmation command:
 ```bash
 cd backend
 python scripts/export_reviewed_schedule.py \
-  --snapshot-dir data/schedule_snapshot/2026-08-30 \
-  --output data/schedule_snapshot/2026-08-30/reviewed_schedule.json \
+  --snapshot-dir data/schedule_snapshot/2026-11-09 \
+  --output data/schedule_snapshot/2026-11-09/reviewed_schedule.json \
   --confirm I_REVIEWED_EVERY_RENDERED_GROUP
 ```
 

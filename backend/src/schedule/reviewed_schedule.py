@@ -34,7 +34,9 @@ _MAX_CORRECTION_ID_LENGTH = 43  # len("manual:") + id must fit Lesson.cell_key(5
 _MAX_SOURCE_PAGE = 10_000
 _MAX_SUBGROUP = 99
 _MAX_COURSE = 9
-_MAX_PAIR_NUMBER = 7
+# November master PDFs add a separate 20:55–21:40 block after pair seven.
+# Keep its exact times and a distinct slot instead of colliding with 19:15.
+_MAX_PAIR_NUMBER = 8
 
 
 class ReviewValidationError(ValueError):

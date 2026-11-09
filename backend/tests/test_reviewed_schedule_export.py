@@ -132,9 +132,9 @@ def _build_draft_v2_snapshot(tmp_path: Path) -> Path:
         (DEFAULT_SNAPSHOT_DIR / "manifest.json").read_text(encoding="utf-8")
     )
     expected_counts = dict(source_manifest["expected_counts"])
-    # Parser-only draft has 608 lessons; the authoritative snapshot reaches 612
-    # through the four approved 14160 add operations.
-    expected_counts["lessons"] = 608
+    # November's source-only parse has 1336 lessons; the reviewed snapshot
+    # recovers missing source rows through explicit source-bound corrections.
+    expected_counts["lessons"] = 1336
     snapshot_dir = tmp_path / "snapshot-v2-draft"
     snapshot_dir.mkdir()
     documents = []
