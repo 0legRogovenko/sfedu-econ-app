@@ -1,0 +1,81 @@
+{
+  "version": 2,
+  "captured_at": "2026-11-09",
+  "source_index_url": "https://sfedu.ru/www/stat_pages22.show?p=STD/rasp/D&params=(p_es_id=>10000000000000,p_tf_id=>1)",
+  "expected_counts": {
+    "documents": 7,
+    "groups": 39,
+    "lessons": 1368,
+    "calendar_weeks": 120,
+    "exams": 0,
+    "unparsed": 76
+  },
+  "documents": [
+    {
+      "p_doc_id": "14175",
+      "section": "Осенний семестр",
+      "label": "1 курс",
+      "filename": "14175.pdf",
+      "bytes": 475662,
+      "sha256": "68ee2803b53585e303c3ef42d507e78fd7ae93f58a7801b14820adbb5e7e47e4"
+    },
+    {
+      "p_doc_id": "14176",
+      "section": "Осенний семестр",
+      "label": "2 курс",
+      "filename": "14176.pdf",
+      "bytes": 363500,
+      "sha256": "11f0f85c5241c318d1d473b85871f89f6ad84823d94c6c9215f45d6fd5576cef"
+    },
+    {
+      "p_doc_id": "14177",
+      "section": "Осенний семестр",
+      "label": "3 курс",
+      "filename": "14177.pdf",
+      "bytes": 392723,
+      "sha256": "c14adc73d3172a03d82213ca7e5f7c99f89bcd5e3272f912bc71ff201751567d"
+    },
+    {
+      "p_doc_id": "14178",
+      "section": "Осенний семестр",
+      "label": "4 курс",
+      "filename": "14178.pdf",
+      "bytes": 453693,
+      "sha256": "4f5ae35ec64875b44b8be9e9aaeeaeb9ee32daf899fa093c8aede1f94282471d"
+    },
+    {
+      "p_doc_id": "14159",
+      "section": "Осенний семестр",
+      "label": "маг.1 курс",
+      "filename": "14159.pdf",
+      "bytes": 548915,
+      "sha256": "6aa4e950395ea25bee7c7d72848f6e01e976ae7845d53e5c466d8b1ae84fecbb"
+    },
+    {
+      "p_doc_id": "14160",
+      "section": "Осенний семестр",
+      "label": "маг.2 курс",
+      "filename": "14160.pdf",
+      "bytes": 494665,
+      "sha256": "db7f891133db15f0014d675e74b2a3fd1b41bca53d532045a358ab359c9c7819"
+    },
+    {
+      "p_doc_id": "14174",
+      "section": "Летняя сессия",
+      "label": "асп.3 курс",
+      "filename": "14174.pdf",
+      "bytes": 539803,
+      "sha256": "5e43a96a3d7031c6cf0f08e9ca2d0e69f40ad27e5c0c9622ffcf4380212df008"
+    }
+  ],
+  "corrections_file": {
+    "filename": "corrections.json",
+    "bytes": 383163,
+    "sha256": "79fbc8796e33d92894cd47930b0bcb1f952bbbd4afce13e16e80ee9901274ed3"
+  },
+  "reviewed_schedule_file": {
+    "filename": "reviewed_schedule.json",
+    "bytes": 549182,
+    "sha256": "97a3952983cb45bb3e0f68d73e050dacffcbe32523443c94f4d5700b720ab9cb"
+  }
+}

@@ -19,6 +19,7 @@ from src.schedule.validated_snapshot import (
 
 
 LEGACY_SNAPSHOT_DIR = DEFAULT_SNAPSHOT_DIR.parent / "2026-08-28"
+AUGUST_SNAPSHOT_DIR = DEFAULT_SNAPSHOT_DIR.parent / "2026-08-30"
 
 
 def _asset_metadata(path):
@@ -146,14 +147,14 @@ def test_imports_exact_validated_official_snapshot(db_session):
     assert result["counts"] == {
         "documents": 7,
         "groups": 39,
-        "lessons": 612,
+        "lessons": 1368,
         "calendar_weeks": 120,
         "exams": 0,
-        "unparsed": 17,
+        "unparsed": 76,
     }
     assert db_session.scalar(select(func.count()).select_from(ScheduleDocument)) == 7
     assert db_session.scalar(select(func.count()).select_from(Group)) == 39
-    assert db_session.scalar(select(func.count()).select_from(Lesson)) == 612
+    assert db_session.scalar(select(func.count()).select_from(Lesson)) == 1368
     assert db_session.scalar(select(func.count()).select_from(WeekCalendar)) == 120
 
 
@@ -163,19 +164,19 @@ def test_current_review_bundle_is_the_six_supplied_pdfs_plus_postgraduate():
     assert {
         document.link.p_doc_id: document.sha256 for document in snapshot.documents
     } == {
-        "14175": "e4532cd0bbe6a3e7a0bd400006a6900689dae04b7cfab58d9e623b4ba4d860fc",
-        "14176": "fc23269224d9ce84aae67dcccdfe6cb3179ee7b47f02e6c829898ba5dd9328d5",
-        "14177": "185c61e49950d60ff457e5cce347dab803dc2da1e7021bb636780f48e022446b",
-        "14178": "311bb1720648d6072265bfcf73b3f0112af335929ecf39ff6fb89b75687e15c4",
-        "14159": "6ff0e7ec277c22cf99b6c2365e7b2c3771d6d4ad946c07453e1973253a0c41d9",
-        "14160": "005fb3145527fd51821823203af05fd3de8841ae5bb4994de7172f062c6afdf8",
+        "14175": "68ee2803b53585e303c3ef42d507e78fd7ae93f58a7801b14820adbb5e7e47e4",
+        "14176": "11f0f85c5241c318d1d473b85871f89f6ad84823d94c6c9215f45d6fd5576cef",
+        "14177": "c14adc73d3172a03d82213ca7e5f7c99f89bcd5e3272f912bc71ff201751567d",
+        "14178": "4f5ae35ec64875b44b8be9e9aaeeaeb9ee32daf899fa093c8aede1f94282471d",
+        "14159": "6aa4e950395ea25bee7c7d72848f6e01e976ae7845d53e5c466d8b1ae84fecbb",
+        "14160": "db7f891133db15f0014d675e74b2a3fd1b41bca53d532045a358ab359c9c7819",
         "14174": "5e43a96a3d7031c6cf0f08e9ca2d0e69f40ad27e5c0c9622ffcf4380212df008",
     }
     assert snapshot.expected_counts["exams"] == 0
 
 
-def test_current_review_bundle_pins_exact_managed_signatures_and_operations():
-    snapshot = validate_snapshot(DEFAULT_SNAPSHOT_DIR)
+def test_august_review_bundle_keeps_its_pinned_signatures_and_operations():
+    snapshot = validate_snapshot(AUGUST_SNAPSHOT_DIR)
 
     assert snapshot.review_bundle is not None
     corrections = snapshot.review_bundle.corrections.documents
