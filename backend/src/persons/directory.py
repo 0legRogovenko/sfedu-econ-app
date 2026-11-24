@@ -22,10 +22,11 @@ from dataclasses import dataclass, field
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
-from src.models import Contact, DirectoryOverride, ExamEvent, Lesson, Teacher
+from src.models import Contact, DirectoryOverride, ExamEvent, Lesson, PersonPhoto, Teacher
 from src.persons.extract import find_names
 from src.persons.linker import Registry, build_registry, link_exams, link_lessons
-from src.persons.names import parse_person, person_key, short_name
+from src.persons.names import key_of_full, parse_person, person_key, short_name
+from src.persons.photos import PhotoCandidate, match_photos
 
 _ID_SEP = "\x1f"  # разделитель внутри ключа, в ФИО не встречается
 _DEANERY = "Деканат"  # у человека с несколькими секциями показываем как главную
@@ -58,6 +59,7 @@ class PersonRow:
     email: str | None = None
     lesson_count: int = 0
     exam_count: int = 0
+    photo_url: str | None = None
 
     @property
     def id(self) -> str:
@@ -162,6 +164,17 @@ def build_directory(db: Session) -> list[PersonRow]:
             row.sections = [_DEANERY] + [s for s in row.sections if s != _DEANERY]
 
     _apply_overrides(db, people)
+    # Apply portraits after hidden entries have been removed. Photo metadata
+    # cannot introduce a person or change an existing email/schedule identity.
+    candidates = [
+        PhotoCandidate(photo.full_name, photo.photo_url, photo.source_url)
+        for photo in db.scalars(select(PersonPhoto))
+        if key_of_full(photo.full_name) is not None
+        and photo.person_id == encode_id(key_of_full(photo.full_name))
+    ]
+    for person_id, photo in match_photos(people.values(), candidates).matches.items():
+        key = decode_id(person_id)
+        people[key].photo_url = photo.photo_url
     return sorted(people.values(), key=lambda p: p.short_name.lower())
 
 
@@ -243,6 +256,7 @@ def person_display(rows: Iterable[PersonRow]) -> list[dict]:
             "has_schedule": row.has_schedule,
             "lesson_count": row.lesson_count,
             "exam_count": row.exam_count,
+            "photo_url": row.photo_url,
         }
         for row in rows
     ]
