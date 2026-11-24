@@ -1,0 +1,472 @@
+{
+  "collected_at": "2026-11-24T19:17:11.090445+00:00",
+  "sources": [
+    {
+      "url": "https://econ.sfedu.ru/kafedra-bukhgalterskogo-ucheta-i-audita/",
+      "sha256": "d70da55e6e19550dedd88b4e4e0785e026cc49c921313008e16e2b7b4908cfbd",
+      "photos": 5
+    },
+    {
+      "url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/",
+      "sha256": "91b9b3878cd1ea6f1d0db11d09d4e26035b616f2d0ca78000776da9976b94cbb",
+      "photos": 11
+    },
+    {
+      "url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/",
+      "sha256": "d0490c49fe4094d8d58ebcd8893cbc84ffec0a66c303edbaa8df869244c2c482",
+      "photos": 19
+    },
+    {
+      "url": "https://econ.sfedu.ru/kafedra-finansy-i-kredit/",
+      "sha256": "a5f42fe6c9ef94360052907a8c2116bbe2bcdf94844dcb5918a00ce110214e2f",
+      "photos": 6
+    },
+    {
+      "url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/",
+      "sha256": "219e3e51df44035741e45581aee6f1d0edc5ace08f2ef902b252bcd2cfbaee79",
+      "photos": 11
+    },
+    {
+      "url": "https://econ.sfedu.ru/kafedra-mirovoy-ekonomiki-i-mezhdunarodnykh-otnosheniy/",
+      "sha256": "0aad3534df743abba33d060c21c21237c87e4717fb3d23f4555f794f08c6251b",
+      "photos": 4
+    },
+    {
+      "url": "https://econ.sfedu.ru/kafedra-politicheskoy-ekonomii-i-ekonomicheskoy-politiki/",
+      "sha256": "53ffeb2b046c1cba0af0fd536545f60187887b26239f3330170d5ccda1d25572",
+      "photos": 6
+    },
+    {
+      "url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/",
+      "sha256": "2463dd032444d41feb6ad6b5537cba22048ce82951d1f1990ea94b7135dc253f",
+      "photos": 10
+    },
+    {
+      "url": "https://econ.sfedu.ru/o-fakultete/",
+      "sha256": "0367023667fb6b9bd38954a6869b63671ff99611915d904838b5708a8a8a2fc7",
+      "photos": 12
+    }
+  ],
+  "photos": [
+    {
+      "full_name": "Фролова Ирина Вениаминовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/024/2bl7293fly1c9iu4txikcbuoyzvkz9j5.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-bukhgalterskogo-ucheta-i-audita/"
+    },
+    {
+      "full_name": "Матыцына Татьяна Вениаминовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/be2/vuw905qnvxkkvkz8vf9o1v3tm2f04cyq.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-bukhgalterskogo-ucheta-i-audita/"
+    },
+    {
+      "full_name": "Погорелова Татьяна Геннадьевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/5a1/bcog1ksobwl8r58cutkhy25i5bzwes7y.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-bukhgalterskogo-ucheta-i-audita/"
+    },
+    {
+      "full_name": "Погосян Нателла Володяевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/ede/ccb41ek31n5paqh646n408j83gahfiwu.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-bukhgalterskogo-ucheta-i-audita/"
+    },
+    {
+      "full_name": "Лебедева Наталья Юрьевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/fef/k61oxwof0f4nkyi1ur2yxvnd16n1zfsn.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-bukhgalterskogo-ucheta-i-audita/"
+    },
+    {
+      "full_name": "Маслюкова Елена Васильевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/9b9/hu2wift7qia3of67p3uigexhv23jqff1.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/"
+    },
+    {
+      "full_name": "Косолапова Наталья Алексеевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/3fc/fnrcnrlh59wpwec2yruu6rc71krow5hq.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/"
+    },
+    {
+      "full_name": "Крюков Сергей Владимирович",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/d06/g4vrrja57obh1ha26m4z2y4d1m8qig3e.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/"
+    },
+    {
+      "full_name": "Березовская Елена Александровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/6b0/lyo3drih4yvvuu9m4ltzrv2te2u690f4.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/"
+    },
+    {
+      "full_name": "Володин Роман Сергеевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/47c/osi9omc51c48k3x3oj0i5gl8y3vap2mo.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/"
+    },
+    {
+      "full_name": "Патракеева Ольга Юрьевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/d55/4c1vf0kvbdh4zn3iqev1o2eohliuudwi.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/"
+    },
+    {
+      "full_name": "Шаль Анна Викторовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/d75/lrdlp4ycvmipcyg0m8jtv601q7tl5zzx.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/"
+    },
+    {
+      "full_name": "Лихацкая Екатерина Александровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/0f9/w93yuxdrlqnxb13ji5c9ihtmgg0zii5l.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/"
+    },
+    {
+      "full_name": "Ласкова Дарья Сергеевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/e84/fg8ywvz23fbvd23gmwu7j8kuujq7cls9.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/"
+    },
+    {
+      "full_name": "Христова София Михайловна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/71c/ptznwro5ofiv8v3dbb4ikie9y1e0xrqr.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/"
+    },
+    {
+      "full_name": "Безуглая Лидия Александровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/11b/dzzf8hrdngdgiwysbsownhen09zan7kn.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/"
+    },
+    {
+      "full_name": "Вольчик Вячеслав Витальевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/1c5/dn3s9aqdyyjadl11gsf5con82n8mtfup.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Белокрылова Ольга Спиридоновна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/501/x2lzfk69r8xdrv2cugehr2tughcbucln.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Корытцев Максим Александрович",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/a5d/r4r0632ehlrm9z881oju6773yv922q8q.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Алехин Валерий Викторович",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/d1f/2u5v5ogzr1zz58zx5f0m2br1jpkz10in.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Барсукова Арина Владимировна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/b66/2sdktw19h2bkhcmn7q09ptqiynsmp8vd.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Белокрылов Кирилл Анатольевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/ad9/pcnmr40q60v8r0m92rwfw1rmehvbi9ia.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Васькина Марина Георгиевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/6d2/w3cxbu233zok3u4qzu1od2zlv65kahsn.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Гуцелюк Елена Федоровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/dbb/bs065r01hpzn37uz0i6e8rgqd69ygqz7.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Ермишина Анна Вениаминовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/537/2yds1m54j5zrixmi0kiahd75fr9v2awa.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Ипатова Анна Владимировна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/001/d2k13sjrmnujfh0tuyug5wmjlsa1n875.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Кот Вера Витальевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/6bd/h6wfe227f9cs39yhwccbzvwj1tus04e5.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Маскаева Артем Ильич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/6bc/fanj65vxoti0oxvivx1ra0pmk5bopl3r.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Стрельченко Елена Александровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/3f0/epyxtnaopzg5nithnt6lm49w4synwx30.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Фурса Елена Владимировна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/ffe/hfmh2nwqogwum4bj2u4nzgc3tavgpi1u.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Цыганков Сергей Сергеевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/09d/i9rc2z80npvj6w5nqgxbyowbn0ct4p5j.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Ширяев Игорь Михайлович",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/94f/vczuss5dtffu14ze8crngtixd43gy6z3.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Грищенко Илья Вадимович",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/8ff/s4is3r8gtuygsi3wpozfh8inyk4agyeb.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Захарова Дарья Сергеевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/355/sdiy2tdd2lz33r7ls633xf55ucg10f64.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Кудряшова Виктория Сергеевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/779/iiznhsjay1ybnxphmd18qpltbwezztbc.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Полховская Татьяна Юрьевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/045/3gjrfdwchr2inio3fcr1eul37kpoyeoc.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-finansy-i-kredit/"
+    },
+    {
+      "full_name": "Свиридов Олег Юрьевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/8c6/znhsygjspotybvgd5czx8yfcwviwp8t8.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-finansy-i-kredit/"
+    },
+    {
+      "full_name": "Давыденко Ирина Геннадиевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/cc5/qawrv5b0htryil79fues7ysfrt3mgqbp.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-finansy-i-kredit/"
+    },
+    {
+      "full_name": "Некрасова Инна Владимировна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/dbe/6k0yqpmtpdlcq3hyc62ar2jjtscpy3su.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-finansy-i-kredit/"
+    },
+    {
+      "full_name": "Савенко Оксана Леонидовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/206/p40yy02vbwcai611tvdb3x7oy3ft0f7h.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-finansy-i-kredit/"
+    },
+    {
+      "full_name": "Шевченко Анастасия Александровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/38b/ydfbc9csiwv67397ldl7atn28gwm5lz0.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-finansy-i-kredit/"
+    },
+    {
+      "full_name": "Никитаева Анастасия Юрьевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/5d5/34qbz06ovwd40hkwx7ulken6qd70ulzg.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/"
+    },
+    {
+      "full_name": "Матвеева Людмила Григорьевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/e55/9oimsh3mb3wg0ej7prms78au8ocrov0k.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/"
+    },
+    {
+      "full_name": "Чернова Ольга Анатольевна",
+      "photo_url": "https://econ.sfedu.ru/upload/resize_cache/iblock/bf5/600_600_240cd750bba9870f18aada2478b24840a/yp77kd0yajhhcqzefnay9a8y9686pz39.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/"
+    },
+    {
+      "full_name": "Айдаркина Екатерина Евгеньевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/302/645zf5dtbhgkrqtqxubymaqkhht0ob81.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/"
+    },
+    {
+      "full_name": "Ласкова Татьяна Сергеевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/ce5/79b1bd8f32cj30euxnc40lpf1e7llzn4.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/"
+    },
+    {
+      "full_name": "Гозалова Анна Вячеславовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/967/dtedut9mml33gb80ab7uchbm7w5f3u3y.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/"
+    },
+    {
+      "full_name": "Долгова Ольга Игоревна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/0c7/rsrvurklxwbnxt5ycrgrkkt29i4lyd84.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/"
+    },
+    {
+      "full_name": "Гриднев Данил Сергеевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/97e/ffj7z4d5raorzvpejm1w2xs4y76hbgee.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/"
+    },
+    {
+      "full_name": "Ковалев Дмитрий Викторович",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/8f6/xwlun8cegdtrmbfulj7b5bdw38q5liuj.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/"
+    },
+    {
+      "full_name": "Федорова Анна Андреевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/67f/k2rzh2utpbbc8cqg46uuk2jzszwpy50n.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/"
+    },
+    {
+      "full_name": "Петросова Мария Евгеньевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/f9f/sc0hnbk2rh5tqkj3glqir5ykcxri6b7g.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/"
+    },
+    {
+      "full_name": "Елецкий Алексей Николаевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/f30/5zci2x6h9xkf6c8abpfzlgwq5pg0mtor.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-mirovoy-ekonomiki-i-mezhdunarodnykh-otnosheniy/"
+    },
+    {
+      "full_name": "Воронина Татьяна Васильевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/026/l12ypdlrxoesy09p83490tdr1bw3yvo3.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-mirovoy-ekonomiki-i-mezhdunarodnykh-otnosheniy/"
+    },
+    {
+      "full_name": "Яценко Ашхен Борисовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/2f3/8v68570rwv3347zrfh2gfb5j6nk5qnie.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-mirovoy-ekonomiki-i-mezhdunarodnykh-otnosheniy/"
+    },
+    {
+      "full_name": "Карпова Мария Александровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/a2d/7pmmu0vodrh9sohlqwgt84vpiawl2tqn.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-mirovoy-ekonomiki-i-mezhdunarodnykh-otnosheniy/"
+    },
+    {
+      "full_name": "Туманян Юрий Рафаелович",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/299/xf7glh2i8laddgsoy0t1kw87qxqq210f.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-politicheskoy-ekonomii-i-ekonomicheskoy-politiki/"
+    },
+    {
+      "full_name": "Ищенко-Падукова Оксана Александровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/b4a/hl4g178c20e81xgrx3r2ck1j7wkidrms.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-politicheskoy-ekonomii-i-ekonomicheskoy-politiki/"
+    },
+    {
+      "full_name": "Козлов Андрей Николаевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/45f/fazm9okwuntbqdg22ah2123h8ononlcy.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-politicheskoy-ekonomii-i-ekonomicheskoy-politiki/"
+    },
+    {
+      "full_name": "Мовчан Ирина Викторовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/cda/7yjjdac647k10dczhg5y4690rjgc68e7.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-politicheskoy-ekonomii-i-ekonomicheskoy-politiki/"
+    },
+    {
+      "full_name": "Прокопенко Золина Владимировна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/bc9/vn2xo5di4noqapp3a2jby4ciert2qui9.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-politicheskoy-ekonomii-i-ekonomicheskoy-politiki/"
+    },
+    {
+      "full_name": "Индустриев Максим Алексеевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/80c/4dn66rlxelbm3crv3qhiy2fiqo9d2jna.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-politicheskoy-ekonomii-i-ekonomicheskoy-politiki/"
+    },
+    {
+      "full_name": "Скачкова Людмила Сергеевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/1b0/9y9jp1b6iuosl1ltoc32kwvd8o5qtx0x.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/"
+    },
+    {
+      "full_name": "Бутова Светлана Валерьевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/397/cpmrj10wm1wowte7srlw3m9bqma2ca7t.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/"
+    },
+    {
+      "full_name": "Костенко Елена Петровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/d38/j49y2x2h2svpzejkp99x2vm46rq2jbi0.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/"
+    },
+    {
+      "full_name": "Кривошеева-Медянцева Дарья Дмитриевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/cf4/fjod9wxv7yzc44xcfb5b1ndur4uxo5vu.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/"
+    },
+    {
+      "full_name": "Маличенко Ирина Петровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/e4a/7lvf3gygl5rxb9m09xyy2qhl6hxttuay.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/"
+    },
+    {
+      "full_name": "Писанка Светлана Анатольевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/5bf/c47akgtlzv3gtx2tl53x1o2rhhhcnoei.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/"
+    },
+    {
+      "full_name": "Щетинина Дарья Павловна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/87c/vrynodffyao8srlrkm09unk0ut0fzqvi.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/"
+    },
+    {
+      "full_name": "Несоленая Олеся Владимировна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/cf2/wjn21lt3gha054wk78n6lmquwcczgr7q.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/"
+    },
+    {
+      "full_name": "Осипова Ирина Владимировна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/fab/ym44d28vcdiqm24khfnzeo4708n7rpbs.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/"
+    },
+    {
+      "full_name": "Коновалова Кристина Станиславовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/19e/fxmob391zhdd9bc14t3t8nv1nsfrl7f4.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/"
+    },
+    {
+      "full_name": "Косолапова Наталья Алексеевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/762/xok5htqbnw2883uybmgspbalcuv0pxdn.png",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/"
+    },
+    {
+      "full_name": "Ищенко-Падукова Оксана Александровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/b4a/hl4g178c20e81xgrx3r2ck1j7wkidrms.png",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/"
+    },
+    {
+      "full_name": "Шаль Анна Викторовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/d75/lrdlp4ycvmipcyg0m8jtv601q7tl5zzx.png",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/"
+    },
+    {
+      "full_name": "Чернова Ольга Анатольевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/901/bkp28pzff2sn1l3d3a3iydqm2irpcohp.jpg",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/"
+    },
+    {
+      "full_name": "Фурса Елена Владимировна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/ffe/hfmh2nwqogwum4bj2u4nzgc3tavgpi1u.png",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/"
+    },
+    {
+      "full_name": "Алехин Валерий Викторович",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/82d/74grena04g103wgnc98cllackia2i1d0.jpg",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/"
+    },
+    {
+      "full_name": "Маличенко Ирина Петровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/b41/1ntleyurc119l9g6k7d7jy8bm1j5f713.jpg",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/"
+    },
+    {
+      "full_name": "Христова София Михайловна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/687/e5pzi2qb87zqp142lwudwqclo0kh6tle.jpg",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/"
+    },
+    {
+      "full_name": "Несоленая Олеся Владимировна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/ecd/h4963tr2p8ljxyjldserpv1dnznq2f9i.jpg",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/"
+    },
+    {
+      "full_name": "Педченко Екатерина Александровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/380/ms6c12b2g54xjstsi51jv1uug423srw0.png",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/"
+    },
+    {
+      "full_name": "Максютова Лариса Вадимовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/497/y30qbm9otb3t04nil18j0q3ihceq1p94.png",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/"
+    },
+    {
+      "full_name": "Сырых Кристина Алексеевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/2fe/xywudguc8jmrxtn798qdcywqqskse5n9.png",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/"
+    }
+  ]
+}
