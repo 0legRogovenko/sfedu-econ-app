@@ -13,33 +13,37 @@ class Person {
     required this.hasSchedule,
     required this.lessonCount,
     required this.examCount,
+    this.photoUrl,
   });
 
   final String id;
   final String shortName; // «Вольчик В.В.» — для списка и поиска
   final String fullName; // «Вольчик Вячеслав Витальевич» — для карточки
-  final List<String> sections; // деканат / кафедры; пусто у внешних преподавателей
+  final List<String>
+  sections; // деканат / кафедры; пусто у внешних преподавателей
   final List<String> roles;
   final String? email;
   final bool hasSchedule;
   final int lessonCount;
   final int examCount;
+  final String? photoUrl;
 
   factory Person.fromJson(Map<String, dynamic> json) => Person(
-        id: json['id'] as String,
-        shortName: json['short_name'] as String,
-        fullName: json['full_name'] as String,
-        sections: ((json['sections'] as List?) ?? const [])
-            .map((e) => e as String)
-            .toList(),
-        roles: ((json['roles'] as List?) ?? const [])
-            .map((e) => e as String)
-            .toList(),
-        email: json['email'] as String?,
-        hasSchedule: json['has_schedule'] as bool? ?? false,
-        lessonCount: json['lesson_count'] as int? ?? 0,
-        examCount: json['exam_count'] as int? ?? 0,
-      );
+    id: json['id'] as String,
+    shortName: json['short_name'] as String,
+    fullName: json['full_name'] as String,
+    sections: ((json['sections'] as List?) ?? const [])
+        .map((e) => e as String)
+        .toList(),
+    roles: ((json['roles'] as List?) ?? const [])
+        .map((e) => e as String)
+        .toList(),
+    email: json['email'] as String?,
+    hasSchedule: json['has_schedule'] as bool? ?? false,
+    lessonCount: json['lesson_count'] as int? ?? 0,
+    examCount: json['exam_count'] as int? ?? 0,
+    photoUrl: json['photo_url'] as String?,
+  );
 }
 
 /// Локальный поиск по короткому и полному имени (регистронезависимо).
@@ -48,8 +52,10 @@ List<Person> filterPeople(List<Person> all, String query) {
   final q = query.trim().toLowerCase();
   if (q.isEmpty) return all;
   return all
-      .where((p) =>
-          p.shortName.toLowerCase().contains(q) ||
-          p.fullName.toLowerCase().contains(q))
+      .where(
+        (p) =>
+            p.shortName.toLowerCase().contains(q) ||
+            p.fullName.toLowerCase().contains(q),
+      )
       .toList();
 }

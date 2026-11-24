@@ -9,6 +9,7 @@ import 'package:sfedu_econ/features/people/person.dart';
 import 'package:sfedu_econ/features/exams/exam_event.dart';
 import 'package:sfedu_econ/features/people/person_schedule_screen.dart';
 import 'package:sfedu_econ/features/people/person_screen.dart';
+import 'package:sfedu_econ/features/people/person_photo.dart';
 import 'package:sfedu_econ/features/people/people_search_screen.dart';
 import 'package:sfedu_econ/features/schedule/lesson.dart';
 import 'package:sfedu_econ/features/schedule/schedule_data.dart';
@@ -275,6 +276,7 @@ void main() {
         hasSchedule: false,
         lessonCount: 0,
         examCount: 0,
+        photoUrl: 'https://econ.sfedu.ru/upload/iblock/volchik.jpg',
       );
       final container = ProviderContainer();
       addTearDown(container.dispose);
@@ -283,6 +285,13 @@ void main() {
         container,
         const PersonScreen(person: personWithEmail),
       );
+
+      expect(find.byType(PersonPhoto), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.byType(PersonPhoto)).dy,
+        lessThan(tester.getTopLeft(find.text(personWithEmail.fullName)).dy),
+      );
+      await tester.ensureVisible(find.text('volchik@sfedu.ru'));
 
       await tester.longPress(find.text('volchik@sfedu.ru'));
       await tester.pump();

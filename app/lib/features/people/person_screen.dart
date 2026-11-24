@@ -8,6 +8,7 @@ import '../contacts/email_copy_region.dart';
 import '../exams/exams_logic.dart';
 import 'people_providers.dart';
 import 'person.dart';
+import 'person_photo.dart';
 
 /// Карточка человека: ПОЛНОЕ имя, должность(и), кафедра, почта и — если у
 /// человека есть занятия — переход к его расписанию. У методистов деканата
@@ -51,6 +52,8 @@ class PersonScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          PersonPhoto(person: person),
+          const SizedBox(height: 16),
           Text(person.fullName, style: theme.textTheme.headlineSmall),
           if (subtitle.isNotEmpty) ...[
             const SizedBox(height: 8),
