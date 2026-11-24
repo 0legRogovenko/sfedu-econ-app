@@ -96,6 +96,6 @@ def test_public_source_parser_does_not_require_database_credentials():
     env = {k: v for k, v in os.environ.items() if k not in {"ADMIN_PASSWORD", "SECRET_KEY", "DATABASE_URL"}}
     result = subprocess.run(
         [sys.executable, "-c", "from src.persons.photos import parse_photo_page; assert parse_photo_page('', 'https://sfedu.ru/') == []"],
-        capture_output=True, text=True, env=env,
+        capture_output=True, text=True, env=env, cwd=Path(__file__).resolve().parents[1],
     )
     assert result.returncode == 0, result.stderr
