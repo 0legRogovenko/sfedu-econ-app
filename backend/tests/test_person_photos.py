@@ -43,6 +43,7 @@ def test_university_profile_uses_named_portrait_not_navigation_logo():
     "https://example.com/volchik.jpg", "//sfedu.ru.evil.test/volchik.jpg",
     "http://econ.sfedu.ru/volchik.jpg", "https://user:pass@sfedu.ru/volchik.jpg",
     "data:image/png;base64,abc", "/images/no-photo.png", "/images/logo.png",
+    "https://[broken/image.jpg",
 ])
 def test_unofficial_or_placeholder_images_are_rejected(url):
     page = f'''<div class="elem-hover-height"><div class="empl-face" data-src="{url}"></div>
@@ -99,3 +100,10 @@ def test_public_source_parser_does_not_require_database_credentials():
         capture_output=True, text=True, env=env, cwd=Path(__file__).resolve().parents[1],
     )
     assert result.returncode == 0, result.stderr
+
+
+def test_canonicalizable_official_photo_url_is_returned_in_absolute_form():
+    person = _person()
+    candidate = PhotoCandidate(person.full_name, "/upload/photo.jpg", SOURCE)
+    matched = match_photos([person], [candidate]).matches[person.id]
+    assert matched.photo_url == "https://econ.sfedu.ru/upload/photo.jpg"

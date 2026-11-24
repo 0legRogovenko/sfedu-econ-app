@@ -33,8 +33,8 @@ class PhotoMatches:
 
 def official_url(value: str, base_url: str = "") -> str | None:
     """Allow public HTTPS university URLs, never credentials or foreign hosts."""
-    value = urljoin(base_url, value.strip())
     try:
+        value = urljoin(base_url, value.strip())
         url = urlsplit(value)
         host = (url.hostname or "").lower()
         if (
@@ -124,8 +124,10 @@ def match_photos(people: Iterable[PersonRow], candidates: Iterable[PhotoCandidat
     by_key: dict[tuple[str, str, str], list[PhotoCandidate]] = defaultdict(list)
     for candidate in candidates:
         key = key_of_full(candidate.full_name)
-        if key and _photo_url(candidate.photo_url, candidate.source_url) and official_url(candidate.source_url):
-            by_key[key].append(candidate)
+        photo_url = _photo_url(candidate.photo_url, candidate.source_url)
+        source_url = official_url(candidate.source_url)
+        if key and photo_url and source_url:
+            by_key[key].append(PhotoCandidate(candidate.full_name, photo_url, source_url))
 
     report = PhotoMatches()
     for person in people:

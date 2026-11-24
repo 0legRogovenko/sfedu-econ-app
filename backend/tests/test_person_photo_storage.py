@@ -71,6 +71,21 @@ def test_stale_name_or_foreign_url_is_never_exposed(client, db_session):
     assert client.get("/api/persons").json()[0]["photo_url"] is None
 
 
+def test_malformed_photo_cannot_break_the_directory(client, db_session):
+    _contact(db_session)
+    db_session.add(_photo(photo_url="https://[broken/image.jpg"))
+    db_session.flush()
+    response = client.get("/api/persons")
+    assert response.status_code == 200
+    assert response.json()[0]["photo_url"] is None
+
+
+def test_import_stores_absolute_photo_urls(db_session):
+    _contact(db_session)
+    store_photos(db_session, [PhotoCandidate(NAME, "/upload/photo.jpg", SOURCE)])
+    assert db_session.scalar(select(PersonPhoto)).photo_url == "https://econ.sfedu.ru/upload/photo.jpg"
+
+
 def test_photo_upsert_is_idempotent_and_creates_no_contacts(db_session):
     _contact(db_session)
     candidate = PhotoCandidate(NAME, PHOTO, SOURCE)
