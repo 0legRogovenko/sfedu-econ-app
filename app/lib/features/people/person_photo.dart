@@ -1,0 +1,57 @@
+import 'package:flutter/material.dart';
+
+import 'person.dart';
+import 'portrait_catalog.dart';
+
+/// A rectangular official portrait; missing or failed images never block a profile.
+class PersonPhoto extends StatelessWidget {
+  const PersonPhoto({super.key, required this.person});
+
+  final Person person;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    // Take the initials after the surname, including compound surnames.
+    final initials = person.shortName
+        .trim()
+        .split(RegExp(r'\s+'))
+        .last
+        .replaceAll(RegExp(r'[^А-ЯЁA-Z]', caseSensitive: false), '')
+        .toUpperCase();
+    final fallback = ColoredBox(
+      color: theme.colorScheme.surfaceContainerHighest,
+      child: Center(
+        child: Text(
+          initials.length <= 2 && initials.isNotEmpty ? initials : '—',
+          style: theme.textTheme.displaySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ),
+    );
+    final asset = portraitAssetFor(person.id, person.fullName);
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: SizedBox(
+        key: const Key('person-photo-frame'),
+        width: 180,
+        child: AspectRatio(
+          aspectRatio: 3 / 4,
+          child: asset != null
+              ? Image.asset(
+                  asset,
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.high,
+                  semanticLabel: 'Фотография: ${person.fullName}',
+                  frameBuilder: (context, child, frame, loaded) =>
+                      frame == null ? fallback : child,
+                  errorBuilder: (context, error, stackTrace) => fallback,
+                )
+              : fallback,
+        ),
+      ),
+    );
+  }
+}

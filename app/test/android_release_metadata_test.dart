@@ -13,7 +13,7 @@ void main() {
     expect(gradle, contains('namespace = "ru.olegrogovenko.econapp"'));
     expect(gradle, contains('applicationId = "ru.olegrogovenko.econapp"'));
     expect(manifest, contains('android:label="Эконом ЮФУ"'));
-    expect(pubspec, contains('version: 0.1.0-beta.2+2'));
+    expect(pubspec, contains('version: 0.1.0-beta.6+6'));
   });
 
   test('MainActivity follows the release namespace', () {
@@ -90,4 +90,33 @@ void main() {
     expect(testing.toLowerCase(), contains('офлайн'));
     expect(testing, contains('Сообщить об ошибке'));
   });
+
+  test(
+    'APK artifact names remain valid for slash-separated feature branches',
+    () {
+      final workflow = File(
+        '../.github/workflows/android-beta.yml',
+      ).readAsStringSync();
+      final template = RegExp(
+        r'^\s*name:\s*(econ-yufu-.+)$',
+        multiLine: true,
+      ).firstMatch(workflow)!.group(1)!;
+      for (final branch in [
+        'main',
+        'codex/teacher-profile-photos',
+        'beta-v0.1.0-beta.3',
+      ]) {
+        final name = template
+            .replaceAll(r'${{ github.ref_name }}', branch)
+            .replaceAll(r'${{ github.run_id }}', '123456789')
+            .replaceAll(r'${{ github.run_number }}', '6');
+        expect(name, isNot(contains(r'${{')));
+        expect(
+          RegExp(r'["<>:/\\|?*\r\n]').hasMatch(name),
+          isFalse,
+          reason: 'GitHub upload-artifact rejects invalid names: $name',
+        );
+      }
+    },
+  );
 }

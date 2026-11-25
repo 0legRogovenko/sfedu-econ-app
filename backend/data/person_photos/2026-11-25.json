@@ -1,0 +1,1028 @@
+{
+  "collected_at": "2026-11-25T16:15:08.143216+00:00",
+  "sources": [
+    {
+      "url": "https://econ.sfedu.ru/kafedra-bukhgalterskogo-ucheta-i-audita/",
+      "sha256": "4a0ec8bfb90fa5933a4186b1ea2726a1008c3e23f41a0986d97edec8f1fe63a1",
+      "photos": 5
+    },
+    {
+      "url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/",
+      "sha256": "fc48627afbc27689279dac299edbd2ce66f482a0739bc14f24a788f0edfd9d71",
+      "photos": 11
+    },
+    {
+      "url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/",
+      "sha256": "2e810816a30e4357dff98ef620342eb5805e6cb5a903ebaf2f42ddf55a58b6ae",
+      "photos": 19
+    },
+    {
+      "url": "https://econ.sfedu.ru/kafedra-finansy-i-kredit/",
+      "sha256": "80c2ff700b54aecb8cc0ea64ba713ceafc46e7062007d119d5934b7fe8bcb59d",
+      "photos": 6
+    },
+    {
+      "url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/",
+      "sha256": "f070ccf80ce11114ce644c1ce7757e917ac843297d237a6084593aac3a3f6e03",
+      "photos": 11
+    },
+    {
+      "url": "https://econ.sfedu.ru/kafedra-mirovoy-ekonomiki-i-mezhdunarodnykh-otnosheniy/",
+      "sha256": "4d70370cd934cfa9789efc68bafa43cf5182c6bd019a7c0790bcf069b98be948",
+      "photos": 4
+    },
+    {
+      "url": "https://econ.sfedu.ru/kafedra-politicheskoy-ekonomii-i-ekonomicheskoy-politiki/",
+      "sha256": "18c101673a38eb9ad809c31f2e19ab64968c6abc8e55e662ca4391d73527ea57",
+      "photos": 6
+    },
+    {
+      "url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/",
+      "sha256": "6884a3d4d4ba1c5f0594c692d41498bc4e21db55e8702fb3502bc511d8a05051",
+      "photos": 10
+    },
+    {
+      "url": "https://econ.sfedu.ru/o-fakultete/",
+      "sha256": "8eb3a4048dd2e260a3a983ada4d70c6da9b67ee2106604354b711071a5870cea",
+      "photos": 12
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/aakosse",
+      "sha256": "538d768515160cc053fc9fbdd6404b05cf1858e399adcd7cd9f0f36afc9530c6",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/aashevch",
+      "sha256": "fc87b5c2f077c93860a15ae0c4a0e7eaf94e8f1f9ca38f599a962884940f04d0",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/abarsukova",
+      "sha256": "83a8176ef21e2065baf612d5cefd8612ddeb1a4af500d780b1e97d79ca06ac2f",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/afed",
+      "sha256": "292db506d3449f20c1540d9d76098843c81ff688b29ac3fe21cce37bc124a1de",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/agozalova",
+      "sha256": "eaa903bc0d57c9f5159e03fa1a94bc6cd668862a6df8b9aab4a5106deac4986a",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/alisicyna",
+      "sha256": "baddee120bab44a3a2f33d529b644eb4ba2688d230eb9a211e4ecd743907c651",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/anbelikov",
+      "sha256": "5e0a541d20b8b0d6a9df907ff4c0ace1e432d08a7b78d6ad5e2bf26c035b54a9",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/ankozlov",
+      "sha256": "4a96dd38ceec08693f66eeafc2dfb080ff729a0947c4e3380ef780f711c6defd",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ashapsigov",
+      "sha256": "cc8ec7f6fd1fd799243639e8654818ea091429ebf765a720bbb5ff561aead775",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/belousova",
+      "sha256": "013328781356576aa8a538b9046a3ce89c05957b1972d9abd6b12593dd735364",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/darkr",
+      "sha256": "6b7e78e8e0fe83e8a7d905fc88429d2f8363c4fdfae1e72c6b88dc0a3a1b4076",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/dgridnev",
+      "sha256": "36bf0322f01f11c8878e70f033b0a9a9ed2a8f06d2946ec9a1b680671f41a12d",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/dpshetinina",
+      "sha256": "723e61907ffdd73ebdfda50f09daa255dac6ac6c63ca01bdf4b8c38801bc7ae2",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/dszaharova",
+      "sha256": "d935062186ef6c660b130818a801b30d3782c39285d1c56d16aa0a1ae6a4c23e",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/dvkovalev",
+      "sha256": "ba002b24d0ca3c953ef3734556096f5c4d75f08f67770a94f8eb6967e6cb6030",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/eafedortsova",
+      "sha256": "f2447549f0ba36071cd2acb8e78df606042cd97974b87f593902d9391b340007",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/eatrohimchuk",
+      "sha256": "ab18ab59c7c270d503d291dd4db1635f36600469cd96cb1660be7f3dcff55b05",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/eeaydarkina",
+      "sha256": "d813a68a81226f2a569e32caf22ad953c5079c938d6f8df0698f4456c829b07b",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/ekostenko",
+      "sha256": "ebd28b8128057c8367d98e93dac6688647fa78d38ff211775d1fd237c75a620e",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/eletskii",
+      "sha256": "866ad1174b463b62cf35c735dcca009a67be96a1abe0c051f70aa4f210f780fc",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/elihackaya",
+      "sha256": "5a704bd70d043476cae246cfd399e62fc408cc689a7a7670dbd2a382cb7e3fcb",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/evmuraveva",
+      "sha256": "b8804bb208398e462e9d45fc4dc6c1e5ba355adff56c9e6cf4a830c427588772",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/golovacheva",
+      "sha256": "9a08a9e08b3d87d014f0e21fecce3838c1170ca3ff5c13d4d7c56f96be707a4d",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/grudanova",
+      "sha256": "794846e6ae8e0d587616661484bdca6df287b893bfef7a5fc6904596e07d33b2",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/gubskaya",
+      "sha256": "1a48fb9c6a6d095f0e77f9750d57ece5a9bd8671b36f900700347e7a7afadaad",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/igrishchenko",
+      "sha256": "5ddb8e72e9fd048f1532882f3249b6e7d0dcb9cc9e01b46ffd3e3839a1feb23f",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/ikorinenko",
+      "sha256": "f434ac1e4644e57f1188370b67bd4db11eb6ca173806ca374b1581693490ef67",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/industriev",
+      "sha256": "a8f62582fa731701af6806f47c9ce4fc971baca06a3ff0fa2c4519d8340fe934",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/khristova",
+      "sha256": "bdf6576cae78252dc6f0d02dae119ead3b1ca513f47efd9ef352bb731368b7c4",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/kkonova",
+      "sha256": "3aee51b4901ace389a847c1eee128c1f5eec6b420d057b49a4b2f0cc4e18c0db",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/lantonova",
+      "sha256": "1b63549407b6fceac25aea255143ab0b0184f08a50b57b4cba6f6efc96bf55cd",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/laskova",
+      "sha256": "cc8b72a93db5b1babb6bf18fc87578f1455eef0a7b2494a9c6d42ea9803020d7",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/lbezuglaya",
+      "sha256": "2890def7662e6776fc9472f3786028d73a212365e41e7e4efdce019ed3212321",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/maksiutova",
+      "sha256": "2297022edb81b961f7dedfd406af6ccb725aff1452e24479c02c37d18e157fd7",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/mashubarin",
+      "sha256": "5134cd820f27818e6447d294ba97145cfb4dd087a9fc3649969c8f6bea185139",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/maskaev",
+      "sha256": "b68d8592be881190067e08d6a6880cd056d60b6da0ea76b72d322719ade3c17d",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/mesropian",
+      "sha256": "433682708c481e69e0eb585c997589358cd9c05f07af6375b36aae60da0f686d",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/mkorytcev",
+      "sha256": "9a88e72bbad7284341483d48051392f137b260906077e6bf48fc401973ea7ffa",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/mvaskina",
+      "sha256": "841720140662fca2772df2f3fbef754df5e7c227b3ea1f358b644a1be6b9325f",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/nesol",
+      "sha256": "fddd6cf8e2f9a84d107f66749a122fdd6502e917bad41df5f68d9a6a9adcbd5a",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/nlebedeva",
+      "sha256": "0a44da364c14709395ba3938306b05bbe216d7ffa252e7c12d273a1b6a6b27b9",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/npogosyan",
+      "sha256": "c14d8f43722c794364452caaaa2031465ef1b705b198cf3554d96c76699558ed",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/oldolgova",
+      "sha256": "eb9c73e1399abfcfa9e2157dc290efb127e217b3824e35b3ec45ad49bba0ad60",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/olsavenko",
+      "sha256": "75b4e6e03eaf846fab1cc625a759de8c5301619272b2659ec5acf21b6b4af2e8",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/onburov",
+      "sha256": "4ddaf3fa6a9669af9955acfbaae6752bed764ba0f08d43a37954f6dd1123251c",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/opatrakeeva",
+      "sha256": "c91cf9e313ee31bc2b7561b015e710bd4f5688c86cf891d716ecf740dd24519c",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/osenkiv",
+      "sha256": "378521917fe40bfbe9263cbf225c4c5a9f00c2354b9ff627c5be07e346d01b5f",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/oskarnauhova",
+      "sha256": "9a7f99ab18797a0a06271ae8c953b46742189d39c37b41600cdaddf047ff7b23",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/otolstokora",
+      "sha256": "2e94b041f35137264c39e9bdcaeb8a3730c6492fb524d56cbfe1ac7c3f3b5f05",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/pavliukevich",
+      "sha256": "cb74cd5d21ccdd1d70f22afb33851d62429855120cf41c1d97f6aae2ea37cb9c",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/petrosova",
+      "sha256": "3c07f8cd9641cf8dd4953c37015f2aa7f9a4afbfa466c3c76145e8e9bc5399ee",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/pmamedova",
+      "sha256": "e4d5f08775a60e656cd1c01a8a65cb886b5f24f7b1fe584131777fd1ed81efb2",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/postnikova",
+      "sha256": "91881c1fe6c4baaeebe39ebda586f2fe47f89750080a3534ce52171552fadfdc",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/shipetina",
+      "sha256": "9f71607778ce52f050d1b1a16c635180e1c084d1ee6bbaeb6ff92d48aa4cbdcb",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/shiriaev",
+      "sha256": "169ed896869136c7ca3930e7cd5574d36732b7357184f28604c6f9ed92d29b90",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/spisanka",
+      "sha256": "d60ae29916ddf7ae102a6f8c8d8b638c5671172c8cf1fa4911b0333953dcaa24",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/sscygankov",
+      "sha256": "886c784f962fd099dae3a4c21ba6668e22a7bfe73d8310a7ea9fbc12b7ae2576",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/svbutova",
+      "sha256": "126b7e567434683846fdf7d22ec1034c603a3ed88273601406b23a57259eedc7",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/syrykh",
+      "sha256": "7d3c7cc8c7aa871e56bdc1a9389c2e5d7363dbf5a3e2c71395ed8b4c4693cda7",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/tmatycyna",
+      "sha256": "fc72b4c8a8f7d56e9c3518deb6e47a692bfbec79161dc6efb85ee5bbd168425e",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/valehin",
+      "sha256": "560da50b0e0d1c8bbd143490a71a00fadde455b32c20dec6c82c2ff6dbe6555b",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/vikud",
+      "sha256": "b3a2d3d93e4200a6b6eca190bfab4d65cab2a65cfbfa1f4846a2a4ce4d70bc5f",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/vkot",
+      "sha256": "b3212e02ce4f0580b6f38f7d4ca8df619ccb5472f7a87280ce5e004ec64d46c6",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/volodinrs",
+      "sha256": "ff4439b56925644c175965f5a42f243011a91561cc51c310f4325c19c81faaba",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/yuhnova",
+      "sha256": "c73faebfcd19946afa17cf8163da1c8771054833b54b1dbd2deaf7450488a3b3",
+      "photos": 1
+    }
+  ],
+  "photos": [
+    {
+      "full_name": "Фролова Ирина Вениаминовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/024/2bl7293fly1c9iu4txikcbuoyzvkz9j5.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-bukhgalterskogo-ucheta-i-audita/"
+    },
+    {
+      "full_name": "Матыцына Татьяна Вениаминовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/be2/vuw905qnvxkkvkz8vf9o1v3tm2f04cyq.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-bukhgalterskogo-ucheta-i-audita/"
+    },
+    {
+      "full_name": "Погорелова Татьяна Геннадьевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/5a1/bcog1ksobwl8r58cutkhy25i5bzwes7y.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-bukhgalterskogo-ucheta-i-audita/"
+    },
+    {
+      "full_name": "Погосян Нателла Володяевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/ede/ccb41ek31n5paqh646n408j83gahfiwu.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-bukhgalterskogo-ucheta-i-audita/"
+    },
+    {
+      "full_name": "Лебедева Наталья Юрьевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/fef/k61oxwof0f4nkyi1ur2yxvnd16n1zfsn.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-bukhgalterskogo-ucheta-i-audita/"
+    },
+    {
+      "full_name": "Маслюкова Елена Васильевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/9b9/hu2wift7qia3of67p3uigexhv23jqff1.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/"
+    },
+    {
+      "full_name": "Косолапова Наталья Алексеевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/3fc/fnrcnrlh59wpwec2yruu6rc71krow5hq.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/"
+    },
+    {
+      "full_name": "Крюков Сергей Владимирович",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/d06/g4vrrja57obh1ha26m4z2y4d1m8qig3e.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/"
+    },
+    {
+      "full_name": "Березовская Елена Александровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/6b0/lyo3drih4yvvuu9m4ltzrv2te2u690f4.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/"
+    },
+    {
+      "full_name": "Володин Роман Сергеевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/47c/osi9omc51c48k3x3oj0i5gl8y3vap2mo.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/"
+    },
+    {
+      "full_name": "Патракеева Ольга Юрьевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/d55/4c1vf0kvbdh4zn3iqev1o2eohliuudwi.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/"
+    },
+    {
+      "full_name": "Шаль Анна Викторовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/d75/lrdlp4ycvmipcyg0m8jtv601q7tl5zzx.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/"
+    },
+    {
+      "full_name": "Лихацкая Екатерина Александровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/0f9/w93yuxdrlqnxb13ji5c9ihtmgg0zii5l.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/"
+    },
+    {
+      "full_name": "Ласкова Дарья Сергеевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/e84/fg8ywvz23fbvd23gmwu7j8kuujq7cls9.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/"
+    },
+    {
+      "full_name": "Христова София Михайловна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/71c/ptznwro5ofiv8v3dbb4ikie9y1e0xrqr.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/"
+    },
+    {
+      "full_name": "Безуглая Лидия Александровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/11b/dzzf8hrdngdgiwysbsownhen09zan7kn.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/"
+    },
+    {
+      "full_name": "Вольчик Вячеслав Витальевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/1c5/dn3s9aqdyyjadl11gsf5con82n8mtfup.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Белокрылова Ольга Спиридоновна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/501/x2lzfk69r8xdrv2cugehr2tughcbucln.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Корытцев Максим Александрович",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/a5d/r4r0632ehlrm9z881oju6773yv922q8q.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Алехин Валерий Викторович",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/d1f/2u5v5ogzr1zz58zx5f0m2br1jpkz10in.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Барсукова Арина Владимировна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/b66/2sdktw19h2bkhcmn7q09ptqiynsmp8vd.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Белокрылов Кирилл Анатольевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/ad9/pcnmr40q60v8r0m92rwfw1rmehvbi9ia.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Васькина Марина Георгиевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/6d2/w3cxbu233zok3u4qzu1od2zlv65kahsn.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Гуцелюк Елена Федоровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/dbb/bs065r01hpzn37uz0i6e8rgqd69ygqz7.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Ермишина Анна Вениаминовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/537/2yds1m54j5zrixmi0kiahd75fr9v2awa.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Ипатова Анна Владимировна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/001/d2k13sjrmnujfh0tuyug5wmjlsa1n875.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Кот Вера Витальевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/6bd/h6wfe227f9cs39yhwccbzvwj1tus04e5.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Маскаева Артем Ильич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/6bc/fanj65vxoti0oxvivx1ra0pmk5bopl3r.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Стрельченко Елена Александровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/3f0/epyxtnaopzg5nithnt6lm49w4synwx30.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Фурса Елена Владимировна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/ffe/hfmh2nwqogwum4bj2u4nzgc3tavgpi1u.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Цыганков Сергей Сергеевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/09d/i9rc2z80npvj6w5nqgxbyowbn0ct4p5j.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Ширяев Игорь Михайлович",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/94f/vczuss5dtffu14ze8crngtixd43gy6z3.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Грищенко Илья Вадимович",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/8ff/s4is3r8gtuygsi3wpozfh8inyk4agyeb.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Захарова Дарья Сергеевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/355/sdiy2tdd2lz33r7ls633xf55ucg10f64.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Кудряшова Виктория Сергеевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/779/iiznhsjay1ybnxphmd18qpltbwezztbc.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/"
+    },
+    {
+      "full_name": "Полховская Татьяна Юрьевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/045/3gjrfdwchr2inio3fcr1eul37kpoyeoc.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-finansy-i-kredit/"
+    },
+    {
+      "full_name": "Свиридов Олег Юрьевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/8c6/znhsygjspotybvgd5czx8yfcwviwp8t8.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-finansy-i-kredit/"
+    },
+    {
+      "full_name": "Давыденко Ирина Геннадиевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/cc5/qawrv5b0htryil79fues7ysfrt3mgqbp.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-finansy-i-kredit/"
+    },
+    {
+      "full_name": "Некрасова Инна Владимировна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/dbe/6k0yqpmtpdlcq3hyc62ar2jjtscpy3su.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-finansy-i-kredit/"
+    },
+    {
+      "full_name": "Савенко Оксана Леонидовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/206/p40yy02vbwcai611tvdb3x7oy3ft0f7h.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-finansy-i-kredit/"
+    },
+    {
+      "full_name": "Шевченко Анастасия Александровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/38b/ydfbc9csiwv67397ldl7atn28gwm5lz0.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-finansy-i-kredit/"
+    },
+    {
+      "full_name": "Никитаева Анастасия Юрьевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/5d5/34qbz06ovwd40hkwx7ulken6qd70ulzg.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/"
+    },
+    {
+      "full_name": "Матвеева Людмила Григорьевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/e55/9oimsh3mb3wg0ej7prms78au8ocrov0k.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/"
+    },
+    {
+      "full_name": "Чернова Ольга Анатольевна",
+      "photo_url": "https://econ.sfedu.ru/upload/resize_cache/iblock/bf5/600_600_240cd750bba9870f18aada2478b24840a/yp77kd0yajhhcqzefnay9a8y9686pz39.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/"
+    },
+    {
+      "full_name": "Айдаркина Екатерина Евгеньевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/302/645zf5dtbhgkrqtqxubymaqkhht0ob81.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/"
+    },
+    {
+      "full_name": "Ласкова Татьяна Сергеевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/ce5/79b1bd8f32cj30euxnc40lpf1e7llzn4.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/"
+    },
+    {
+      "full_name": "Гозалова Анна Вячеславовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/967/dtedut9mml33gb80ab7uchbm7w5f3u3y.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/"
+    },
+    {
+      "full_name": "Долгова Ольга Игоревна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/0c7/rsrvurklxwbnxt5ycrgrkkt29i4lyd84.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/"
+    },
+    {
+      "full_name": "Гриднев Данил Сергеевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/97e/ffj7z4d5raorzvpejm1w2xs4y76hbgee.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/"
+    },
+    {
+      "full_name": "Ковалев Дмитрий Викторович",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/8f6/xwlun8cegdtrmbfulj7b5bdw38q5liuj.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/"
+    },
+    {
+      "full_name": "Федорова Анна Андреевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/67f/k2rzh2utpbbc8cqg46uuk2jzszwpy50n.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/"
+    },
+    {
+      "full_name": "Петросова Мария Евгеньевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/f9f/sc0hnbk2rh5tqkj3glqir5ykcxri6b7g.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/"
+    },
+    {
+      "full_name": "Елецкий Алексей Николаевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/f30/5zci2x6h9xkf6c8abpfzlgwq5pg0mtor.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-mirovoy-ekonomiki-i-mezhdunarodnykh-otnosheniy/"
+    },
+    {
+      "full_name": "Воронина Татьяна Васильевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/026/l12ypdlrxoesy09p83490tdr1bw3yvo3.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-mirovoy-ekonomiki-i-mezhdunarodnykh-otnosheniy/"
+    },
+    {
+      "full_name": "Яценко Ашхен Борисовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/2f3/8v68570rwv3347zrfh2gfb5j6nk5qnie.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-mirovoy-ekonomiki-i-mezhdunarodnykh-otnosheniy/"
+    },
+    {
+      "full_name": "Карпова Мария Александровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/a2d/7pmmu0vodrh9sohlqwgt84vpiawl2tqn.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-mirovoy-ekonomiki-i-mezhdunarodnykh-otnosheniy/"
+    },
+    {
+      "full_name": "Туманян Юрий Рафаелович",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/299/xf7glh2i8laddgsoy0t1kw87qxqq210f.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-politicheskoy-ekonomii-i-ekonomicheskoy-politiki/"
+    },
+    {
+      "full_name": "Ищенко-Падукова Оксана Александровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/b4a/hl4g178c20e81xgrx3r2ck1j7wkidrms.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-politicheskoy-ekonomii-i-ekonomicheskoy-politiki/"
+    },
+    {
+      "full_name": "Козлов Андрей Николаевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/45f/fazm9okwuntbqdg22ah2123h8ononlcy.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-politicheskoy-ekonomii-i-ekonomicheskoy-politiki/"
+    },
+    {
+      "full_name": "Мовчан Ирина Викторовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/cda/7yjjdac647k10dczhg5y4690rjgc68e7.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-politicheskoy-ekonomii-i-ekonomicheskoy-politiki/"
+    },
+    {
+      "full_name": "Прокопенко Золина Владимировна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/bc9/vn2xo5di4noqapp3a2jby4ciert2qui9.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-politicheskoy-ekonomii-i-ekonomicheskoy-politiki/"
+    },
+    {
+      "full_name": "Индустриев Максим Алексеевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/80c/4dn66rlxelbm3crv3qhiy2fiqo9d2jna.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-politicheskoy-ekonomii-i-ekonomicheskoy-politiki/"
+    },
+    {
+      "full_name": "Скачкова Людмила Сергеевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/1b0/9y9jp1b6iuosl1ltoc32kwvd8o5qtx0x.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/"
+    },
+    {
+      "full_name": "Бутова Светлана Валерьевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/397/cpmrj10wm1wowte7srlw3m9bqma2ca7t.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/"
+    },
+    {
+      "full_name": "Костенко Елена Петровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/d38/j49y2x2h2svpzejkp99x2vm46rq2jbi0.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/"
+    },
+    {
+      "full_name": "Кривошеева-Медянцева Дарья Дмитриевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/cf4/fjod9wxv7yzc44xcfb5b1ndur4uxo5vu.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/"
+    },
+    {
+      "full_name": "Маличенко Ирина Петровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/e4a/7lvf3gygl5rxb9m09xyy2qhl6hxttuay.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/"
+    },
+    {
+      "full_name": "Писанка Светлана Анатольевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/5bf/c47akgtlzv3gtx2tl53x1o2rhhhcnoei.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/"
+    },
+    {
+      "full_name": "Щетинина Дарья Павловна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/87c/vrynodffyao8srlrkm09unk0ut0fzqvi.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/"
+    },
+    {
+      "full_name": "Несоленая Олеся Владимировна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/cf2/wjn21lt3gha054wk78n6lmquwcczgr7q.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/"
+    },
+    {
+      "full_name": "Осипова Ирина Владимировна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/fab/ym44d28vcdiqm24khfnzeo4708n7rpbs.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/"
+    },
+    {
+      "full_name": "Коновалова Кристина Станиславовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/19e/fxmob391zhdd9bc14t3t8nv1nsfrl7f4.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/"
+    },
+    {
+      "full_name": "Косолапова Наталья Алексеевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/762/xok5htqbnw2883uybmgspbalcuv0pxdn.png",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/"
+    },
+    {
+      "full_name": "Ищенко-Падукова Оксана Александровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/b4a/hl4g178c20e81xgrx3r2ck1j7wkidrms.png",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/"
+    },
+    {
+      "full_name": "Шаль Анна Викторовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/d75/lrdlp4ycvmipcyg0m8jtv601q7tl5zzx.png",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/"
+    },
+    {
+      "full_name": "Чернова Ольга Анатольевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/901/bkp28pzff2sn1l3d3a3iydqm2irpcohp.jpg",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/"
+    },
+    {
+      "full_name": "Фурса Елена Владимировна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/ffe/hfmh2nwqogwum4bj2u4nzgc3tavgpi1u.png",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/"
+    },
+    {
+      "full_name": "Алехин Валерий Викторович",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/82d/74grena04g103wgnc98cllackia2i1d0.jpg",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/"
+    },
+    {
+      "full_name": "Маличенко Ирина Петровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/b41/1ntleyurc119l9g6k7d7jy8bm1j5f713.jpg",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/"
+    },
+    {
+      "full_name": "Христова София Михайловна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/687/e5pzi2qb87zqp142lwudwqclo0kh6tle.jpg",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/"
+    },
+    {
+      "full_name": "Несоленая Олеся Владимировна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/ecd/h4963tr2p8ljxyjldserpv1dnznq2f9i.jpg",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/"
+    },
+    {
+      "full_name": "Педченко Екатерина Александровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/380/ms6c12b2g54xjstsi51jv1uug423srw0.png",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/"
+    },
+    {
+      "full_name": "Максютова Лариса Вадимовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/497/y30qbm9otb3t04nil18j0q3ihceq1p94.png",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/"
+    },
+    {
+      "full_name": "Сырых Кристина Алексеевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/2fe/xywudguc8jmrxtn798qdcywqqskse5n9.png",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/"
+    },
+    {
+      "full_name": "Коссе Андрей Александрович",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/c2/91/person_3771.jpg",
+      "source_url": "https://sfedu.ru/s7/person/aakosse"
+    },
+    {
+      "full_name": "Шевченко Анастасия Александровна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/b2/69/person_-13874.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/aashevch"
+    },
+    {
+      "full_name": "Барсукова Арина Владимировна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/34/97/person_3035.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/abarsukova"
+    },
+    {
+      "full_name": "Марченко Анна Андреевна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/27/5c/person_1027755.jpg",
+      "source_url": "https://sfedu.ru/s7/person/afed"
+    },
+    {
+      "full_name": "Гозалова Анна Вячеславовна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/7f/9e/person_-14291.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/agozalova"
+    },
+    {
+      "full_name": "Лисицына Александра Анатольевна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/9c/51/person_-12530.jpg",
+      "source_url": "https://sfedu.ru/s7/person/alisicyna"
+    },
+    {
+      "full_name": "Беликов Александр Николаевич",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/23/70/person_1006460.jpg",
+      "source_url": "https://sfedu.ru/s7/person/anbelikov"
+    },
+    {
+      "full_name": "Козлов Андрей Николаевич",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/b0/ca/person_2746.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/ankozlov"
+    },
+    {
+      "full_name": "Шапсигов Альберт Хусенович",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/77/1f/person_-14016.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ashapsigov"
+    },
+    {
+      "full_name": "Беликова Светлана Алексеевна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/5c/2c/person_-10286.jpg",
+      "source_url": "https://sfedu.ru/s7/person/belousova"
+    },
+    {
+      "full_name": "Гриднев Данил Сергеевич",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/eb/03/person_1029096.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/dgridnev"
+    },
+    {
+      "full_name": "Щетинина Дарья Павловна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/34/85/person_5038.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/dpshetinina"
+    },
+    {
+      "full_name": "Захарова Дарья Сергеевна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/f9/55/person_1023261.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/dszaharova"
+    },
+    {
+      "full_name": "Костенко Елена Петровна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/4a/75/person_268.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/ekostenko"
+    },
+    {
+      "full_name": "Елецкий Алексей Николаевич",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/13/41/person_-10751.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/eletskii"
+    },
+    {
+      "full_name": "Лихацкая Екатерина Александровна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/ba/87/person_-4023.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/elihackaya"
+    },
+    {
+      "full_name": "Муравьева Елена Викторовна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/8d/1b/person_1554.jpg",
+      "source_url": "https://sfedu.ru/s7/person/evmuraveva"
+    },
+    {
+      "full_name": "Груданова Ирина Юрьевна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/6c/03/person_1024288.jpg",
+      "source_url": "https://sfedu.ru/s7/person/grudanova"
+    },
+    {
+      "full_name": "Карпова Мария Александровна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/3f/93/person_1025673.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/gubskaya"
+    },
+    {
+      "full_name": "Осипова Ирина Владимировна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/fb/a4/person_9590.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/ikorinenko"
+    },
+    {
+      "full_name": "Индустриев Максим Алексеевич",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/7b/f6/person_1026720.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/industriev"
+    },
+    {
+      "full_name": "Христова София Михайловна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/5f/1a/person_1028845.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/khristova"
+    },
+    {
+      "full_name": "Коновалова Кристина Станиславовна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/b1/25/person_1028571.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/kkonova"
+    },
+    {
+      "full_name": "Антонова Людмила Анатольевна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/b0/14/person_9276.jpg",
+      "source_url": "https://sfedu.ru/s7/person/lantonova"
+    },
+    {
+      "full_name": "Безуглая Лидия Александровна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/a3/f3/person_45.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/lbezuglaya"
+    },
+    {
+      "full_name": "Максютова Лариса Вадимовна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/ef/09/person_-12294.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/maksiutova"
+    },
+    {
+      "full_name": "Шубарин Михаил Александрович",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/95/98/person_614.jpg",
+      "source_url": "https://sfedu.ru/s7/person/mashubarin"
+    },
+    {
+      "full_name": "Маскаев Артём Ильич",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/41/52/person_-12437.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/maskaev"
+    },
+    {
+      "full_name": "Васькина Марина Георгиевна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/21/ec/person_1382.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/mvaskina"
+    },
+    {
+      "full_name": "Несоленая Олеся Владимировна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/2e/e3/person_7268.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/nesol"
+    },
+    {
+      "full_name": "Лебедева Наталья Юрьевна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/2e/e3/person_7320.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/nlebedeva"
+    },
+    {
+      "full_name": "Погосян Нателла Володяевна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/13/41/person_-10749.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/npogosyan"
+    },
+    {
+      "full_name": "Долгова Ольга Игоревна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/fc/18/person_1026282.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/oldolgova"
+    },
+    {
+      "full_name": "Савенко Оксана Леонидовна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/cc/4d/person_1929.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/olsavenko"
+    },
+    {
+      "full_name": "Буров Олег Николаевич",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/86/90/person_6595.jpg",
+      "source_url": "https://sfedu.ru/s7/person/onburov"
+    },
+    {
+      "full_name": "Герасимова Ольга Ярославовна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/b1/c8/person_10895.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/osenkiv"
+    },
+    {
+      "full_name": "Карнаухова Оксана Сергеевна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/34/97/person_3066.jpg",
+      "source_url": "https://sfedu.ru/s7/person/oskarnauhova"
+    },
+    {
+      "full_name": "Дмитриева Полина Руслановна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/58/8f/person_1024846.jpg",
+      "source_url": "https://sfedu.ru/s7/person/pmamedova"
+    },
+    {
+      "full_name": "Ширяев Игорь Михайлович",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/23/70/person_1000022.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/shiriaev"
+    },
+    {
+      "full_name": "Цыганков Сергей Сергеевич",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/38/a4/person_11321.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/sscygankov"
+    },
+    {
+      "full_name": "Бутова Светлана Валерьевна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/e3/bd/person_3142.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/svbutova"
+    },
+    {
+      "full_name": "Сырых Кристина Алексеевна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/5c/6d/person_1030288.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/syrykh"
+    },
+    {
+      "full_name": "Алехин Валерий Викторович",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/93/93/person_19.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/valehin"
+    },
+    {
+      "full_name": "Кот Вера Витальевна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/bd/75/person_3433.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/vkot"
+    },
+    {
+      "full_name": "Володин Роман Сергеевич",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/19/8f/person_11287.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/volodinrs"
+    },
+    {
+      "full_name": "Юхнова Юлия Ивановна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/bd/9c/person_-12105.jpg",
+      "source_url": "https://sfedu.ru/s7/person/yuhnova"
+    }
+  ],
+  "source_policy": "official_named_staff_profiles"
+}
