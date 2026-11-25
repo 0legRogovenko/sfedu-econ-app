@@ -6,8 +6,8 @@ requests, recording their official URLs in sources.json, then run:
     python scripts/collect_person_photos.py --pages-dir /path/to/pages --output photos.json
 
 The manifest records source hashes so subsequent matching can be reviewed
-without refetching the site. Department pages can assist with discovering
-people, but the mobile bundler accepts personal profile sources only.
+without refetching the site. Named staff profiles on faculty pages are valid;
+unrelated pictures elsewhere on those pages are never extracted as portraits.
 """
 
 from __future__ import annotations

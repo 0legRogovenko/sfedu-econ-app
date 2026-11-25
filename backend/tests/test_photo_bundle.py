@@ -11,14 +11,28 @@ from src.persons.photo_bundle import parse_people, validate_image, render_catalo
 from src.persons.photos import PhotoCandidate
 
 
-def test_bundle_excludes_department_cards_and_unrelated_official_pages():
-    from src.persons.photo_bundle import personal_profile_photos
+def test_bundle_accepts_named_staff_profiles_but_not_unrelated_pages():
+    from src.persons.photo_bundle import official_profile_photos
 
     name = "Вольчик Вячеслав Витальевич"
     profile = PhotoCandidate(name, "https://sfedu.ru/files/photo.jpg", "https://sfedu.ru/s7/person/ru/volchik")
     department = PhotoCandidate(name, "https://econ.sfedu.ru/photo.jpg", "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/")
     lookalike = PhotoCandidate(name, "https://sfedu.ru/photo.jpg", "https://example.com/s7/person/ru/volchik")
-    assert personal_profile_photos([department, lookalike, profile]) == [profile]
+    news = PhotoCandidate(name, "https://sfedu.ru/photo.jpg", "https://sfedu.ru/press-center/news/78988")
+    assert official_profile_photos([department, lookalike, news, profile]) == [profile, department]
+
+
+def test_decanat_profile_photo_is_available_when_university_page_is_down():
+    from src.persons.photo_bundle import official_profile_photos
+    from src.persons.photos import match_photos
+
+    name = "Косолапова Наталья Алексеевна"
+    row = {"id": base64.urlsafe_b64encode("косолапова\x1fн\x1fа".encode()).decode().rstrip("="),
+           "short_name": "Косолапова Н.А.", "full_name": name}
+    department = PhotoCandidate(name, "https://econ.sfedu.ru/department.jpg", "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/")
+    dean = PhotoCandidate(name, "https://econ.sfedu.ru/dean.png", "https://econ.sfedu.ru/o-fakultete/")
+    result = match_photos(parse_people([row]), official_profile_photos([department, dean]))
+    assert result.matches[row["id"]] == dean
 
 
 def test_stale_generated_portraits_are_removed_without_touching_other_files(tmp_path):
@@ -110,9 +124,9 @@ def test_shipped_catalog_contains_original_verified_images():
     assert len(records) + len(manifest["missing"]) == manifest["people"]
     hashes = set()
     for person_id, record in records.items():
-        from src.persons.photo_bundle import personal_profile_photos
+        from src.persons.photo_bundle import official_profile_photos
         candidate = PhotoCandidate(record["full_name"], record["photo_url"], record["source_url"])
-        assert personal_profile_photos([candidate]) == [candidate], f"Not a personal profile: {person_id}"
+        assert official_profile_photos([candidate]) == [candidate], f"Not a personal profile: {person_id}"
         path = app / record["asset"]
         assert path.resolve().is_relative_to((app / "assets/people").resolve())
         data = path.read_bytes()

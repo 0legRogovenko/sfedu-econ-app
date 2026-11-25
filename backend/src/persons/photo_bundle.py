@@ -19,16 +19,20 @@ from src.persons.names import person_key
 from src.persons.photos import PhotoCandidate, official_url
 
 
-def personal_profile_photos(candidates: Iterable[PhotoCandidate]) -> list[PhotoCandidate]:
-    """Ship photographs only when their source is an official personal profile."""
+def official_profile_photos(candidates: Iterable[PhotoCandidate]) -> list[PhotoCandidate]:
+    """Prefer personal pages, then named dean and department staff profiles."""
     result = []
     for candidate in candidates:
         source = official_url(candidate.source_url)
         if source:
             url = urlsplit(source)
             if url.hostname == "sfedu.ru" and re.fullmatch(r"/s7/person/(?:ru/)?[\w.-]+/?", url.path):
-                result.append(candidate)
-    return result
+                result.append((0, candidate))
+            elif url.hostname == "econ.sfedu.ru" and url.path.rstrip("/") == "/o-fakultete":
+                result.append((1, candidate))
+            elif url.hostname == "econ.sfedu.ru" and re.fullmatch(r"/kafedra-[a-z0-9-]+/?", url.path):
+                result.append((2, candidate))
+    return [candidate for _, candidate in sorted(result, key=lambda item: item[0])]
 
 
 def prune_unused_portraits(app_dir: Path, records: dict[str, dict]) -> None:

@@ -1,7 +1,9 @@
 """Bundle reviewed original SFEDU images for a mobile release, without DB writes.
 
 python scripts/bundle_person_photos.py --people-json /path/to/people.json \
-  --snapshot data/person_photos/2026-11-24.json --app-dir ../app
+  --snapshot data/person_photos/2026-11-25.json --app-dir ../app \
+  --cache-dir /path/to/image-cache \
+  --reviewed-aliases data/person_photos/reviewed_aliases.json
 """
 
 from __future__ import annotations
@@ -20,7 +22,7 @@ import time
 import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from src.persons.photo_bundle import parse_people, personal_profile_photos, prune_unused_portraits, render_catalog, validate_image
+from src.persons.photo_bundle import parse_people, official_profile_photos, prune_unused_portraits, render_catalog, validate_image
 from src.persons.photos import PhotoCandidate, match_photos, official_url
 from src.sfedu_tls import SfeduTLSAdapter
 from urllib.parse import urlsplit
@@ -59,6 +61,7 @@ def download_group(items, cache_dir):
             digest = hashlib.sha256(data).hexdigest()
             asset = f"assets/people/{digest[:24]}.{extension}"
             records[person.id] = {**asdict(candidate), "directory_name": person.full_name,
+                                  "source_type": "personal_page" if urlsplit(candidate.source_url).hostname == "sfedu.ru" else "staff_profile_card",
                                   "asset": asset, "sha256": digest, "bytes": len(data)}
             print(f"Bundled {person.short_name}", flush=True)
         except (requests.RequestException, ValueError) as exc:
@@ -77,7 +80,7 @@ def main():
     parser.add_argument("--reviewed-aliases", type=Path)
     args = parser.parse_args()
     people = parse_people(json.loads(args.people_json.read_text()))
-    candidates = personal_profile_photos(PhotoCandidate(**r) for r in json.loads(args.snapshot.read_text())["photos"])
+    candidates = official_profile_photos(PhotoCandidate(**r) for r in json.loads(args.snapshot.read_text())["photos"])
     aliases = json.loads(args.reviewed_aliases.read_text()) if args.reviewed_aliases else {}
     matches = match_photos(people, candidates,
                           reviewed_aliases={k: v["full_name"] for k, v in aliases.items()},
