@@ -2,6 +2,11 @@ name: Android beta APK
 
 on:
   workflow_dispatch:
+    inputs:
+      api_base_url:
+        description: HTTPS origin for this build. Leave blank to use the beta environment.
+        required: false
+        type: string
   push:
     tags:
       - 'beta-v*'
@@ -19,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: android-beta
     env:
-      BETA_API_BASE_URL: ${{ vars.BETA_API_BASE_URL }}
+      BETA_API_BASE_URL: ${{ inputs.api_base_url || vars.BETA_API_BASE_URL }}
 
     steps:
       - uses: actions/checkout@v4
@@ -101,9 +106,9 @@ jobs:
 
       - name: Build signed APK
         working-directory: app
-        run: >-
-          flutter build apk --release --no-pub
-          --dart-define=API_BASE_URL=${{ steps.endpoint.outputs.origin }}
+        env:
+          API_ORIGIN: ${{ steps.endpoint.outputs.origin }}
+        run: flutter build apk --release --no-pub "--dart-define=API_BASE_URL=$API_ORIGIN"
 
       - name: Package artifact and checksum
         working-directory: app
