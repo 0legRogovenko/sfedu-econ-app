@@ -61,7 +61,7 @@ def download_group(items, cache_dir):
             digest = hashlib.sha256(data).hexdigest()
             asset = f"assets/people/{digest[:24]}.{extension}"
             records[person.id] = {**asdict(candidate), "directory_name": person.full_name,
-                                  "source_type": "personal_page" if urlsplit(candidate.source_url).hostname == "sfedu.ru" else "staff_profile_card",
+                                  "source_type": "personal_page",
                                   "asset": asset, "sha256": digest, "bytes": len(data)}
             print(f"Bundled {person.short_name}", flush=True)
         except (requests.RequestException, ValueError) as exc:
@@ -109,6 +109,7 @@ def main():
             raise ValueError("Cached photograph changed before publication")
         (args.app_dir / record["asset"]).write_bytes(data)
     report = {"collected_at": datetime.now(timezone.utc).isoformat(), "people": len(people),
+              "source_policy": "official_personal_profiles_only",
               "reviewed_aliases_sha256": hashlib.sha256(args.reviewed_aliases.read_bytes()).hexdigest() if args.reviewed_aliases else None,
               "portraits": records, "missing": [p.short_name for p in people if p.id not in records],
               "ambiguous": [p.short_name for p in people if p.id in matches.ambiguous], "download_errors": errors}

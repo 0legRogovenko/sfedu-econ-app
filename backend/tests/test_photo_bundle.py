@@ -11,7 +11,7 @@ from src.persons.photo_bundle import parse_people, validate_image, render_catalo
 from src.persons.photos import PhotoCandidate
 
 
-def test_bundle_accepts_named_staff_profiles_but_not_unrelated_pages():
+def test_bundle_accepts_personal_pages_but_excludes_faculty_cards():
     from src.persons.photo_bundle import official_profile_photos
 
     name = "Вольчик Вячеслав Витальевич"
@@ -19,10 +19,11 @@ def test_bundle_accepts_named_staff_profiles_but_not_unrelated_pages():
     department = PhotoCandidate(name, "https://econ.sfedu.ru/photo.jpg", "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/")
     lookalike = PhotoCandidate(name, "https://sfedu.ru/photo.jpg", "https://example.com/s7/person/ru/volchik")
     news = PhotoCandidate(name, "https://sfedu.ru/photo.jpg", "https://sfedu.ru/press-center/news/78988")
-    assert official_profile_photos([department, lookalike, news, profile]) == [profile, department]
+    dean = PhotoCandidate(name, "https://econ.sfedu.ru/dean.jpg", "https://econ.sfedu.ru/o-fakultete/")
+    assert official_profile_photos([department, lookalike, news, dean, profile]) == [profile]
 
 
-def test_decanat_profile_photo_is_available_when_university_page_is_down():
+def test_unavailable_personal_profile_does_not_fall_back_to_faculty_cards():
     from src.persons.photo_bundle import official_profile_photos
     from src.persons.photos import match_photos
 
@@ -32,7 +33,29 @@ def test_decanat_profile_photo_is_available_when_university_page_is_down():
     department = PhotoCandidate(name, "https://econ.sfedu.ru/department.jpg", "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/")
     dean = PhotoCandidate(name, "https://econ.sfedu.ru/dean.png", "https://econ.sfedu.ru/o-fakultete/")
     result = match_photos(parse_people([row]), official_profile_photos([department, dean]))
-    assert result.matches[row["id"]] == dean
+    assert result.matches == {}
+    assert result.missing == [row["id"]]
+
+
+@pytest.mark.parametrize("image_url", [
+    "https://example.com/photo.jpg",
+    "https://cdn.sfedu.ru/photo.jpg",
+    "https://econ-sfedu.ru/photo.jpg",
+])
+def test_personal_profile_cannot_supply_an_image_from_an_unapproved_host(image_url):
+    from src.persons.photo_bundle import official_profile_photos
+
+    candidate = PhotoCandidate("Вольчик Вячеслав Витальевич", image_url,
+                               "https://sfedu.ru/s7/person/ru/volchik")
+    assert official_profile_photos([candidate]) == []
+
+
+def test_personal_profile_may_reference_an_original_on_the_approved_faculty_host():
+    from src.persons.photo_bundle import official_profile_photos
+
+    candidate = PhotoCandidate("Вольчик Вячеслав Витальевич", "https://econ.sfedu.ru/photo.jpg",
+                               "https://sfedu.ru/s7/person/ru/volchik")
+    assert official_profile_photos([candidate]) == [candidate]
 
 
 def test_stale_generated_portraits_are_removed_without_touching_other_files(tmp_path):
@@ -124,6 +147,7 @@ def test_shipped_catalog_contains_original_verified_images():
     assert len(records) + len(manifest["missing"]) == manifest["people"]
     hashes = set()
     for person_id, record in records.items():
+        assert record["source_type"] == "personal_page"
         from src.persons.photo_bundle import official_profile_photos
         candidate = PhotoCandidate(record["full_name"], record["photo_url"], record["source_url"])
         assert official_profile_photos([candidate]) == [candidate], f"Not a personal profile: {person_id}"

@@ -23,44 +23,34 @@ Person _person({bool known = true}) => Person(
 );
 
 void main() {
-  testWidgets('Kosolapova has her official dean profile portrait', (
-    tester,
-  ) async {
-    final id = base64Url
-        .encode(utf8.encode('косолапова\u001fн\u001fа'))
-        .replaceAll('=', '');
-    expect(
-      portraitAssetFor(id, 'Косолапова Наталья Алексеевна'),
-      'assets/people/ffd393bcd9b8200b08f0ec19.png',
-    );
-    final person = Person(
-      id: id,
-      shortName: 'Косолапова Н.А.',
-      fullName: 'Косолапова Наталья Алексеевна',
-      sections: const ['Деканат'],
-      roles: const [],
-      email: null,
-      hasSchedule: false,
-      lessonCount: 0,
-      examCount: 0,
-    );
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(body: PersonPhoto(person: person)),
-      ),
-    );
-    final image = tester.widget<Image>(find.byType(Image));
-    expect(
-      (image.image as AssetImage).assetName,
-      'assets/people/ffd393bcd9b8200b08f0ec19.png',
-    );
-    await tester.runAsync(
-      () => precacheImage(image.image, tester.element(find.byType(Image))),
-    );
-    await tester.pump();
-    expect(find.text('НА'), findsNothing);
-    expect(tester.takeException(), isNull);
-  });
+  testWidgets(
+    'Kosolapova shows initials while her personal profile is unavailable',
+    (tester) async {
+      final id = base64Url
+          .encode(utf8.encode('косолапова\u001fн\u001fа'))
+          .replaceAll('=', '');
+      expect(portraitAssetFor(id, 'Косолапова Наталья Алексеевна'), isNull);
+      final person = Person(
+        id: id,
+        shortName: 'Косолапова Н.А.',
+        fullName: 'Косолапова Наталья Алексеевна',
+        sections: const ['Деканат'],
+        roles: const [],
+        email: null,
+        hasSchedule: false,
+        lessonCount: 0,
+        examCount: 0,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: PersonPhoto(person: person)),
+        ),
+      );
+      expect(find.byType(Image), findsNothing);
+      expect(find.text('НА'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('original portrait has no added background or corner crop', (
     tester,
