@@ -1,5 +1,5 @@
 {
-  "collected_at": "2026-11-24T19:17:11.090445+00:00",
+  "collected_at": "2026-11-25T11:37:11.983963+00:00",
   "sources": [
     {
       "url": "https://econ.sfedu.ru/kafedra-bukhgalterskogo-ucheta-i-audita/",
@@ -45,6 +45,126 @@
       "url": "https://econ.sfedu.ru/o-fakultete/",
       "sha256": "0367023667fb6b9bd38954a6869b63671ff99611915d904838b5708a8a8a2fc7",
       "photos": 12
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/aakosse",
+      "sha256": "538d768515160cc053fc9fbdd6404b05cf1858e399adcd7cd9f0f36afc9530c6",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/afed",
+      "sha256": "292db506d3449f20c1540d9d76098843c81ff688b29ac3fe21cce37bc124a1de",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/alisicyna",
+      "sha256": "baddee120bab44a3a2f33d529b644eb4ba2688d230eb9a211e4ecd743907c651",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/anbelikov",
+      "sha256": "5e0a541d20b8b0d6a9df907ff4c0ace1e432d08a7b78d6ad5e2bf26c035b54a9",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ashapsigov",
+      "sha256": "cc8ec7f6fd1fd799243639e8654818ea091429ebf765a720bbb5ff561aead775",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/belousova",
+      "sha256": "013328781356576aa8a538b9046a3ce89c05957b1972d9abd6b12593dd735364",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/darkr",
+      "sha256": "6b7e78e8e0fe83e8a7d905fc88429d2f8363c4fdfae1e72c6b88dc0a3a1b4076",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/eatrohimchuk",
+      "sha256": "ab18ab59c7c270d503d291dd4db1635f36600469cd96cb1660be7f3dcff55b05",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/evmuraveva",
+      "sha256": "b8804bb208398e462e9d45fc4dc6c1e5ba355adff56c9e6cf4a830c427588772",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/golovacheva",
+      "sha256": "9a08a9e08b3d87d014f0e21fecce3838c1170ca3ff5c13d4d7c56f96be707a4d",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/grudanova",
+      "sha256": "794846e6ae8e0d587616661484bdca6df287b893bfef7a5fc6904596e07d33b2",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/lantonova",
+      "sha256": "1b63549407b6fceac25aea255143ab0b0184f08a50b57b4cba6f6efc96bf55cd",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/mashubarin",
+      "sha256": "5134cd820f27818e6447d294ba97145cfb4dd087a9fc3649969c8f6bea185139",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/maskaev",
+      "sha256": "b68d8592be881190067e08d6a6880cd056d60b6da0ea76b72d322719ade3c17d",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/mesropian",
+      "sha256": "433682708c481e69e0eb585c997589358cd9c05f07af6375b36aae60da0f686d",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/onburov",
+      "sha256": "4ddaf3fa6a9669af9955acfbaae6752bed764ba0f08d43a37954f6dd1123251c",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/ru/osenkiv",
+      "sha256": "378521917fe40bfbe9263cbf225c4c5a9f00c2354b9ff627c5be07e346d01b5f",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/oskarnauhova",
+      "sha256": "9a7f99ab18797a0a06271ae8c953b46742189d39c37b41600cdaddf047ff7b23",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/otolstokora",
+      "sha256": "2e94b041f35137264c39e9bdcaeb8a3730c6492fb524d56cbfe1ac7c3f3b5f05",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/pavliukevich",
+      "sha256": "cb74cd5d21ccdd1d70f22afb33851d62429855120cf41c1d97f6aae2ea37cb9c",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/pmamedova",
+      "sha256": "e4d5f08775a60e656cd1c01a8a65cb886b5f24f7b1fe584131777fd1ed81efb2",
+      "photos": 1
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/postnikova",
+      "sha256": "91881c1fe6c4baaeebe39ebda586f2fe47f89750080a3534ce52171552fadfdc",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/shipetina",
+      "sha256": "9f71607778ce52f050d1b1a16c635180e1c084d1ee6bbaeb6ff92d48aa4cbdcb",
+      "photos": 0
+    },
+    {
+      "url": "https://sfedu.ru/s7/person/yuhnova",
+      "sha256": "c73faebfcd19946afa17cf8163da1c8771054833b54b1dbd2deaf7450488a3b3",
+      "photos": 1
     }
   ],
   "photos": [
@@ -467,6 +587,86 @@
       "full_name": "Сырых Кристина Алексеевна",
       "photo_url": "https://econ.sfedu.ru/upload/iblock/2fe/xywudguc8jmrxtn798qdcywqqskse5n9.png",
       "source_url": "https://econ.sfedu.ru/o-fakultete/"
+    },
+    {
+      "full_name": "Коссе Андрей Александрович",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/c2/91/person_3771.jpg",
+      "source_url": "https://sfedu.ru/s7/person/aakosse"
+    },
+    {
+      "full_name": "Марченко Анна Андреевна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/27/5c/person_1027755.jpg",
+      "source_url": "https://sfedu.ru/s7/person/afed"
+    },
+    {
+      "full_name": "Лисицына Александра Анатольевна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/9c/51/person_-12530.jpg",
+      "source_url": "https://sfedu.ru/s7/person/alisicyna"
+    },
+    {
+      "full_name": "Беликов Александр Николаевич",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/23/70/person_1006460.jpg",
+      "source_url": "https://sfedu.ru/s7/person/anbelikov"
+    },
+    {
+      "full_name": "Шапсигов Альберт Хусенович",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/77/1f/person_-14016.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ashapsigov"
+    },
+    {
+      "full_name": "Беликова Светлана Алексеевна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/5c/2c/person_-10286.jpg",
+      "source_url": "https://sfedu.ru/s7/person/belousova"
+    },
+    {
+      "full_name": "Муравьева Елена Викторовна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/8d/1b/person_1554.jpg",
+      "source_url": "https://sfedu.ru/s7/person/evmuraveva"
+    },
+    {
+      "full_name": "Груданова Ирина Юрьевна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/6c/03/person_1024288.jpg",
+      "source_url": "https://sfedu.ru/s7/person/grudanova"
+    },
+    {
+      "full_name": "Антонова Людмила Анатольевна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/b0/14/person_9276.jpg",
+      "source_url": "https://sfedu.ru/s7/person/lantonova"
+    },
+    {
+      "full_name": "Шубарин Михаил Александрович",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/95/98/person_614.jpg",
+      "source_url": "https://sfedu.ru/s7/person/mashubarin"
+    },
+    {
+      "full_name": "Маскаев Артём Ильич",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/41/52/person_-12437.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/maskaev"
+    },
+    {
+      "full_name": "Буров Олег Николаевич",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/86/90/person_6595.jpg",
+      "source_url": "https://sfedu.ru/s7/person/onburov"
+    },
+    {
+      "full_name": "Герасимова Ольга Ярославовна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/b1/c8/person_10895.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/osenkiv"
+    },
+    {
+      "full_name": "Карнаухова Оксана Сергеевна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/34/97/person_3066.jpg",
+      "source_url": "https://sfedu.ru/s7/person/oskarnauhova"
+    },
+    {
+      "full_name": "Дмитриева Полина Руслановна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/58/8f/person_1024846.jpg",
+      "source_url": "https://sfedu.ru/s7/person/pmamedova"
+    },
+    {
+      "full_name": "Юхнова Юлия Ивановна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/bd/9c/person_-12105.jpg",
+      "source_url": "https://sfedu.ru/s7/person/yuhnova"
     }
   ]
 }

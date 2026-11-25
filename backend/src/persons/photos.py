@@ -3,18 +3,23 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from pathlib import PurePosixPath
-from typing import TYPE_CHECKING
+from typing import Protocol
 from urllib.parse import urljoin, urlsplit
 
 from bs4 import BeautifulSoup
 
 from src.persons.names import key_of_full, parse_person, person_key
 
-if TYPE_CHECKING:
-    from src.persons.directory import PersonRow
+
+class DirectoryIdentity(Protocol):
+    key: tuple[str, str, str]
+    full_name: str
+
+    @property
+    def id(self) -> str: ...
 
 
 @dataclass(frozen=True)
@@ -119,7 +124,8 @@ def parse_photo_page(page_html: str, source_url: str) -> list[PhotoCandidate]:
     return list(dict.fromkeys(candidates))
 
 
-def match_photos(people: Iterable[PersonRow], candidates: Iterable[PhotoCandidate]) -> PhotoMatches:
+def match_photos(people: Iterable[DirectoryIdentity], candidates: Iterable[PhotoCandidate],
+                 *, reviewed_aliases: Mapping[str, str] | None = None) -> PhotoMatches:
     """Only uniquely identified official full names can decorate existing rows."""
     by_key: dict[tuple[str, str, str], list[PhotoCandidate]] = defaultdict(list)
     for candidate in candidates:
@@ -133,9 +139,12 @@ def match_photos(people: Iterable[PersonRow], candidates: Iterable[PhotoCandidat
     for person in people:
         options = by_key.get(person.key, [])
         identities = {_identity(c.full_name) for c in options}
+        expected = _identity(person.full_name)
+        if expected is None:
+            expected = _identity((reviewed_aliases or {}).get(person.id, ""))
         if len(identities) > 1:
             report.ambiguous.append(person.id)
-        elif options and (_identity(person.full_name) is None or _identity(person.full_name) in identities):
+        elif options and expected is not None and expected in identities:
             report.matches[person.id] = options[0]
         else:
             report.missing.append(person.id)

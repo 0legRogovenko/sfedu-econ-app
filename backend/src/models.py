@@ -98,18 +98,6 @@ class Teacher(Base):
     office_hours: Mapped[str | None] = mapped_column(String(200))
 
 
-class PersonPhoto(Base):
-    """Portrait metadata decorates stable directory IDs; it never creates people."""
-
-    __tablename__ = "person_photos"
-
-    person_id: Mapped[str] = mapped_column(String(300), primary_key=True)
-    full_name: Mapped[str] = mapped_column(String(200))
-    photo_url: Mapped[str] = mapped_column(String(1000))
-    source_url: Mapped[str] = mapped_column(String(1000))
-    updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
-
-
 class ScheduleDocument(Base):
     """Файл расписания с сайта ЮГУ. p_doc_id — стабильный ключ слота:
     файл подменяется на месте, id не меняется. Last-Modified/ETag у файлов

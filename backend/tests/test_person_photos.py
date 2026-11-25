@@ -83,7 +83,11 @@ def test_external_teacher_can_match_only_one_official_full_name():
     key = ("груданова", "и", "ю")
     person = PersonRow(key=key, short_name="Груданова И.Ю.", full_name="Груданова И.Ю.")
     candidate = PhotoCandidate("Груданова Ирина Юрьевна", "https://sfedu.ru/files/grudanova.jpg", "https://sfedu.ru/s7/person/grudanova")
-    assert match_photos([person], [candidate]).matches == {encode_id(key): candidate}
+    assert match_photos([person], [candidate]).matches == {}
+    reviewed = {encode_id(key): "Груданова Ирина Юрьевна"}
+    assert match_photos([person], [candidate], reviewed_aliases=reviewed).matches == {encode_id(key): candidate}
+    wrong = PhotoCandidate("Груданова Инна Юрьевна", candidate.photo_url, candidate.source_url)
+    assert match_photos([person], [wrong], reviewed_aliases=reviewed).matches == {}
 
 
 def test_different_department_photos_of_the_same_person_are_not_ambiguous():

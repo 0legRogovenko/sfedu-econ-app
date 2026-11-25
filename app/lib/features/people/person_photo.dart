@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'person.dart';
+import 'portrait_catalog.dart';
 
 /// A rectangular official portrait; missing or failed images never block a profile.
 class PersonPhoto extends StatelessWidget {
@@ -26,8 +27,7 @@ class PersonPhoto extends StatelessWidget {
         ),
       ),
     );
-    final url = person.photoUrl;
-    final hasPhoto = url != null && Uri.tryParse(url)?.scheme == 'https';
+    final asset = portraitAssetFor(person.id, person.fullName);
 
     return Align(
       alignment: Alignment.centerLeft,
@@ -40,9 +40,9 @@ class PersonPhoto extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             child: ColoredBox(
               color: theme.colorScheme.surfaceContainerHighest,
-              child: hasPhoto
-                  ? Image.network(
-                      url,
+              child: asset != null
+                  ? Image.asset(
+                      asset,
                       fit: BoxFit.contain,
                       cacheWidth: 540,
                       semanticLabel: 'Фотография: ${person.fullName}',

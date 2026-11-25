@@ -267,7 +267,7 @@ void main() {
       );
 
       const personWithEmail = Person(
-        id: 'p-email',
+        id: '0LLQvtC70YzRh9C40Lof0LIf0LI',
         shortName: 'Вольчик В.В.',
         fullName: 'Вольчик Вячеслав Витальевич',
         sections: ['Экономическая теория'],
@@ -276,7 +276,6 @@ void main() {
         hasSchedule: false,
         lessonCount: 0,
         examCount: 0,
-        photoUrl: 'https://econ.sfedu.ru/upload/iblock/volchik.jpg',
       );
       final container = ProviderContainer();
       addTearDown(container.dispose);

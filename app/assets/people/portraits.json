@@ -1,0 +1,831 @@
+{
+  "collected_at": "2026-11-25T11:50:54.140386+00:00",
+  "people": 108,
+  "reviewed_aliases_sha256": "b218308b5d69ecd32477bfa59d10cf99a3e45520fb3a5ce846dc440f17f5c237",
+  "portraits": {
+    "0LDQudC00LDRgNC60LjQvdCwH9C1H9C1": {
+      "full_name": "Айдаркина Екатерина Евгеньевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/302/645zf5dtbhgkrqtqxubymaqkhht0ob81.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/",
+      "directory_name": "Айдаркина Екатерина Евгеньевна",
+      "asset": "assets/people/1ab78793965ebae28164ff26.jpg",
+      "sha256": "1ab78793965ebae28164ff26a707552c6ecd982a2334d9002a5a59e21d47d2a7",
+      "bytes": 21065
+    },
+    "0LDQu9C10YXQuNC9H9CyH9Cy": {
+      "full_name": "Алехин Валерий Викторович",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/d1f/2u5v5ogzr1zz58zx5f0m2br1jpkz10in.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/",
+      "directory_name": "Алехин Валерий Викторович",
+      "asset": "assets/people/f78090bd1ebe460c8bd77ef9.png",
+      "sha256": "f78090bd1ebe460c8bd77ef99aa36e42fcda604326c567f19c39c1bc4cd69093",
+      "bytes": 237471
+    },
+    "0LHQsNGA0YHRg9C60L7QstCwH9CwH9Cy": {
+      "full_name": "Барсукова Арина Владимировна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/b66/2sdktw19h2bkhcmn7q09ptqiynsmp8vd.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/",
+      "directory_name": "Барсукова Арина Владимировна",
+      "asset": "assets/people/54fcba24165311c017c29f8b.jpg",
+      "sha256": "54fcba24165311c017c29f8b90e83bf01d51f518a3da6e8239b6b918cacd006d",
+      "bytes": 19054
+    },
+    "0LHQtdC30YPQs9C70LDRjx_Qux_QsA": {
+      "full_name": "Безуглая Лидия Александровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/11b/dzzf8hrdngdgiwysbsownhen09zan7kn.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/",
+      "directory_name": "Безуглая Лидия Александровна",
+      "asset": "assets/people/71b7c8d9bc281fe7687edd12.jpg",
+      "sha256": "71b7c8d9bc281fe7687edd12b7b734e7c09a060a7dd6d3472dae88766d237159",
+      "bytes": 20257
+    },
+    "0LHQtdC70L7QutGA0YvQu9C-0LIf0Lof0LA": {
+      "full_name": "Белокрылов Кирилл Анатольевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/ad9/pcnmr40q60v8r0m92rwfw1rmehvbi9ia.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/",
+      "directory_name": "Белокрылов Кирилл Анатольевич",
+      "asset": "assets/people/c60d708cd28c24c50d628f00.jpg",
+      "sha256": "c60d708cd28c24c50d628f00d19c0eb6b7b40e1de412d69d7d65d248a0d680f9",
+      "bytes": 23408
+    },
+    "0LHQtdC70L7QutGA0YvQu9C-0LLQsB_Qvh_RgQ": {
+      "full_name": "Белокрылова Ольга Спиридоновна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/501/x2lzfk69r8xdrv2cugehr2tughcbucln.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/",
+      "directory_name": "Белокрылова Ольга Спиридоновна",
+      "asset": "assets/people/62010532c190eb56055716c7.jpg",
+      "sha256": "62010532c190eb56055716c74d1da1b26b66c4d722076215215a1e4a001fdaaa",
+      "bytes": 19677
+    },
+    "0LHQtdGA0LXQt9C-0LLRgdC60LDRjx_QtR_QsA": {
+      "full_name": "Березовская Елена Александровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/6b0/lyo3drih4yvvuu9m4ltzrv2te2u690f4.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/",
+      "directory_name": "Березовская Елена Александровна",
+      "asset": "assets/people/df0377c407d7d8cc4de58d01.jpg",
+      "sha256": "df0377c407d7d8cc4de58d017482cc92c0cdbdb827bb8f0ae6396e181514223f",
+      "bytes": 18393
+    },
+    "0LHRg9GC0L7QstCwH9GBH9Cy": {
+      "full_name": "Бутова Светлана Валерьевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/397/cpmrj10wm1wowte7srlw3m9bqma2ca7t.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/",
+      "directory_name": "Бутова Светлана Валерьевна",
+      "asset": "assets/people/bc3b98ee81aa63ce5c277ab8.jpg",
+      "sha256": "bc3b98ee81aa63ce5c277ab8e5928483b96ff88315939858d1227641386ce046",
+      "bytes": 31371
+    },
+    "0LLQsNGB0YzQutC40L3QsB_QvB_Qsw": {
+      "full_name": "Васькина Марина Георгиевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/6d2/w3cxbu233zok3u4qzu1od2zlv65kahsn.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/",
+      "directory_name": "Васькина Марина Георгиевна",
+      "asset": "assets/people/a684ab2109b77f1d6e884369.jpg",
+      "sha256": "a684ab2109b77f1d6e884369ba6e590039bc9311726155179feb544466ae85d4",
+      "bytes": 20517
+    },
+    "0LLQvtC70L7QtNC40L0f0YAf0YE": {
+      "full_name": "Володин Роман Сергеевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/47c/osi9omc51c48k3x3oj0i5gl8y3vap2mo.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/",
+      "directory_name": "Володин Роман Сергеевич",
+      "asset": "assets/people/fd69543cb9849fe11e4b1f7d.jpg",
+      "sha256": "fd69543cb9849fe11e4b1f7dd798220982383bbd925e158eb23b76342373f1dc",
+      "bytes": 23636
+    },
+    "0LLQvtC70YzRh9C40Lof0LIf0LI": {
+      "full_name": "Вольчик Вячеслав Витальевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/1c5/dn3s9aqdyyjadl11gsf5con82n8mtfup.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/",
+      "directory_name": "Вольчик Вячеслав Витальевич",
+      "asset": "assets/people/7e07234d33a3e37779f6b140.png",
+      "sha256": "7e07234d33a3e37779f6b140418a2dce2e73886eef2772755c34faefbb384910",
+      "bytes": 190766
+    },
+    "0LLQvtGA0L7QvdC40L3QsB_Rgh_Qsg": {
+      "full_name": "Воронина Татьяна Васильевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/026/l12ypdlrxoesy09p83490tdr1bw3yvo3.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-mirovoy-ekonomiki-i-mezhdunarodnykh-otnosheniy/",
+      "directory_name": "Воронина Татьяна Васильевна",
+      "asset": "assets/people/980ff3e49e2cdff7e7ff50b7.jpg",
+      "sha256": "980ff3e49e2cdff7e7ff50b780ba894b1acbd32cba3cfc2998b7ed28e488f244",
+      "bytes": 28936
+    },
+    "0LPQvtC30LDQu9C-0LLQsB_QsB_Qsg": {
+      "full_name": "Гозалова Анна Вячеславовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/967/dtedut9mml33gb80ab7uchbm7w5f3u3y.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/",
+      "directory_name": "Гозалова Анна Вячеславовна",
+      "asset": "assets/people/d57ee6235848e13ab9b111d6.jpg",
+      "sha256": "d57ee6235848e13ab9b111d6fb26d0709e6735cea94226260e6eecff74c36126",
+      "bytes": 25489
+    },
+    "0LPRgNC40LTQvdC10LIf0LQf0YE": {
+      "full_name": "Гриднев Данил Сергеевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/97e/ffj7z4d5raorzvpejm1w2xs4y76hbgee.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/",
+      "directory_name": "Гриднев Данил Сергеевич",
+      "asset": "assets/people/5b07cf388f8446788a76ae48.jpg",
+      "sha256": "5b07cf388f8446788a76ae483a0ac9443acb353fe3f4eddb306547d05b7a2677",
+      "bytes": 32442
+    },
+    "0LPRgNC40YnQtdC90LrQvh_QuB_Qsg": {
+      "full_name": "Грищенко Илья Вадимович",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/8ff/s4is3r8gtuygsi3wpozfh8inyk4agyeb.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/",
+      "directory_name": "Грищенко Илья Вадимович",
+      "asset": "assets/people/60f03d4b8232deec440fa0a4.png",
+      "sha256": "60f03d4b8232deec440fa0a47969e1e0c4a3b7e28d48216168a4f35c97af242d",
+      "bytes": 179410
+    },
+    "0LPRg9GG0LXQu9GO0Lof0LUf0YQ": {
+      "full_name": "Гуцелюк Елена Федоровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/dbb/bs065r01hpzn37uz0i6e8rgqd69ygqz7.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/",
+      "directory_name": "Гуцелюк Елена Федоровна",
+      "asset": "assets/people/d724e46b1d09f0d6de64e490.jpg",
+      "sha256": "d724e46b1d09f0d6de64e49063ba95fe73cf40b18a37e7b3f22e092661032632",
+      "bytes": 22086
+    },
+    "0LTQsNCy0YvQtNC10L3QutC-H9C4H9Cz": {
+      "full_name": "Давыденко Ирина Геннадиевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/cc5/qawrv5b0htryil79fues7ysfrt3mgqbp.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-finansy-i-kredit/",
+      "directory_name": "Давыденко Ирина Геннадиевна",
+      "asset": "assets/people/4e0828879b55f4ae9fcd7fcc.jpg",
+      "sha256": "4e0828879b55f4ae9fcd7fcc647d7f07df3657d19918dcee24ef5e2369098dfc",
+      "bytes": 21955
+    },
+    "0LTQvtC70LPQvtCy0LAf0L4f0Lg": {
+      "full_name": "Долгова Ольга Игоревна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/0c7/rsrvurklxwbnxt5ycrgrkkt29i4lyd84.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/",
+      "directory_name": "Долгова Ольга Игоревна",
+      "asset": "assets/people/e48a9657a1d0acd19675a2a4.jpg",
+      "sha256": "e48a9657a1d0acd19675a2a42ef73e530ebda31a4dbeb0445c8e1bd17496cc41",
+      "bytes": 28858
+    },
+    "0LXQu9C10YbQutC40Lkf0LAf0L0": {
+      "full_name": "Елецкий Алексей Николаевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/f30/5zci2x6h9xkf6c8abpfzlgwq5pg0mtor.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-mirovoy-ekonomiki-i-mezhdunarodnykh-otnosheniy/",
+      "directory_name": "Елецкий Алексей Николаевич",
+      "asset": "assets/people/3c359aaa72efe983e07e900f.jpg",
+      "sha256": "3c359aaa72efe983e07e900fdee98b7fb9e280cfebd7b1ed2deae2347be5db8b",
+      "bytes": 58416
+    },
+    "0LXRgNC80LjRiNC40L3QsB_QsB_Qsg": {
+      "full_name": "Ермишина Анна Вениаминовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/537/2yds1m54j5zrixmi0kiahd75fr9v2awa.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/",
+      "directory_name": "Ермишина Анна Вениаминовна",
+      "asset": "assets/people/6f21447da1c445bae9d16539.jpg",
+      "sha256": "6f21447da1c445bae9d1653902b2a8dc5535a68c621a643547a30b79f91126d9",
+      "bytes": 18337
+    },
+    "0LfQsNGF0LDRgNC-0LLQsB_QtB_RgQ": {
+      "full_name": "Захарова Дарья Сергеевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/355/sdiy2tdd2lz33r7ls633xf55ucg10f64.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/",
+      "directory_name": "Захарова Дарья Сергеевна",
+      "asset": "assets/people/ba490ee0c3ac1a7cd0d69160.jpg",
+      "sha256": "ba490ee0c3ac1a7cd0d6916055163a10888022d3b0314b791357963500bb25b5",
+      "bytes": 24251
+    },
+    "0LjQvdC00YPRgdGC0YDQuNC10LIf0Lwf0LA": {
+      "full_name": "Индустриев Максим Алексеевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/80c/4dn66rlxelbm3crv3qhiy2fiqo9d2jna.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-politicheskoy-ekonomii-i-ekonomicheskoy-politiki/",
+      "directory_name": "Индустриев Максим Алексеевич",
+      "asset": "assets/people/aaab1ed6a78f5fa95fafcc6d.jpg",
+      "sha256": "aaab1ed6a78f5fa95fafcc6dc2b032506ddb8f3b6ee22e15d2e378064e5e2dcf",
+      "bytes": 29702
+    },
+    "0LjQv9Cw0YLQvtCy0LAf0LAf0LI": {
+      "full_name": "Ипатова Анна Владимировна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/001/d2k13sjrmnujfh0tuyug5wmjlsa1n875.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/",
+      "directory_name": "Ипатова Анна Владимировна",
+      "asset": "assets/people/0681ffff0945b903332a238f.jpg",
+      "sha256": "0681ffff0945b903332a238fafc9b76527af474ca378955099499e78d42d7238",
+      "bytes": 21669
+    },
+    "0LjRidC10L3QutC-0L_QsNC00YPQutC-0LLQsB_Qvh_QsA": {
+      "full_name": "Ищенко-Падукова Оксана Александровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/b4a/hl4g178c20e81xgrx3r2ck1j7wkidrms.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-politicheskoy-ekonomii-i-ekonomicheskoy-politiki/",
+      "directory_name": "Ищенко-Падукова Оксана Александровна",
+      "asset": "assets/people/45c3287f0bb9e3c135d8893e.png",
+      "sha256": "45c3287f0bb9e3c135d8893e7de5d7482da1901500d6f8fcb5858684200ecc78",
+      "bytes": 271189
+    },
+    "0LrQsNGA0L_QvtCy0LAf0Lwf0LA": {
+      "full_name": "Карпова Мария Александровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/a2d/7pmmu0vodrh9sohlqwgt84vpiawl2tqn.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-mirovoy-ekonomiki-i-mezhdunarodnykh-otnosheniy/",
+      "directory_name": "Карпова Мария Александровна",
+      "asset": "assets/people/0c65f2ff689962e04e97e702.jpg",
+      "sha256": "0c65f2ff689962e04e97e702d224d34ba42307cbbe70d0d8dae4a8610455d874",
+      "bytes": 23278
+    },
+    "0LrQvtCy0LDQu9C10LIf0LQf0LI": {
+      "full_name": "Ковалев Дмитрий Викторович",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/8f6/xwlun8cegdtrmbfulj7b5bdw38q5liuj.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/",
+      "directory_name": "Ковалев Дмитрий Викторович",
+      "asset": "assets/people/b9c1d9ca4b5d30554fdc8615.jpg",
+      "sha256": "b9c1d9ca4b5d30554fdc86150ba5ad491b2fa14d504a7291ac140fb21273f1d0",
+      "bytes": 19844
+    },
+    "0LrQvtC30LvQvtCyH9CwH9C9": {
+      "full_name": "Козлов Андрей Николаевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/45f/fazm9okwuntbqdg22ah2123h8ononlcy.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-politicheskoy-ekonomii-i-ekonomicheskoy-politiki/",
+      "directory_name": "Козлов Андрей Николаевич",
+      "asset": "assets/people/802413e96493ede5a9e0fb31.jpg",
+      "sha256": "802413e96493ede5a9e0fb31ddcbab91d181b70ae08bc328ea6011bc13523c02",
+      "bytes": 21837
+    },
+    "0LrQvtC90L7QstCw0LvQvtCy0LAf0Lof0YE": {
+      "full_name": "Коновалова Кристина Станиславовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/19e/fxmob391zhdd9bc14t3t8nv1nsfrl7f4.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/",
+      "directory_name": "Коновалова Кристина Станиславовна",
+      "asset": "assets/people/48b0f8678fd36a8c912c74b5.jpg",
+      "sha256": "48b0f8678fd36a8c912c74b542d2b2109c2e21c5155b0eff1d66862da7fcafd3",
+      "bytes": 23694
+    },
+    "0LrQvtGA0YvRgtGG0LXQsh_QvB_QsA": {
+      "full_name": "Корытцев Максим Александрович",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/a5d/r4r0632ehlrm9z881oju6773yv922q8q.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/",
+      "directory_name": "Корытцев Максим Александрович",
+      "asset": "assets/people/16619d4696eb497a9f2f9913.jpg",
+      "sha256": "16619d4696eb497a9f2f99130fd807e2afe83a280a211e25d1fa7ccb14109b92",
+      "bytes": 15149
+    },
+    "0LrQvtGB0L7Qu9Cw0L_QvtCy0LAf0L0f0LA": {
+      "full_name": "Косолапова Наталья Алексеевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/3fc/fnrcnrlh59wpwec2yruu6rc71krow5hq.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/",
+      "directory_name": "Косолапова Наталья Алексеевна",
+      "asset": "assets/people/be979ce4eb4f830a9646384b.jpg",
+      "sha256": "be979ce4eb4f830a9646384b7355c91d34b17577cf2c1a698cf971b4fd87b0db",
+      "bytes": 26062
+    },
+    "0LrQvtGB0YLQtdC90LrQvh_QtR_Qvw": {
+      "full_name": "Костенко Елена Петровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/d38/j49y2x2h2svpzejkp99x2vm46rq2jbi0.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/",
+      "directory_name": "Костенко Елена Петровна",
+      "asset": "assets/people/c97701f23d2fb4cd48c70da3.jpg",
+      "sha256": "c97701f23d2fb4cd48c70da3d45f72d855521fc507a63d683bd4c058a90b2bc6",
+      "bytes": 59487
+    },
+    "0LrQvtGCH9CyH9Cy": {
+      "full_name": "Кот Вера Витальевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/6bd/h6wfe227f9cs39yhwccbzvwj1tus04e5.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/",
+      "directory_name": "Кот Вера Витальевна",
+      "asset": "assets/people/54b0aacfc42f13c1dcdc5042.jpg",
+      "sha256": "54b0aacfc42f13c1dcdc5042bf9275ce9cd5b7eb142ba104670c281fd35eb898",
+      "bytes": 20645
+    },
+    "0LrRgNC40LLQvtGI0LXQtdCy0LDQvNC10LTRj9C90YbQtdCy0LAf0LQf0LQ": {
+      "full_name": "Кривошеева-Медянцева Дарья Дмитриевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/cf4/fjod9wxv7yzc44xcfb5b1ndur4uxo5vu.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/",
+      "directory_name": "Кривошеева-Медянцева Дарья Дмитриевна",
+      "asset": "assets/people/d35b09f55e71a6313aa818ba.png",
+      "sha256": "d35b09f55e71a6313aa818baceb5afecb92e9da2075bbad85038b3a3eba94331",
+      "bytes": 79546
+    },
+    "0LrRgNGO0LrQvtCyH9GBH9Cy": {
+      "full_name": "Крюков Сергей Владимирович",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/d06/g4vrrja57obh1ha26m4z2y4d1m8qig3e.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/",
+      "directory_name": "Крюков Сергей Владимирович",
+      "asset": "assets/people/ca830d6b6af22a12d3d0be2d.jpg",
+      "sha256": "ca830d6b6af22a12d3d0be2dbaff530d075e78b3dcc0ed4c76f4c291e91176ef",
+      "bytes": 18560
+    },
+    "0LrRg9C00YDRj9GI0L7QstCwH9CyH9GB": {
+      "full_name": "Кудряшова Виктория Сергеевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/779/iiznhsjay1ybnxphmd18qpltbwezztbc.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/",
+      "directory_name": "Кудряшова Виктория Сергеевна",
+      "asset": "assets/people/b32cb035e57069616257ac80.jpg",
+      "sha256": "b32cb035e57069616257ac80c6ec3197a1ea9847e5a100dc189cbce66eae8eab",
+      "bytes": 29946
+    },
+    "0LvQsNGB0LrQvtCy0LAf0LQf0YE": {
+      "full_name": "Ласкова Дарья Сергеевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/e84/fg8ywvz23fbvd23gmwu7j8kuujq7cls9.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/",
+      "directory_name": "Ласкова Дарья Сергеевна",
+      "asset": "assets/people/3dddd56b97da98ac34413ee4.jpg",
+      "sha256": "3dddd56b97da98ac34413ee4f59a62752985b9f1d4ace9e02869e2e2f11c2a4e",
+      "bytes": 41055
+    },
+    "0LvQsNGB0LrQvtCy0LAf0YIf0YE": {
+      "full_name": "Ласкова Татьяна Сергеевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/ce5/79b1bd8f32cj30euxnc40lpf1e7llzn4.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/",
+      "directory_name": "Ласкова Татьяна Сергеевна",
+      "asset": "assets/people/8aa96a42d162f680a5666fdb.jpg",
+      "sha256": "8aa96a42d162f680a5666fdbe4444b8f966d8fe755b801c5387632dd9efcbde2",
+      "bytes": 68603
+    },
+    "0LvQtdCx0LXQtNC10LLQsB_QvR_Rjg": {
+      "full_name": "Лебедева Наталья Юрьевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/fef/k61oxwof0f4nkyi1ur2yxvnd16n1zfsn.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-bukhgalterskogo-ucheta-i-audita/",
+      "directory_name": "Лебедева Наталья Юрьевна",
+      "asset": "assets/people/c1fdbd49dc7bcc8397c32375.jpg",
+      "sha256": "c1fdbd49dc7bcc8397c3237549d05c8df7ac56921725c2f314a25a142b6f5f94",
+      "bytes": 26874
+    },
+    "0LvQuNGF0LDRhtC60LDRjx_QtR_QsA": {
+      "full_name": "Лихацкая Екатерина Александровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/0f9/w93yuxdrlqnxb13ji5c9ihtmgg0zii5l.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/",
+      "directory_name": "Лихацкая Екатерина Александровна",
+      "asset": "assets/people/31f7b15eb05525599fbbad81.png",
+      "sha256": "31f7b15eb05525599fbbad812abd2b63c616bf0748eeeefb7805366e4c0af6bd",
+      "bytes": 224152
+    },
+    "0LzQsNC60YHRjtGC0L7QstCwH9C7H9Cy": {
+      "full_name": "Максютова Лариса Вадимовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/497/y30qbm9otb3t04nil18j0q3ihceq1p94.png",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/",
+      "directory_name": "Максютова Лариса Вадимовна",
+      "asset": "assets/people/246e995fd33fa01415c6ba19.png",
+      "sha256": "246e995fd33fa01415c6ba19cb78e81b2a6c321a94971c87dc443504fe378850",
+      "bytes": 233260
+    },
+    "0LzQsNC70LjRh9C10L3QutC-H9C4H9C_": {
+      "full_name": "Маличенко Ирина Петровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/e4a/7lvf3gygl5rxb9m09xyy2qhl6hxttuay.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/",
+      "directory_name": "Маличенко Ирина Петровна",
+      "asset": "assets/people/7f89a7e8d81158a1e7c5a800.jpg",
+      "sha256": "7f89a7e8d81158a1e7c5a800099a507ee030de44ff004e884d3075c6383be81a",
+      "bytes": 67435
+    },
+    "0LzQsNGB0LvRjtC60L7QstCwH9C1H9Cy": {
+      "full_name": "Маслюкова Елена Васильевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/9b9/hu2wift7qia3of67p3uigexhv23jqff1.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/",
+      "directory_name": "Маслюкова Елена Васильевна",
+      "asset": "assets/people/de651517840a657dc63d4b59.jpg",
+      "sha256": "de651517840a657dc63d4b597c14970551b9698548343948546b45194d335af6",
+      "bytes": 23250
+    },
+    "0LzQsNGC0LLQtdC10LLQsB_Qux_Qsw": {
+      "full_name": "Матвеева Людмила Григорьевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/e55/9oimsh3mb3wg0ej7prms78au8ocrov0k.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/",
+      "directory_name": "Матвеева Людмила Григорьевна",
+      "asset": "assets/people/a6d4a3e3725401413defabb7.jpg",
+      "sha256": "a6d4a3e3725401413defabb720ee361f62806fb81798f926122e14fada74737c",
+      "bytes": 58596
+    },
+    "0LzQsNGC0YvRhtGL0L3QsB_Rgh_Qsg": {
+      "full_name": "Матыцына Татьяна Вениаминовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/be2/vuw905qnvxkkvkz8vf9o1v3tm2f04cyq.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-bukhgalterskogo-ucheta-i-audita/",
+      "directory_name": "Матыцына Татьяна Вениаминовна",
+      "asset": "assets/people/5af6fa63abfc0b8d09716ad6.jpg",
+      "sha256": "5af6fa63abfc0b8d09716ad6cc2dbe1ed657a978fecb6b52107bc21fdeab7281",
+      "bytes": 19214
+    },
+    "0LzQvtCy0YfQsNC9H9C4H9Cy": {
+      "full_name": "Мовчан Ирина Викторовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/cda/7yjjdac647k10dczhg5y4690rjgc68e7.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-politicheskoy-ekonomii-i-ekonomicheskoy-politiki/",
+      "directory_name": "Мовчан Ирина Викторовна",
+      "asset": "assets/people/61faed5561c7ac1e78195717.jpg",
+      "sha256": "61faed5561c7ac1e78195717427c53c93f277d8a8d237d52aec88fbb6e7be020",
+      "bytes": 20631
+    },
+    "0L3QtdC60YDQsNGB0L7QstCwH9C4H9Cy": {
+      "full_name": "Некрасова Инна Владимировна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/dbe/6k0yqpmtpdlcq3hyc62ar2jjtscpy3su.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-finansy-i-kredit/",
+      "directory_name": "Некрасова Инна Владимировна",
+      "asset": "assets/people/c07613412336d4168ab893a0.jpg",
+      "sha256": "c07613412336d4168ab893a007c3b2b75f8e61c0987024740435bcd5d41bda4a",
+      "bytes": 31189
+    },
+    "0L3QtdGB0L7Qu9C10L3QsNGPH9C-H9Cy": {
+      "full_name": "Несоленая Олеся Владимировна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/cf2/wjn21lt3gha054wk78n6lmquwcczgr7q.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/",
+      "directory_name": "Несоленая Олеся Владимировна",
+      "asset": "assets/people/3385fcf8bcc53c0857834596.jpg",
+      "sha256": "3385fcf8bcc53c085783459640be261d28432f194259d0a25a5923f861104025",
+      "bytes": 19446
+    },
+    "0L3QuNC60LjRgtCw0LXQstCwH9CwH9GO": {
+      "full_name": "Никитаева Анастасия Юрьевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/5d5/34qbz06ovwd40hkwx7ulken6qd70ulzg.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/",
+      "directory_name": "Никитаева Анастасия Юрьевна",
+      "asset": "assets/people/6749d04936f78696f983ca3e.jpg",
+      "sha256": "6749d04936f78696f983ca3ed63f49dd5de934feb001c6181a85e0c3c31e85b5",
+      "bytes": 52136
+    },
+    "0L7RgdC40L_QvtCy0LAf0Lgf0LI": {
+      "full_name": "Осипова Ирина Владимировна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/fab/ym44d28vcdiqm24khfnzeo4708n7rpbs.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/",
+      "directory_name": "Осипова Ирина Владимировна",
+      "asset": "assets/people/40d81da9b409dcd77152bef7.jpg",
+      "sha256": "40d81da9b409dcd77152bef76bcdfe892f66094bf799f7ff17ade417cde40129",
+      "bytes": 21236
+    },
+    "0L_QsNGC0YDQsNC60LXQtdCy0LAf0L4f0Y4": {
+      "full_name": "Патракеева Ольга Юрьевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/d55/4c1vf0kvbdh4zn3iqev1o2eohliuudwi.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/",
+      "directory_name": "Патракеева Ольга Юрьевна",
+      "asset": "assets/people/157be5296f09c84d43029844.png",
+      "sha256": "157be5296f09c84d430298441db61204b0079b638c8546a1077402444a2f64c4",
+      "bytes": 61520
+    },
+    "0L_QtdC00YfQtdC90LrQvh_QtR_QsA": {
+      "full_name": "Педченко Екатерина Александровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/380/ms6c12b2g54xjstsi51jv1uug423srw0.png",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/",
+      "directory_name": "Педченко Екатерина Александровна",
+      "asset": "assets/people/28fc0bc1f3070c367c1a3315.png",
+      "sha256": "28fc0bc1f3070c367c1a3315034d9abcb3d245863fcce1d29be818ad08106159",
+      "bytes": 204314
+    },
+    "0L_QtdGC0YDQvtGB0L7QstCwH9C8H9C1": {
+      "full_name": "Петросова Мария Евгеньевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/f9f/sc0hnbk2rh5tqkj3glqir5ykcxri6b7g.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/",
+      "directory_name": "Петросова Мария Евгеньевна",
+      "asset": "assets/people/aa030935390a6775fb30f7a7.jpg",
+      "sha256": "aa030935390a6775fb30f7a7abc7658b6c2096871412357c6b4c01c37b2e808b",
+      "bytes": 26517
+    },
+    "0L_QuNGB0LDQvdC60LAf0YEf0LA": {
+      "full_name": "Писанка Светлана Анатольевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/5bf/c47akgtlzv3gtx2tl53x1o2rhhhcnoei.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/",
+      "directory_name": "Писанка Светлана Анатольевна",
+      "asset": "assets/people/e17c351d67f85e21a9439384.jpg",
+      "sha256": "e17c351d67f85e21a94393849317e0481e437db924abd2753584d34848aa8ba1",
+      "bytes": 22983
+    },
+    "0L_QvtCz0L7RgdGP0L0f0L0f0LI": {
+      "full_name": "Погосян Нателла Володяевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/ede/ccb41ek31n5paqh646n408j83gahfiwu.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-bukhgalterskogo-ucheta-i-audita/",
+      "directory_name": "Погосян Нателла Володяевна",
+      "asset": "assets/people/48e9f30b19c57f9ef71ea391.jpg",
+      "sha256": "48e9f30b19c57f9ef71ea391ca73c1c11fb487076fbe11a620d427943bfe72f1",
+      "bytes": 31193
+    },
+    "0L_QvtC70YXQvtCy0YHQutCw0Y8f0YIf0Y4": {
+      "full_name": "Полховская Татьяна Юрьевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/045/3gjrfdwchr2inio3fcr1eul37kpoyeoc.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-finansy-i-kredit/",
+      "directory_name": "Полховская Татьяна Юрьевна",
+      "asset": "assets/people/0c2601da3cfc2584178f7999.jpg",
+      "sha256": "0c2601da3cfc2584178f799901f41ae98fa0b71d171677679fcfb732306ce408",
+      "bytes": 105371
+    },
+    "0L_RgNC-0LrQvtC_0LXQvdC60L4f0Lcf0LI": {
+      "full_name": "Прокопенко Золина Владимировна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/bc9/vn2xo5di4noqapp3a2jby4ciert2qui9.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-politicheskoy-ekonomii-i-ekonomicheskoy-politiki/",
+      "directory_name": "Прокопенко Золина Владимировна",
+      "asset": "assets/people/38b293c2c2af61bf872e5c04.jpg",
+      "sha256": "38b293c2c2af61bf872e5c04c2f519f68a1ba48cc8d16a4f5f2c623a89ebcc7d",
+      "bytes": 21228
+    },
+    "0YHQsNCy0LXQvdC60L4f0L4f0Ls": {
+      "full_name": "Савенко Оксана Леонидовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/206/p40yy02vbwcai611tvdb3x7oy3ft0f7h.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-finansy-i-kredit/",
+      "directory_name": "Савенко Оксана Леонидовна",
+      "asset": "assets/people/83b7b2254d315d8bab2de8f9.jpg",
+      "sha256": "83b7b2254d315d8bab2de8f94d8079545862a792002ec58294de3815339462e0",
+      "bytes": 19613
+    },
+    "0YHQstC40YDQuNC00L7Qsh_Qvh_Rjg": {
+      "full_name": "Свиридов Олег Юрьевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/8c6/znhsygjspotybvgd5czx8yfcwviwp8t8.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-finansy-i-kredit/",
+      "directory_name": "Свиридов Олег Юрьевич",
+      "asset": "assets/people/a0e4c3b68fd27d6103acabcf.jpg",
+      "sha256": "a0e4c3b68fd27d6103acabcfaedc4a7f1dbabac7c5f5cc18e9495ed3cd8eb38e",
+      "bytes": 28695
+    },
+    "0YHQutCw0YfQutC-0LLQsB_Qux_RgQ": {
+      "full_name": "Скачкова Людмила Сергеевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/1b0/9y9jp1b6iuosl1ltoc32kwvd8o5qtx0x.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/",
+      "directory_name": "Скачкова Людмила Сергеевна",
+      "asset": "assets/people/4fe13c525eaa95c0341bfa67.jpg",
+      "sha256": "4fe13c525eaa95c0341bfa675f1a24235dc37d9a335518a8b4977ebedc7fddfb",
+      "bytes": 98951
+    },
+    "0YHRgtGA0LXQu9GM0YfQtdC90LrQvh_QtR_QsA": {
+      "full_name": "Стрельченко Елена Александровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/3f0/epyxtnaopzg5nithnt6lm49w4synwx30.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/",
+      "directory_name": "Стрельченко Елена Александровна",
+      "asset": "assets/people/720494af085230d1f0b81fa7.jpg",
+      "sha256": "720494af085230d1f0b81fa7373eb49e6c14876ffc7ba8a331dcefb49b9a6637",
+      "bytes": 19654
+    },
+    "0YHRi9GA0YvRhR_Quh_QsA": {
+      "full_name": "Сырых Кристина Алексеевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/2fe/xywudguc8jmrxtn798qdcywqqskse5n9.png",
+      "source_url": "https://econ.sfedu.ru/o-fakultete/",
+      "directory_name": "Сырых Кристина Алексеевна",
+      "asset": "assets/people/97c53467586ade309dfe3191.png",
+      "sha256": "97c53467586ade309dfe3191887cde39a2b1de098c4b9b667307978a38caff89",
+      "bytes": 172639
+    },
+    "0YLRg9C80LDQvdGP0L0f0Y4f0YA": {
+      "full_name": "Туманян Юрий Рафаелович",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/299/xf7glh2i8laddgsoy0t1kw87qxqq210f.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-politicheskoy-ekonomii-i-ekonomicheskoy-politiki/",
+      "directory_name": "Туманян Юрий Рафаелович",
+      "asset": "assets/people/98ba664f022138ca8887a6a3.jpg",
+      "sha256": "98ba664f022138ca8887a6a32910c99f43b094e806c9781e0babc7e9a26e250f",
+      "bytes": 98332
+    },
+    "0YTQtdC00L7RgNC-0LLQsB_QsB_QsA": {
+      "full_name": "Федорова Анна Андреевна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/67f/k2rzh2utpbbc8cqg46uuk2jzszwpy50n.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/",
+      "directory_name": "Федорова Анна Андреевна",
+      "asset": "assets/people/359aff569fd9238918945fac.png",
+      "sha256": "359aff569fd9238918945facf55dded1e7abcf6b86f07b92f96793e3411a9ae1",
+      "bytes": 202688
+    },
+    "0YTRgNC-0LvQvtCy0LAf0Lgf0LI": {
+      "full_name": "Фролова Ирина Вениаминовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/024/2bl7293fly1c9iu4txikcbuoyzvkz9j5.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-bukhgalterskogo-ucheta-i-audita/",
+      "directory_name": "Фролова Ирина Вениаминовна",
+      "asset": "assets/people/18d9ed187f9d778ec765c0e4.jpg",
+      "sha256": "18d9ed187f9d778ec765c0e40cda99abd402ba2b0a0ac82e8bb8f1b4afa76253",
+      "bytes": 100238
+    },
+    "0YTRg9GA0YHQsB_QtR_Qsg": {
+      "full_name": "Фурса Елена Владимировна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/ffe/hfmh2nwqogwum4bj2u4nzgc3tavgpi1u.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/",
+      "directory_name": "Фурса Елена Владимировна",
+      "asset": "assets/people/16db77fb686e03f3e8f0c233.png",
+      "sha256": "16db77fb686e03f3e8f0c2330838648575d4c64bc30516bf1ce8560cde6c97de",
+      "bytes": 192161
+    },
+    "0YXRgNC40YHRgtC-0LLQsB_RgR_QvA": {
+      "full_name": "Христова София Михайловна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/71c/ptznwro5ofiv8v3dbb4ikie9y1e0xrqr.jpg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/",
+      "directory_name": "Христова София Михайловна",
+      "asset": "assets/people/cda12cf2c175f54eda9ef258.jpg",
+      "sha256": "cda12cf2c175f54eda9ef25866f8a8bfc5449e0b8d615718fb4fdc7df1a0b174",
+      "bytes": 28433
+    },
+    "0YbRi9Cz0LDQvdC60L7Qsh_RgR_RgQ": {
+      "full_name": "Цыганков Сергей Сергеевич",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/09d/i9rc2z80npvj6w5nqgxbyowbn0ct4p5j.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/",
+      "directory_name": "Цыганков Сергей Сергеевич",
+      "asset": "assets/people/702687e357fd01ad251a0b70.jpg",
+      "sha256": "702687e357fd01ad251a0b705638c27671ba1a60ecd90c61cd6e3a562e325457",
+      "bytes": 27988
+    },
+    "0YfQtdGA0L3QvtCy0LAf0L4f0LA": {
+      "full_name": "Чернова Ольга Анатольевна",
+      "photo_url": "https://econ.sfedu.ru/upload/resize_cache/iblock/bf5/600_600_240cd750bba9870f18aada2478b24840a/yp77kd0yajhhcqzefnay9a8y9686pz39.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-informatsionnoy-ekonomiki/",
+      "directory_name": "Чернова Ольга Анатольевна",
+      "asset": "assets/people/620e72456b4e8046ca10c75f.png",
+      "sha256": "620e72456b4e8046ca10c75f9e333431ea5cb2adc6f728315866cc7322316873",
+      "bytes": 360844
+    },
+    "0YjQsNC70Ywf0LAf0LI": {
+      "full_name": "Шаль Анна Викторовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/d75/lrdlp4ycvmipcyg0m8jtv601q7tl5zzx.png",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-kibernetiki/",
+      "directory_name": "Шаль Анна Викторовна",
+      "asset": "assets/people/6ecc9d161e12076c6bf0de2a.png",
+      "sha256": "6ecc9d161e12076c6bf0de2aae5eb63af31b8b90312c3dfb694412e7b3fa5521",
+      "bytes": 212162
+    },
+    "0YjQtdCy0YfQtdC90LrQvh_QsB_QsA": {
+      "full_name": "Шевченко Анастасия Александровна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/38b/ydfbc9csiwv67397ldl7atn28gwm5lz0.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-finansy-i-kredit/",
+      "directory_name": "Шевченко Анастасия Александровна",
+      "asset": "assets/people/673817a9fae93916aeff4e3f.jpg",
+      "sha256": "673817a9fae93916aeff4e3f6099e4d6f2ed7f9bfcedf5d853dfbf3ea7809c1f",
+      "bytes": 19928
+    },
+    "0YjQuNGA0Y_QtdCyH9C4H9C8": {
+      "full_name": "Ширяев Игорь Михайлович",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/94f/vczuss5dtffu14ze8crngtixd43gy6z3.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/",
+      "directory_name": "Ширяев Игорь Михайлович",
+      "asset": "assets/people/ab9a5f91d5d5539e9af01942.jpg",
+      "sha256": "ab9a5f91d5d5539e9af0194258a34d7c2ee61d6008a22f3de1c1c68f7d2a62b6",
+      "bytes": 18489
+    },
+    "0YnQtdGC0LjQvdC40L3QsB_QtB_Qvw": {
+      "full_name": "Щетинина Дарья Павловна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/87c/vrynodffyao8srlrkm09unk0ut0fzqvi.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-upravleniya-chelovecheskimi-resursami/",
+      "directory_name": "Щетинина Дарья Павловна",
+      "asset": "assets/people/b68f659d7d5aa35b2f052275.jpg",
+      "sha256": "b68f659d7d5aa35b2f0522757c8dc3f55a84ef9f927b7ac82363d79fbb40daf3",
+      "bytes": 20278
+    },
+    "0Y_RhtC10L3QutC-H9CwH9Cx": {
+      "full_name": "Яценко Ашхен Борисовна",
+      "photo_url": "https://econ.sfedu.ru/upload/iblock/2f3/8v68570rwv3347zrfh2gfb5j6nk5qnie.jpeg",
+      "source_url": "https://econ.sfedu.ru/kafedra-mirovoy-ekonomiki-i-mezhdunarodnykh-otnosheniy/",
+      "directory_name": "Яценко Ашхен Борисовна",
+      "asset": "assets/people/235c064ed01c9618f678d83c.jpg",
+      "sha256": "235c064ed01c9618f678d83ca39aa30c9727255e59fa4f863504153bbef3d6ad",
+      "bytes": 21024
+    },
+    "0LDQvdGC0L7QvdC-0LLQsB_Qux_QsA": {
+      "full_name": "Антонова Людмила Анатольевна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/b0/14/person_9276.jpg",
+      "source_url": "https://sfedu.ru/s7/person/lantonova",
+      "directory_name": "Антонова Л.А.",
+      "asset": "assets/people/6536fef1c520da96df8f4eb1.jpg",
+      "sha256": "6536fef1c520da96df8f4eb154878f248a74f8e977d97433f47c9082832657f8",
+      "bytes": 35074
+    },
+    "0LHQtdC70LjQutC-0LIf0LAf0L0": {
+      "full_name": "Беликов Александр Николаевич",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/23/70/person_1006460.jpg",
+      "source_url": "https://sfedu.ru/s7/person/anbelikov",
+      "directory_name": "Беликов А.Н.",
+      "asset": "assets/people/43acf15078e7169d140c0eb3.jpg",
+      "sha256": "43acf15078e7169d140c0eb3791f4acde06f5310386641ffec88d2a2a5043fd5",
+      "bytes": 38286
+    },
+    "0LHQtdC70LjQutC-0LLQsB_RgR_QsA": {
+      "full_name": "Беликова Светлана Алексеевна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/5c/2c/person_-10286.jpg",
+      "source_url": "https://sfedu.ru/s7/person/belousova",
+      "directory_name": "Беликова С.А.",
+      "asset": "assets/people/ac47f7d06544ad060c1688c0.jpg",
+      "sha256": "ac47f7d06544ad060c1688c0559ae98a19877ac9e1d2700b8c6503aa8e9e9177",
+      "bytes": 46081
+    },
+    "0LHRg9GA0L7Qsh_Qvh_QvQ": {
+      "full_name": "Буров Олег Николаевич",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/86/90/person_6595.jpg",
+      "source_url": "https://sfedu.ru/s7/person/onburov",
+      "directory_name": "Буров О.Н.",
+      "asset": "assets/people/e2db846f72432557749fc6e9.jpg",
+      "sha256": "e2db846f72432557749fc6e9fbd6856d668ec9c3e5d18a2a02710304979dd910",
+      "bytes": 126500
+    },
+    "0LPQtdGA0LDRgdC40LzQvtCy0LAf0L4f0Y8": {
+      "full_name": "Герасимова Ольга Ярославовна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/b1/c8/person_10895.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/osenkiv",
+      "directory_name": "Герасимова Ольга Ярославовна",
+      "asset": "assets/people/3881e33a26b1f8d88c86cfd5.jpg",
+      "sha256": "3881e33a26b1f8d88c86cfd56e87c6496893a54f790c87fbf81ad4d70cb562ba",
+      "bytes": 127321
+    },
+    "0LPRgNGD0LTQsNC90L7QstCwH9C4H9GO": {
+      "full_name": "Груданова Ирина Юрьевна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/6c/03/person_1024288.jpg",
+      "source_url": "https://sfedu.ru/s7/person/grudanova",
+      "directory_name": "Груданова И.Ю.",
+      "asset": "assets/people/673fc9c0d4a3cd641687f180.jpg",
+      "sha256": "673fc9c0d4a3cd641687f1800def097b83e74bb0d3455f13c86d70706954b1bd",
+      "bytes": 44946
+    },
+    "0LTQvNC40YLRgNC40LXQstCwH9C_H9GA": {
+      "full_name": "Дмитриева Полина Руслановна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/58/8f/person_1024846.jpg",
+      "source_url": "https://sfedu.ru/s7/person/pmamedova",
+      "directory_name": "Дмитриева П.Р.",
+      "asset": "assets/people/3906716f9e9ee1a3ab6b4bab.jpg",
+      "sha256": "3906716f9e9ee1a3ab6b4bab022970f38860e0f69069a6e8ef4020dfebac0788",
+      "bytes": 46664
+    },
+    "0LrQsNGA0L3QsNGD0YXQvtCy0LAf0L4f0YE": {
+      "full_name": "Карнаухова Оксана Сергеевна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/34/97/person_3066.jpg",
+      "source_url": "https://sfedu.ru/s7/person/oskarnauhova",
+      "directory_name": "Карнаухова О.С.",
+      "asset": "assets/people/b520e6f8c4fa40e7e79cfd57.jpg",
+      "sha256": "b520e6f8c4fa40e7e79cfd576782a0d0a4bf3afc87ef0fb4e9ee1ed405ef5220",
+      "bytes": 26826
+    },
+    "0LrQvtGB0YHQtR_QsB_QsA": {
+      "full_name": "Коссе Андрей Александрович",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/c2/91/person_3771.jpg",
+      "source_url": "https://sfedu.ru/s7/person/aakosse",
+      "directory_name": "Коссе А.А.",
+      "asset": "assets/people/d2336ae445d2079d9062cd18.jpg",
+      "sha256": "d2336ae445d2079d9062cd189e75be7d25334737ecf70f6ac3ad41af2e461d63",
+      "bytes": 28949
+    },
+    "0LvQuNGB0LjRhtGL0L3QsB_QsB_QsA": {
+      "full_name": "Лисицына Александра Анатольевна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/9c/51/person_-12530.jpg",
+      "source_url": "https://sfedu.ru/s7/person/alisicyna",
+      "directory_name": "Лисицына А.А.",
+      "asset": "assets/people/4e4f53b3ee38731e27e246ab.jpg",
+      "sha256": "4e4f53b3ee38731e27e246ab7f77c6349ca430add28676e394bdee1daf004ae0",
+      "bytes": 34675
+    },
+    "0LzQsNGA0YfQtdC90LrQvh_QsB_QsA": {
+      "full_name": "Марченко Анна Андреевна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/27/5c/person_1027755.jpg",
+      "source_url": "https://sfedu.ru/s7/person/afed",
+      "directory_name": "Марченко А.А.",
+      "asset": "assets/people/829b4e120930bbe9dc1b51b6.jpg",
+      "sha256": "829b4e120930bbe9dc1b51b64832963f2f5d88cc064e2b9f1ec16662b04811ca",
+      "bytes": 197675
+    },
+    "0LzQsNGB0LrQsNC10LIf0LAf0Lg": {
+      "full_name": "Маскаев Артём Ильич",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/41/52/person_-12437.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ru/maskaev",
+      "directory_name": "Маскаев Артём Ильич",
+      "asset": "assets/people/bc7c5ce57a289f7b5106e868.jpg",
+      "sha256": "bc7c5ce57a289f7b5106e86849163b374149b8140bc3e0d90d2eb87d93bc582d",
+      "bytes": 157322
+    },
+    "0LzRg9GA0LDQstGM0LXQstCwH9C1H9Cy": {
+      "full_name": "Муравьева Елена Викторовна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/8d/1b/person_1554.jpg",
+      "source_url": "https://sfedu.ru/s7/person/evmuraveva",
+      "directory_name": "Муравьева Е.В.",
+      "asset": "assets/people/5cefcdaf79c23f7ca88c53cf.jpg",
+      "sha256": "5cefcdaf79c23f7ca88c53cf5a95143a5a7d2a349de6c2fde1df73aaefbe8eae",
+      "bytes": 189297
+    },
+    "0YjQsNC_0YHQuNCz0L7Qsh_QsB_RhQ": {
+      "full_name": "Шапсигов Альберт Хусенович",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/77/1f/person_-14016.jpg",
+      "source_url": "https://sfedu.ru/s7/person/ashapsigov",
+      "directory_name": "Шапсигов А.Х.",
+      "asset": "assets/people/6b7603c0f45a6a8aa9baf9c4.jpg",
+      "sha256": "6b7603c0f45a6a8aa9baf9c40cd3b98d5a7a2f2049cd3343107447b6daa16e54",
+      "bytes": 24476
+    },
+    "0YjRg9Cx0LDRgNC40L0f0Lwf0LA": {
+      "full_name": "Шубарин Михаил Александрович",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/95/98/person_614.jpg",
+      "source_url": "https://sfedu.ru/s7/person/mashubarin",
+      "directory_name": "Шубарин М.А.",
+      "asset": "assets/people/76f1a5b0f59f9fc8d5a6503c.jpg",
+      "sha256": "76f1a5b0f59f9fc8d5a6503c9aeb639c2cc9bda0a2e0bd99ce3c9ba8dddace21",
+      "bytes": 29671
+    },
+    "0Y7RhdC90L7QstCwH9GOH9C4": {
+      "full_name": "Юхнова Юлия Ивановна",
+      "photo_url": "https://sfedu.ru/files/upload/photo/staff/bd/9c/person_-12105.jpg",
+      "source_url": "https://sfedu.ru/s7/person/yuhnova",
+      "directory_name": "Юхнова Ю.И.",
+      "asset": "assets/people/5db6dbd7d71b6dfd3c542dcb.jpg",
+      "sha256": "5db6dbd7d71b6dfd3c542dcb67119956e7610315421f880f07bbbba2b07a12d0",
+      "bytes": 39192
+    }
+  },
+  "missing": [
+    "Абросимов Д.В.",
+    "Архипова К.Э.",
+    "Войтенко М.С.",
+    "Головачева М.М.",
+    "Гончарова И.К.",
+    "Гревцов А.В.",
+    "Дейниченко А.С.",
+    "Жело В.В.",
+    "Зинченко Е.В.",
+    "Калачев В.Ю.",
+    "Кудаева Э.А.",
+    "Лапач Л.В.",
+    "Медянцева Д.Д.",
+    "Овчаренко О.В.",
+    "Палий В.П.",
+    "Постникова В.П.",
+    "Толстокора О.Н.",
+    "Трохимчук Е.А.",
+    "Федорова И.В."
+  ],
+  "ambiguous": [],
+  "download_errors": {}
+}
