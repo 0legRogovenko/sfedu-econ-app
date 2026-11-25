@@ -3,14 +3,46 @@
 from __future__ import annotations
 
 import base64
+from collections.abc import Iterable
 from dataclasses import dataclass
+import hashlib
 from io import BytesIO
 import json
+from pathlib import Path
+import re
+from urllib.parse import urlsplit
 
 from PIL import Image, UnidentifiedImageError
 
 from src.persons.extract import find_names
 from src.persons.names import person_key
+from src.persons.photos import PhotoCandidate, official_url
+
+
+def personal_profile_photos(candidates: Iterable[PhotoCandidate]) -> list[PhotoCandidate]:
+    """Ship photographs only when their source is an official personal profile."""
+    result = []
+    for candidate in candidates:
+        source = official_url(candidate.source_url)
+        if source:
+            url = urlsplit(source)
+            if url.hostname == "sfedu.ru" and re.fullmatch(r"/s7/person/(?:ru/)?[\w.-]+/?", url.path):
+                result.append(candidate)
+    return result
+
+
+def prune_unused_portraits(app_dir: Path, records: dict[str, dict]) -> None:
+    """Remove only unchanged, content-addressed files produced by this bundler."""
+    retained = {record["asset"] for record in records.values()}
+    for path in (app_dir / "assets/people").iterdir():
+        if path.is_symlink() or not path.is_file():
+            continue
+        if not re.fullmatch(r"[0-9a-f]{24}\.(?:jpg|png|webp)", path.name):
+            continue
+        if path.relative_to(app_dir).as_posix() in retained:
+            continue
+        if hashlib.sha256(path.read_bytes()).hexdigest().startswith(path.stem):
+            path.unlink()
 
 
 @dataclass(frozen=True)

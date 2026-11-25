@@ -20,13 +20,13 @@ import time
 import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from src.persons.photo_bundle import parse_people, render_catalog, validate_image
+from src.persons.photo_bundle import parse_people, personal_profile_photos, prune_unused_portraits, render_catalog, validate_image
 from src.persons.photos import PhotoCandidate, match_photos, official_url
 from src.sfedu_tls import SfeduTLSAdapter
 from urllib.parse import urlsplit
 
 
-def download_group(items, app_dir, cache_dir):
+def download_group(items, cache_dir):
     session = requests.Session()
     session.mount("https://sfedu.ru/", SfeduTLSAdapter())
     session.headers["User-Agent"] = "EconYufuApp/0.1 (official public staff portraits)"
@@ -58,7 +58,6 @@ def download_group(items, app_dir, cache_dir):
             extension = validate_image(data)
             digest = hashlib.sha256(data).hexdigest()
             asset = f"assets/people/{digest[:24]}.{extension}"
-            (app_dir / asset).write_bytes(data)
             records[person.id] = {**asdict(candidate), "directory_name": person.full_name,
                                   "asset": asset, "sha256": digest, "bytes": len(data)}
             print(f"Bundled {person.short_name}", flush=True)
@@ -78,9 +77,11 @@ def main():
     parser.add_argument("--reviewed-aliases", type=Path)
     args = parser.parse_args()
     people = parse_people(json.loads(args.people_json.read_text()))
-    candidates = [PhotoCandidate(**r) for r in json.loads(args.snapshot.read_text())["photos"]]
+    candidates = personal_profile_photos(PhotoCandidate(**r) for r in json.loads(args.snapshot.read_text())["photos"])
     aliases = json.loads(args.reviewed_aliases.read_text()) if args.reviewed_aliases else {}
-    matches = match_photos(people, candidates, reviewed_aliases={k: v["full_name"] for k, v in aliases.items()})
+    matches = match_photos(people, candidates,
+                          reviewed_aliases={k: v["full_name"] for k, v in aliases.items()},
+                          reviewed_sources={k: v["source_url"] for k, v in aliases.items()})
     groups = defaultdict(list)
     for person in people:
         candidate = matches.matches.get(person.id)
@@ -90,17 +91,27 @@ def main():
     args.cache_dir.mkdir(parents=True, exist_ok=True)
     records, errors = {}, {}
     with ThreadPoolExecutor(max_workers=2) as executor:
-        for result, failures in executor.map(lambda items: download_group(items, args.app_dir, args.cache_dir), groups.values()):
+        for result, failures in executor.map(lambda items: download_group(items, args.cache_dir), groups.values()):
             records.update(result)
             errors.update(failures)
+    if errors:
+        raise RuntimeError(f"{len(errors)} portrait download(s) failed; previous catalog was kept")
     if not records:
         raise ValueError("No official photographs were downloaded")
+    # Publication starts only after every selected original has been verified.
+    for record in records.values():
+        cache = args.cache_dir / hashlib.sha256(record["photo_url"].encode()).hexdigest()
+        data = cache.read_bytes()
+        if hashlib.sha256(data).hexdigest() != record["sha256"]:
+            raise ValueError("Cached photograph changed before publication")
+        (args.app_dir / record["asset"]).write_bytes(data)
     report = {"collected_at": datetime.now(timezone.utc).isoformat(), "people": len(people),
               "reviewed_aliases_sha256": hashlib.sha256(args.reviewed_aliases.read_bytes()).hexdigest() if args.reviewed_aliases else None,
               "portraits": records, "missing": [p.short_name for p in people if p.id not in records],
               "ambiguous": [p.short_name for p in people if p.id in matches.ambiguous], "download_errors": errors}
     (args.app_dir / "assets/people/portraits.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
     (args.app_dir / "lib/features/people/portrait_catalog.g.dart").write_text(render_catalog(records))
+    prune_unused_portraits(args.app_dir, records)
     print(f"Bundled {len(records)} / {len(people)} profiles; errors {len(errors)}; database writes: 0", flush=True)
 
 

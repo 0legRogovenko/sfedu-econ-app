@@ -88,6 +88,23 @@ def parse_photo_page(page_html: str, source_url: str) -> list[PhotoCandidate]:
     page = BeautifulSoup(page_html, "html.parser")
     candidates: list[PhotoCandidate] = []
 
+    if "/s7/person/" in urlsplit(source_url).path:
+        headings = page.select(".about_employee > h2") or page.select("h1, h2")
+        owner = next((identity for heading in headings
+                      if (identity := _identity(heading.get_text(" ", strip=True))) is not None), None)
+        if owner is None:
+            return []
+        # A biography may contain photographs of colleagues. Only the owner
+        # named by the profile heading can supply a portrait from this page.
+        for image in page.select("img[alt]"):
+            name = image.get("alt", "").strip()
+            if _identity(name) != owner:
+                continue
+            url = _photo_url(image.get("data-src") or image.get("src", ""), source_url)
+            if url and "display:none" not in image.get("style", "").replace(" ", "").lower():
+                candidates.append(PhotoCandidate(name, url, source_url))
+        return list(dict.fromkeys(candidates))
+
     def add(name: str, container) -> None:
         name = " ".join(name.split())
         if _identity(name) is None:
@@ -111,21 +128,12 @@ def parse_photo_page(page_html: str, source_url: str) -> list[PhotoCandidate]:
         if container:
             add(name.get_text(" ", strip=True), container)
 
-    # University profiles explicitly label the portrait with the full name.
-    # Do not derive a login or choose an arbitrary image from a personal page.
-    if "/s7/person/" in urlsplit(source_url).path:
-        for image in page.select("img[alt]"):
-            name = image.get("alt", "").strip()
-            if _identity(name) is None:
-                continue
-            url = _photo_url(image.get("data-src") or image.get("src", ""), source_url)
-            if url and "display:none" not in image.get("style", "").replace(" ", "").lower():
-                candidates.append(PhotoCandidate(name, url, source_url))
     return list(dict.fromkeys(candidates))
 
 
 def match_photos(people: Iterable[DirectoryIdentity], candidates: Iterable[PhotoCandidate],
-                 *, reviewed_aliases: Mapping[str, str] | None = None) -> PhotoMatches:
+                 *, reviewed_aliases: Mapping[str, str] | None = None,
+                 reviewed_sources: Mapping[str, str] | None = None) -> PhotoMatches:
     """Only uniquely identified official full names can decorate existing rows."""
     by_key: dict[tuple[str, str, str], list[PhotoCandidate]] = defaultdict(list)
     for candidate in candidates:
@@ -138,10 +146,13 @@ def match_photos(people: Iterable[DirectoryIdentity], candidates: Iterable[Photo
     report = PhotoMatches()
     for person in people:
         options = by_key.get(person.key, [])
-        identities = {_identity(c.full_name) for c in options}
         expected = _identity(person.full_name)
         if expected is None:
             expected = _identity((reviewed_aliases or {}).get(person.id, ""))
+            if reviewed_sources is not None:
+                reviewed_source = official_url(reviewed_sources.get(person.id, ""))
+                options = [candidate for candidate in options if candidate.source_url == reviewed_source]
+        identities = {_identity(c.full_name) for c in options}
         if len(identities) > 1:
             report.ambiguous.append(person.id)
         elif options and expected is not None and expected in identities:

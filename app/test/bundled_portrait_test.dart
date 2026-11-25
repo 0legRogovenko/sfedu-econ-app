@@ -7,13 +7,13 @@ import 'package:sfedu_econ/features/people/person_photo.dart';
 import 'package:sfedu_econ/features/people/portrait_catalog.dart';
 
 final _id = base64Url
-    .encode(utf8.encode('вольчик\u001fв\u001fв'))
+    .encode(utf8.encode('герасимова\u001fо\u001fя'))
     .replaceAll('=', '');
 
 Person _person({bool known = true}) => Person(
   id: known ? _id : 'unknown',
-  shortName: 'Вольчик В.В.',
-  fullName: 'Вольчик Вячеслав Витальевич',
+  shortName: 'Герасимова О.Я.',
+  fullName: 'Герасимова Ольга Ярославовна',
   sections: const [],
   roles: const [],
   email: null,
@@ -23,12 +23,36 @@ Person _person({bool known = true}) => Person(
 );
 
 void main() {
+  testWidgets('original portrait has no added background or corner crop', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: PersonPhoto(person: _person())),
+      ),
+    );
+    final image = tester.widget<Image>(find.byType(Image));
+    await tester.runAsync(
+      () => precacheImage(image.image, tester.element(find.byType(Image))),
+    );
+    await tester.pump();
+    final frame = find.byKey(const Key('person-photo-frame'));
+    expect(
+      find.descendant(of: frame, matching: find.byType(ColoredBox)),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: frame, matching: find.byType(ClipRRect)),
+      findsNothing,
+    );
+  });
+
   test('existing API identity resolves its reviewed bundled portrait', () {
     expect(
       portraitAssetFor(_id, _person().fullName),
       startsWith('assets/people/'),
     );
-    expect(portraitAssetFor(_id, 'Вольчик Виктор Владимирович'), isNull);
+    expect(portraitAssetFor(_id, 'Герасимова Оксана Яковлевна'), isNull);
     expect(portraitAssetFor('unknown', _person().fullName), isNull);
   });
 
@@ -40,7 +64,7 @@ void main() {
         home: Scaffold(body: PersonPhoto(person: _person(known: false))),
       ),
     );
-    expect(find.text('ВВ'), findsOneWidget);
+    expect(find.text('ОЯ'), findsOneWidget);
     expect(find.byType(Image), findsNothing);
     expect(
       tester.getSize(find.byKey(const Key('person-photo-frame'))),
@@ -58,6 +82,8 @@ void main() {
         ),
       );
       final image = tester.widget<Image>(find.byType(Image));
+      // Decode the original; a fixed resize can discard detail or upscale it.
+      expect(image.image, isA<AssetImage>());
       final provider = image.image is ResizeImage
           ? (image.image as ResizeImage).imageProvider
           : image.image;
@@ -67,7 +93,7 @@ void main() {
         () => precacheImage(image.image, tester.element(find.byType(Image))),
       );
       await tester.pump();
-      expect(find.text('ВВ'), findsNothing);
+      expect(find.text('ОЯ'), findsNothing);
       expect(
         tester.getSize(find.byKey(const Key('person-photo-frame'))),
         const Size(180, 240),
@@ -89,7 +115,7 @@ void main() {
       StackTrace.empty,
     );
     await tester.pumpWidget(MaterialApp(home: Scaffold(body: fallback)));
-    expect(find.text('ВВ'), findsOneWidget);
+    expect(find.text('ОЯ'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

@@ -8,6 +8,39 @@ from PIL import Image
 import pytest
 
 from src.persons.photo_bundle import parse_people, validate_image, render_catalog
+from src.persons.photos import PhotoCandidate
+
+
+def test_bundle_excludes_department_cards_and_unrelated_official_pages():
+    from src.persons.photo_bundle import personal_profile_photos
+
+    name = "Вольчик Вячеслав Витальевич"
+    profile = PhotoCandidate(name, "https://sfedu.ru/files/photo.jpg", "https://sfedu.ru/s7/person/ru/volchik")
+    department = PhotoCandidate(name, "https://econ.sfedu.ru/photo.jpg", "https://econ.sfedu.ru/kafedra-ekonomicheskoy-teorii/")
+    lookalike = PhotoCandidate(name, "https://sfedu.ru/photo.jpg", "https://example.com/s7/person/ru/volchik")
+    assert personal_profile_photos([department, lookalike, profile]) == [profile]
+
+
+def test_stale_generated_portraits_are_removed_without_touching_other_files(tmp_path):
+    from src.persons.photo_bundle import prune_unused_portraits
+
+    folder = tmp_path / "assets/people"
+    folder.mkdir(parents=True)
+    data = b"previously bundled original"
+    stale = folder / (hashlib.sha256(data).hexdigest()[:24] + ".jpg")
+    stale.write_bytes(data)
+    keep = folder / "portrait-not-generated.jpg"
+    keep.write_bytes(b"user file")
+    altered = folder / ("a" * 24 + ".png")
+    altered.write_bytes(b"not a generated hash")
+    active_data = b"current original"
+    active = folder / (hashlib.sha256(active_data).hexdigest()[:24] + ".png")
+    active.write_bytes(active_data)
+    prune_unused_portraits(tmp_path, {"current": {"asset": active.relative_to(tmp_path).as_posix()}})
+    assert not stale.exists()
+    assert keep.read_bytes() == b"user file"
+    assert altered.read_bytes() == b"not a generated hash"
+    assert active.read_bytes() == active_data
 
 
 def _row():
@@ -73,9 +106,13 @@ def test_shipped_catalog_contains_original_verified_images():
     aliases_path = Path(__file__).resolve().parents[1] / "data/person_photos/reviewed_aliases.json"
     assert hashlib.sha256(aliases_path.read_bytes()).hexdigest() == manifest["reviewed_aliases_sha256"]
     aliases = json.loads(aliases_path.read_text())
-    assert 70 <= len(records) <= manifest["people"]
+    assert 0 < len(records) <= manifest["people"]
+    assert len(records) + len(manifest["missing"]) == manifest["people"]
     hashes = set()
     for person_id, record in records.items():
+        from src.persons.photo_bundle import personal_profile_photos
+        candidate = PhotoCandidate(record["full_name"], record["photo_url"], record["source_url"])
+        assert personal_profile_photos([candidate]) == [candidate], f"Not a personal profile: {person_id}"
         path = app / record["asset"]
         assert path.resolve().is_relative_to((app / "assets/people").resolve())
         data = path.read_bytes()
@@ -87,4 +124,5 @@ def test_shipped_catalog_contains_original_verified_images():
             assert aliases[person_id]["source_url"] == record["source_url"]
         assert record["sha256"] not in hashes, f"Shared photograph requires review: {person_id}"
         hashes.add(record["sha256"])
+    assert {p.name for p in (app / "assets/people").iterdir() if p.suffix in {".jpg", ".png", ".webp"}} == {Path(r["asset"]).name for r in records.values()}
     assert (app / "lib/features/people/portrait_catalog.g.dart").read_text() == render_catalog(records)

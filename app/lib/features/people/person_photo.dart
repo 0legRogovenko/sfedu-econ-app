@@ -19,11 +19,14 @@ class PersonPhoto extends StatelessWidget {
         .last
         .replaceAll(RegExp(r'[^А-ЯЁA-Z]', caseSensitive: false), '')
         .toUpperCase();
-    final fallback = Center(
-      child: Text(
-        initials.length <= 2 && initials.isNotEmpty ? initials : '—',
-        style: theme.textTheme.displaySmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
+    final fallback = ColoredBox(
+      color: theme.colorScheme.surfaceContainerHighest,
+      child: Center(
+        child: Text(
+          initials.length <= 2 && initials.isNotEmpty ? initials : '—',
+          style: theme.textTheme.displaySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
       ),
     );
@@ -36,23 +39,17 @@ class PersonPhoto extends StatelessWidget {
         width: 180,
         child: AspectRatio(
           aspectRatio: 3 / 4,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: ColoredBox(
-              color: theme.colorScheme.surfaceContainerHighest,
-              child: asset != null
-                  ? Image.asset(
-                      asset,
-                      fit: BoxFit.contain,
-                      cacheWidth: 540,
-                      semanticLabel: 'Фотография: ${person.fullName}',
-                      frameBuilder: (context, child, frame, loaded) =>
-                          frame == null ? fallback : child,
-                      errorBuilder: (context, error, stackTrace) => fallback,
-                    )
-                  : fallback,
-            ),
-          ),
+          child: asset != null
+              ? Image.asset(
+                  asset,
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.high,
+                  semanticLabel: 'Фотография: ${person.fullName}',
+                  frameBuilder: (context, child, frame, loaded) =>
+                      frame == null ? fallback : child,
+                  errorBuilder: (context, error, stackTrace) => fallback,
+                )
+              : fallback,
         ),
       ),
     );

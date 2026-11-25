@@ -1,14 +1,13 @@
 """Collect portrait metadata from saved official pages; never write the database.
 
-Fetch the public department pages listed by https://econ.sfedu.ru/kafedry/ and
-https://econ.sfedu.ru/o-fakultete/ with verified TLS and a pause between requests.
-Save each HTML page as <URL-path-without-slashes>.html, then run:
+Save public personal profile pages with verified TLS and a pause between
+requests, recording their official URLs in sources.json, then run:
 
     python scripts/collect_person_photos.py --pages-dir /path/to/pages --output photos.json
 
 The manifest records source hashes so subsequent matching can be reviewed
-without refetching the site. University profile files may be added with a
-sources.json mapping of local filenames to their official HTTPS source URLs.
+without refetching the site. Department pages can assist with discovering
+people, but the mobile bundler accepts personal profile sources only.
 """
 
 from __future__ import annotations

@@ -39,6 +39,19 @@ def test_university_profile_uses_named_portrait_not_navigation_logo():
     assert candidates[0].photo_url == "https://sfedu.ru/files/users/volchik.jpg"
 
 
+def test_personal_profile_does_not_supply_a_colleagues_biography_image():
+    page = '''<section class="about_employee"><h2>Вольчик Вячеслав Витальевич</h2>
+    <div class="img"><img src="/files/volchik.jpg" alt="Вольчик Вячеслав Витальевич"></div>
+    <img src="/files/colleague.jpg" alt="Белокрылова Ольга Спиридоновна"></section>'''
+    candidates = parse_photo_page(page, "https://sfedu.ru/s7/person/ru/volchik")
+    assert [c.full_name for c in candidates] == ["Вольчик Вячеслав Витальевич"]
+
+
+def test_personal_portrait_requires_a_matching_profile_owner_heading():
+    page = '<div class="img"><img src="/files/person.jpg" alt="Вольчик Вячеслав Витальевич"></div>'
+    assert parse_photo_page(page, "https://sfedu.ru/s7/person/ru/volchik") == []
+
+
 @pytest.mark.parametrize("url", [
     "https://example.com/volchik.jpg", "//sfedu.ru.evil.test/volchik.jpg",
     "http://econ.sfedu.ru/volchik.jpg", "https://user:pass@sfedu.ru/volchik.jpg",
@@ -88,6 +101,17 @@ def test_external_teacher_can_match_only_one_official_full_name():
     assert match_photos([person], [candidate], reviewed_aliases=reviewed).matches == {encode_id(key): candidate}
     wrong = PhotoCandidate("Груданова Инна Юрьевна", candidate.photo_url, candidate.source_url)
     assert match_photos([person], [wrong], reviewed_aliases=reviewed).matches == {}
+
+
+@pytest.mark.parametrize("include_reviewed", [False, True])
+def test_initials_alias_uses_only_the_reviewed_profile_source(include_reviewed):
+    person = PersonRow(key=("груданова", "и", "ю"), short_name="Груданова И.Ю.", full_name="Груданова И.Ю.")
+    reviewed = PhotoCandidate("Груданова Ирина Юрьевна", "https://sfedu.ru/files/right.jpg", "https://sfedu.ru/s7/person/grudanova")
+    wrong = PhotoCandidate(reviewed.full_name, "https://sfedu.ru/files/wrong.jpg", "https://sfedu.ru/s7/person/other_profile")
+    candidates = [wrong, reviewed] if include_reviewed else [wrong]
+    result = match_photos([person], candidates, reviewed_aliases={person.id: reviewed.full_name},
+                          reviewed_sources={person.id: reviewed.source_url})
+    assert result.matches == ({person.id: reviewed} if include_reviewed else {})
 
 
 def test_different_department_photos_of_the_same_person_are_not_ambiguous():
